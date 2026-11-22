@@ -7,6 +7,10 @@
 // for feed and land.
 // Prints, for each profile: the level reached on days 7, 30, 90, 180, 365, the day each level comes, the coins, the
 // birds, and where the coins came from. GIFT=day:coins adds a bought bag of coins on that day (the real-money prices, 14 Nov).
+// (22 Nov 2026, Audrey: "try to play the game end to end with our 3 personas": brought up to date: every bed and vegetable
+// (the lowest in the basket sown), the beds and the second wheat field bought, each coop's favourite feed mixed in, the
+// collector's shelf's breeds bought with coins (SHELF=0: not), and the winter collection's buildings in their season
+// (THEMES=0: not); a line of what's been bought and when. Farm moments and Mrs Potts left out: a few coins a day)
 globalThis.localStorage = { getItem: () => null, setItem: () => {}, removeItem: () => {} };
 let NOW = Date.UTC(2026, 9, 26, 9, 0);
 Date.now = () => NOW;
@@ -24,7 +28,7 @@ function simulate(name, seed) {
   Math.random = R;                                   // (the trios' personalities and names, the same each run)
   g.newFarm({ lang: 'en', look: 'f', name: 'Sim' });
   g.data.wheat.x = 0; g.data.wheat.z = 0;            // (the farm puts it somewhere; here, anywhere)
-  let treats = 0;
+  let treats = 0, favs = 0;
   const xpBy = {}, track = (k, f) => { const x0 = g.data.xp; const r = f(); xpBy[k] = (xpBy[k] || 0) + g.data.xp - x0; return r; };
   const earn = { eggs: 0, chicks: 0, shows: 0, jobs: 0, honey: 0, fish: 0, guide: 0, orders: 0 }, spend = { feed: 0, land: 0, decor: 0, outfits: 0, shows: 0, wheat: 0 };
   const levelDay = {}, at = {}, rares = [], foxes = { n: 0, eggs: 0 }, upDay = {}; let silkDays = 0;
@@ -51,7 +55,7 @@ function simulate(name, seed) {
       const hr = track('honey', () => g.collectHoney(NOW)); if (hr) earn.honey += hr.coins;
       // (the pantry, 10 Nov 2026: the eggs and jars are kept there; this player sells what the open orders don't want straight away)
       { const r = track('eggs', () => g.sellShelf('eggs')); if (r) earn.eggs += r.coins; const h2 = track('honey', () => g.sellShelf('honey')); if (h2) earn.honey += h2.coins; }
-      if (g.wheatStage(NOW) === 'ripe') track('wheat', () => g.harvestWheat(NOW));
+      for (const k of [0, 1]) if (g.wheat(k) && g.wheatStage(NOW, k) === 'ripe') track('wheat', () => g.harvestWheat(NOW, k));
       // fishing (release 5): the chickens asked for their worms (Friendly 1, Trusting 2, Best friend 3 a day), then up to 8
       // worms fished at the first visit (a keen player's few minutes; the river half the time once it's open), most fish
       // landed (fewer of the rare ones, fewer still of the legendary)
@@ -60,15 +64,19 @@ function simulate(name, seed) {
         const b = g.castWorm(g.fishOpen('river') && R() < 0.5 ? 'river' : 'pond', NOW, R); if (!b) break;
         if (R() < [0.85, 0.75, 0.6][b.rare]) { const r = track('fish', () => g.landFish()); if (r) earn.fish += r.coins; } else g.loseFish();
       }
-      if (g.wheatStage(NOW) === 'soil' && g.data.coins >= WHEAT.sow + 40) { g.sowWheat(NOW); spend.wheat += WHEAT.sow; }
+      for (const k of [0, 1]) if (g.wheat(k) && g.wheatStage(NOW, k) === 'soil' && g.data.coins >= WHEAT.sow + 40) { g.sowWheat(NOW, k); spend.wheat += WHEAT.sow; }
       // the vegetable garden (7 Nov 2026): the ripe beds picked; the empty ones sown (strawberries in the middle bed; in the
       // others carrots when coming back later that day, pumpkins at the last visit); a treat for each coop at the first visit
       // (the best there's enough of)
       if (g.gardenOpen()) {
-        for (let i = 0; i < 3; i++) if (g.bedStage(i, NOW) === 'ripe') track('garden', () => g.pickBed(i, NOW));
-        const last = h === hours[hours.length - 1];
-        for (let i = 0; i < 3; i++) if (g.bedStage(i, NOW) === 'empty') { const k = i === 1 ? 'straw' : i === 2 || last ? 'pump' : 'carrot'; if (g.data.coins >= G.CROPS[k].seed + 40 && g.sowBed(i, k, NOW)) spend.garden = (spend.garden || 0) + G.CROPS[k].seed; }
-        if (h === hours[0]) for (const c of g.data.coops) { const k = ['pump', 'straw', 'carrot'].find(k => g.treatCan(c, k, NOW)); if (k) { g.giveTreat(c.id, k, NOW); treats++; } }
+        const nb = g.garden().beds.length, B = g.vegBasket(), grow = k => G.CROPS[k].grow, last = h === hours[hours.length - 1];
+        for (let i = 0; i < nb; i++) if (g.bedStage(i, NOW) === 'ripe') track('garden', () => g.pickBed(i, NOW));
+        for (let i = 0; i < nb; i++) if (g.bedStage(i, NOW) === 'empty') {
+          const ks = G.CROP_IDS.filter(k => g.cropOpen(k)).sort((a, b) => (B[a] || 0) - (B[b] || 0) || (last ? grow(b) - grow(a) : grow(a) - grow(b))), k = ks[0];
+          if (k && g.data.coins >= G.CROPS[k].seed + 40 && g.sowBed(i, k, NOW)) spend.garden = (spend.garden || 0) + G.CROPS[k].seed;
+        }
+        if (h === hours[0]) for (const c of g.data.coops) { const k = Object.keys(B).sort((a, b) => (B[b] || 0) - (B[a] || 0)).find(k => g.treatCan(c, k, NOW)); if (k) { g.giveTreat(c.id, k, NOW); treats++; } }
+        for (const c of g.data.coops) { const f = g.favState(c, NOW); if (f && f.state === 'can' && g.mixFav(c.id, NOW)) favs++; }
       }
       // the feeders (when below half: the grain first)
       for (const c of g.data.coops) if (g.feedLeft(c, NOW) < 0.5) { const q = track('feed', () => g.fillFeeder(c.id, NOW)); if (q && q.cost) spend.feed += q.cost; }
@@ -99,12 +107,16 @@ function simulate(name, seed) {
       for (const id of Object.keys(DECOR)) if (g.decorNext(id) && g.data.coins - DECOR[id].price >= keep) { spot++; if (track('decor', () => g.buyDecor(id, DECOR[id].pond ? null : { x: -spot * 4, z: 9 }))) { spend.decor += DECOR[id].price; bought.push([d + 1, id]); } }
       for (const id of Object.keys(G.ANIMALS)) if (g.animalNext(id) && g.data.coins - G.ANIMALS[id].price >= keep) { spot++; if (track('animals', () => g.buyAnimal(id, NOW, { x: -spot * 4, z: 14 }))) spend.animals = (spend.animals || 0) + G.ANIMALS[id].price; bought.push([d + 1, id]); }      // (the geese and the dog, release 3)
       for (const id of Object.keys(OUTFITS)) if (g.outfitNext(id) && g.data.coins - OUTFITS[id].price >= keep) { if (track('outfits', () => g.buyOutfit(id))) { spend.outfits += OUTFITS[id].price; bought.push([d + 1, 'outfit ' + id]); } }
+      { const nb = g.bedNext(); if (nb && !nb.locked && g.data.coins - nb.price >= keep && g.buyBed()) { spend.beds = (spend.beds || 0) + nb.price; bought.push([d + 1, 'bed ' + nb.n]); } }
+      { const w = g.wheatNext && g.wheatNext(); if (w && w.can && g.data.coins - w.price >= keep && g.buyWheat({ x: G.FIXED.wheat2.x, z: G.FIXED.wheat2.z })) { spend.wheat2 = w.price; bought.push([d + 1, 'wheat field 2']); } }
+      if (process.env.SHELF !== '0') for (const sh of g.shelfList().filter(x => x.open && !x.had)) if (g.data.coins - sh.price >= keep + 1000) { const r = g.buyShelf(sh.breed); if (r && !r.broke) { spend.shelf = (spend.shelf || 0) + sh.price; bought.push([d + 1, 'shelf ' + sh.breed]); } }
+      if (process.env.THEMES !== '0') for (const c of g.data.coops) for (const t of g.themesFor(c, NOW)) if (!t.owned && t.season && g.data.coins - t.price >= keep + 2000) { const r = g.buyTheme(c.id, t.id, NOW); if (r && !r.broke) { spend.themes = (spend.themes || 0) + t.price; bought.push([d + 1, 'theme ' + t.key]); } }
       if (process.env.SHOPFIRST) for (const c of g.data.coops) { const n = g.coopNext(c); if (n && g.data.coins - n.price >= keep && track('upgrades', () => g.upgradeCoop(c.id) === 'ok')) { spend.upgrades = (spend.upgrades || 0) + n.price; bought.push([d + 1, c.breed + ' ' + ['', 'mended', 'snug', 'cosy', 'deluxe'][n.tier]]); } }      // (SHOPFIRST: the shop before the coops' looks)
       const L = g.level; if (!levelDay[L]) levelDay[L] = d + 1;
     }
     if ([7, 30, 90, 180, 365].includes(d + 1)) at[d + 1] = { earned: Object.values(earn).reduce((x, y) => x + y, 0), level: g.level, coins: g.data.coins, birds: g.data.birds.length, coops: g.data.coops.length, land: g.data.land.length, decor: (g.data.decor || []).length };
   }
-  return { bought, levelDay, at, earn, spend, xp: g.data.xp, xpBy, treats, rares, silkDays, basket: g.basket().length, rareCoops: g.data.coops.filter(c => G.RARE_LINES.includes(c.breed)).length, foxes, upDay };
+  return { bought, levelDay, at, earn, spend, xp: g.data.xp, xpBy, treats, favs, rares, silkDays, basket: g.basket().length, rareCoops: g.data.coops.filter(c => G.RARE_LINES.includes(c.breed)).length, foxes, upDay };
 }
 const avg = (list, f) => list.reduce((a, x) => a + f(x), 0) / list.length;
 for (const name of Object.keys(PROFILES)) {
@@ -117,6 +129,9 @@ for (const name of Object.keys(PROFILES)) {
   console.log('earned: ' + Object.entries(runs[0].earn).map(([k]) => `${k} ${Math.round(avg(runs, r => r.earn[k]))}`).join(', '));
   console.log('XP from: ' + Object.keys(runs[0].xpBy).map(k => `${k} ${Math.round(avg(runs, r => r.xpBy[k] || 0))}`).join(', '));
   console.log('treats given: ' + Math.round(avg(runs, r => r.treats)));
+  console.log('favourite feeds mixed: ' + Math.round(avg(runs, r => r.favs || 0)));
+  console.log('spent: ' + [...new Set(runs.flatMap(r => Object.keys(r.spend)))].map(k => `${k} ${Math.round(avg(runs, r => r.spend[k] || 0))}`).join(', '));
+  console.log('bought (the first farm): ' + runs[0].bought.filter(([, w]) => /^(shelf|theme|bed|wheat)/.test(String(w))).map(([d, w]) => `day ${d} ${w}`).join('; '));
   console.log('Rusty: ' + avg(runs, r => r.foxes.n).toFixed(1) + ' visits in the time, ' + avg(runs, r => r.foxes.eggs).toFixed(1) + ' eggs taken');
   console.log('rare babies: ' + avg(runs, r => r.rares.length).toFixed(1) + ' in the year, one every ' + (avg(runs, r => r.silkDays / Math.max(1, r.rares.length)) / 30).toFixed(1) + ' months a Silkie coop; the first on day ' + Math.round(avg(runs, r => r.rares[0] || 0)) + '; in the basket at the end ' + avg(runs, r => r.basket).toFixed(1) + ', rare coops ' + avg(runs, r => r.rareCoops).toFixed(1));
   console.log('the Red Barn: ' + [1, 2, 3, 4].map(t => ['', 'Mended', 'Snug', 'Cosy', 'Deluxe'][t] + ' day ' + (runs.every(r => r.upDay[t]) ? Math.round(avg(runs, r => r.upDay[t])) : '-')).join(', '));

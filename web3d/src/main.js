@@ -5362,7 +5362,7 @@ function gameTick(now = Date.now(), force = false) {
   // notification nothing had to look for it"; the secret one has its own word, at the kiss)
   { const mr = game.milesReady(); if (mr > MILES_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { const first = MILES_NOTED < 0; MILES_NOTED = mr; if (!first || mr) { const id = MILE_IDS.find(k => game.mileReached(k) > game.mileClaimed(k)), P = id ? game.milePay(id, game.mileClaimed(id)) : null; hintNext(mr > 1 || !P ? game.t('mile_ready_n', { n: mr }) : game.t('mile_ready', { name: game.t('mile_' + id), c: P.coins.toLocaleString(game.locale()) })); } } else if (mr < MILES_NOTED) MILES_NOTED = mr; }
   if (BIRD_BACK && gameUI.isOpen && gameUI.kind !== 'bird') BIRD_BACK = null;      // (on to another card from hers: the view stays)
-  { const wn = game.waitingCoops().length; if (wn > WAIT_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { WAIT_NOTED = wn; hintNext(game.t('coop_waits')); } else if (wn < WAIT_NOTED) WAIT_NOTED = wn; }      // (a coop waiting in the Book: said when the farm opens and whenever another comes)
+  { const wn = game.waitingCoops().length; if (wn > WAIT_NOTED && !gameUI.isOpen && !MOVE.plot && document.getElementById('loading') === null) { WAIT_NOTED = wn; hintNext(game.t('coop_waits'), () => game.waitingCoops().length > 0 && !MOVE.plot); } else if (wn < WAIT_NOTED) WAIT_NOTED = wn; }      // (a coop waiting in the Book: said when the farm opens and whenever another comes)
   if (live) { const dw = game.dawnWorms(now); if (dw) hint(game.t('dawn_worms', { n: dw })); }      // (the morning's worms; said before the day's other news, which stays on top)
   const news = game.broodTick(now);
   if (news.length) broodNews(news, now);
@@ -7652,9 +7652,10 @@ function groomFor(id, bid) {
   let img = null; try { img = birdPortrait(b); } catch (e) { img = null; }
   if (!img) { enterShowNow(id, bid); return; }
   gameUI.close();
-  const pct = g => Math.round(game.showChance(b, id, g).rosette * 100), end = () => { GROOMING = null; document.body.classList.remove('grooming'); };
+  let live = null; try { live = groomLive(b, img); } catch (e) { live = null; if (GROOM_LIVE.on) { GROOM_LIVE.on = false; applyDaylight(clockHour()); } }      // (her, alive: else her picture)
+  const pct = g => Math.round(game.showChance(b, id, g).rosette * 100), end = () => { GROOMING = null; if (live) live.dispose(); document.body.classList.remove('grooming'); };
   document.body.classList.add('grooming');
-  GROOMING = openGroom({ img, name: b.name, show: game.showName(id), fee: SHOWS[s.tier].fee, secs: (navigator.webdriver && window.__FF_GROOM_SECS) || GROOM.secs, t: (k, v) => game.t(k, v, b.sex === 'h'), chance: pct,
+  GROOMING = openGroom({ img, live, name: b.name, show: game.showName(id), fee: SHOWS[s.tier].fee, secs: (navigator.webdriver && window.__FF_GROOM_SECS) || GROOM.secs, t: (k, v) => game.t(k, v, b.sex === 'h'), chance: pct,
     onGo: g => { end(); enterShowNow(id, bid, g); }, onSkip: () => { end(); enterShowNow(id, bid, 0); }, onClose: () => { end(); showsSheet(); } });
 }
 // a bird's picture, her alone, as she is on the farm (her breed, hen or rooster, her colour), see-through round her: one of
@@ -7717,6 +7718,7 @@ function birdPortrait(gb, SIZE = 640) {
       out = document.createElement('canvas'); out.width = out.height = Math.min(SIZE, rect[2]);
       const g = out.getContext('2d'); g.imageSmoothingQuality = 'high'; g.drawImage(src, ...rect, 0, 0, out.width, out.height);
       if (hb) { const toUV = p => [((p.x + 1) / 2 * W - sx) / side, ((1 - p.y) / 2 * H - sy) / side]; const a = toUV(hp), b = toUV(up); out.head = { u: a[0], v: a[1], top: b[1] }; }
+      out.view = { fov, dist, el, span, N, crop: [sx, sy, side], atL: G.worldToLocal(at.clone()).toArray(), rotY: G.rotation.y };      // (22 Nov 2026: the same lens and framing for her drawn live, groomLive)
     }
   } finally {
     scene.background = bg; for (const o of hidden) o.visible = true;
@@ -7726,6 +7728,120 @@ function birdPortrait(gb, SIZE = 640) {
     try { drawFarmerShadows(renderer); renderFarm(); } catch (e) { /* (the next frame draws it) */ }
   }
   return out;
+}
+// ---- her, alive, in the grooming game (22 Nov 2026, Audrey: "can the move of the chicken be more natural, it currently is
+// just an image moving"): the game's own bird drawn live in a little see-through canvas of its own over her picture, through
+// the same lens and framing (birdPortrait's .view), so the places to see to stay where they are on her; lit as her picture
+// is, at midday (the farm's light held there while she's groomed; the farm itself not drawn under the game). What she does
+// (groom.js says what's going on: ev): breathes; looks about in little darts of the head, then at the tool in your hand,
+// cocking her head when it's low on her; blinks (slowly when she's enjoying the sponge or the cloth); a little cluck now and
+// then; a ruffle when brushed the wrong way; a good shake of the water once she's washed; her tail wagging as each place is
+// done; and, all ready, a little hop and she stands proud. Her body stays where it is (her head, tail and wings move), so the
+// marks stay on her. No second drawing context to be had: her picture, as before (null)
+const GROOM_LIVE = { on: false };
+function groomLive(gb, img) {
+  const V = img && img.view; if (!V) return null;
+  const hen = gb.sex === 'h', real = allBirds.find(x => x.gid === gb.id);
+  let R2 = null;
+  try { R2 = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', stencil: false }); if (!R2.getContext()) throw new Error('no context'); }
+  catch (e) { if (R2) R2.dispose(); return null; }
+  R2.outputColorSpace = renderer.outputColorSpace; R2.toneMapping = renderer.toneMapping;
+  R2.shadowMap.enabled = true; R2.shadowMap.type = THREE.PCFSoftShadowMap;
+  const cv = R2.domElement; cv.className = 'groom-live';
+  const sc = new THREE.Scene(), G = new THREE.Group();
+  // (drawn on the game's own warm background, the very gradient behind it, so her soft feathers' edges blend as on the farm:
+  // the bird's shader leaves the picture's see-through-ness to the fur, so a see-through canvas showed her as a pale glow)
+  const bgCv = document.createElement('canvas'); bgCv.width = bgCv.height = 4; const bgTex = new THREE.CanvasTexture(bgCv); bgTex.colorSpace = THREE.SRGBColorSpace; sc.background = bgTex;
+  const paintBg = () => {
+    const root = cv.closest('.groom'); if (!root) return; const rr = root.getBoundingClientRect(), pr = cv.getBoundingClientRect(), k = L.dpr || 1;
+    const cx = rr.left + rr.width * 0.28, cy = rr.top + rr.height * 0.55, R = Math.max(...[[rr.left, rr.top], [rr.right, rr.top], [rr.left, rr.bottom], [rr.right, rr.bottom]].map(([x, y]) => Math.hypot(x - cx, y - cy)));      // (CSS: circle at 28% 55%, to the farthest corner)
+    bgCv.width = Math.max(4, Math.round(pr.width * k)); bgCv.height = Math.max(4, Math.round(pr.height * k));
+    const g = bgCv.getContext('2d'), gr = g.createRadialGradient((cx - pr.left) * k, (cy - pr.top) * k, 0, (cx - pr.left) * k, (cy - pr.top) * k, R * k);
+    gr.addColorStop(0, '#fff3cf'); gr.addColorStop(0.38, '#f6dfa6'); gr.addColorStop(1, '#d9b86a'); g.fillStyle = gr; g.fillRect(0, 0, bgCv.width, bgCv.height); bgTex.needsUpdate = true;
+  };
+  G.position.set(view.target.x + 400, 0, view.target.z + 400); G.rotation.y = V.rotY; sc.add(G);      // (far off the farm, as her picture: a sound of hers never heard on it)
+  const plot = { kind: 'lineup', frame: G, birds: [], centre: G.position.clone() };
+  const B = new Bird(plot, baseBreed(gb.breed), hen ? 'hen' : 'rooster', real ? real.colour : lineColour(gb.breed), [0, 0, 0], -1.0, rng(5));
+  B.stay = true; plot.birds.push(B);
+  for (const m of [B.rig.mesh, B.rig.lo]) if (m) { m.visible = m === B.rig.mesh; m.castShadow = true; m.receiveShadow = false; }      // (her shadow on the ground, none on herself: lit as she is on the farm)
+  // the light: the farm's at midday, the sun's shadow drawn close round her (her own wing on her side, her shadow on the ground)
+  GROOM_LIVE.on = true; applyDaylight(12.5);
+  const mid = G.localToWorld(new THREE.Vector3(...V.atL)), sunL = new THREE.DirectionalLight(sun.color.clone(), sun.intensity), sky = new THREE.HemisphereLight(hemi.color.clone(), hemi.groundColor.clone(), hemi.intensity);
+  sunL.position.copy(mid).addScaledVector(SUN_DIR, -4); sunL.target.position.copy(mid);
+  sunL.castShadow = true; sunL.shadow.mapSize.set(1024, 1024); sunL.shadow.bias = sun.shadow.bias; sunL.shadow.normalBias = sun.shadow.normalBias;
+  { const c = sunL.shadow.camera; c.left = c.bottom = -0.8; c.right = c.top = 0.8; c.near = 0.5; c.far = 9; c.updateProjectionMatrix(); }
+  sc.add(sunL, sunL.target, sky);
+  // the ground she stands on, unseen: her shadow on it, and a soft dark patch under her feet (the picture's drop shadow)
+  const ground = new THREE.Mesh(new THREE.PlaneGeometry(4, 4), new THREE.ShadowMaterial({ opacity: 0.2 })); ground.rotation.x = -Math.PI / 2; ground.position.y = 0.001; ground.receiveShadow = true; G.add(ground);
+  const bt = document.createElement('canvas'); bt.width = bt.height = 64; { const g = bt.getContext('2d'), gr = g.createRadialGradient(32, 32, 2, 32, 32, 31); gr.addColorStop(0, 'rgba(90,60,10,0.42)'); gr.addColorStop(1, 'rgba(90,60,10,0)'); g.fillStyle = gr; g.fillRect(0, 0, 64, 64); }
+  const blobTex = new THREE.CanvasTexture(bt); blobTex.colorSpace = THREE.SRGBColorSpace;
+  const blob = new THREE.Mesh(new THREE.PlaneGeometry(1, 1), new THREE.MeshBasicMaterial({ map: blobTex, transparent: true, depthWrite: false }));
+  blob.rotation.x = -Math.PI / 2; blob.position.y = 0.002; { const k = B.rig.scale / 0.5; blob.scale.set(0.62 * k, 0.5 * k, 1); } blob.rotation.z = 1.0; G.add(blob);
+  // the lens: as her picture's
+  const cam = new THREE.PerspectiveCamera(V.fov, 1, 0.1, 200);
+  cam.position.copy(G.localToWorld(new THREE.Vector3(...V.atL).add(new THREE.Vector3(0, Math.sin(V.el), Math.cos(V.el)).multiplyScalar(V.dist))));
+  cam.lookAt(mid); cam.setViewOffset(V.N, V.N, V.crop[0], V.crop[1], V.crop[2], V.crop[2]); cam.updateProjectionMatrix();
+  // what she does
+  const R = rng(17), clamp = (x, a, b) => Math.max(a, Math.min(b, x)), H = img.head || { u: 0.3, v: 0.3 };
+  const D = { t: 0, yaw: 0.32, tilt: 0.05, gYaw: 0.32, gTilt: 0.05, lookIn: 1.4, tool: null, blinkIn: 1.6, blink: 0, cluckIn: 2.2, ck: [], rf: 0, rfT: 0, rfDur: 1, wagT: 0,
+    proud: hen ? 0.12 : 0.45, gProud: hen ? 0.12 : 0.45, hopT: -1, content: 0 };
+  B.posterPose = (A, dt) => {
+    if (D.tool) { D.gYaw = clamp(0.22 + (D.tool.u - H.u) * 1.5, -0.25, 1.05); D.gTilt = clamp((D.tool.v - H.v) * 0.55, -0.15, 0.4); }      // (looking at the tool, her head cocked when it's low on her)
+    else if ((D.lookIn -= dt) <= 0) { D.lookIn = 0.9 + R() * 2.6; const r = R(); D.gYaw = r < 0.3 ? 0.32 + (R() - 0.5) * 0.1 : r < 0.6 ? -0.3 + R() * 0.35 : 0.5 + R() * 0.45; D.gTilt = (R() - 0.45) * 0.4; }      // (at you, ahead, or round at her back; her head cocked one way or the other)
+    const k = Math.min(1, dt * (D.tool ? 7 : 11)); D.yaw += (D.gYaw - D.yaw) * k; D.tilt += (D.gTilt - D.tilt) * k;      // (a chicken's head: quick little darts, then held still)
+    if ((D.cluckIn -= dt) <= 0) { D.cluckIn = 3.5 + R() * 5; const n = 1 + Math.floor(R() * 3); D.ck = Array.from({ length: n }, (_, i) => D.t + i * 0.24); }
+    let ck = 0; for (const t0 of D.ck) { const u = (D.t - t0) / 0.18; if (u > 0 && u < 1) ck = Math.max(ck, Math.sin(u * Math.PI)); }
+    if (D.blink > 0) { if ((D.blink -= dt) <= 0) B.rig.sleepy(false); }
+    else if ((D.blinkIn -= dt) <= 0) { D.blinkIn = 1.8 + R() * 3.4; D.blink = D.content > 0.5 ? 0.5 : 0.12; B.rig.sleepy(true); }
+    D.content = Math.max(0, D.content - dt * 0.25);
+    let rf = 0; if (D.rfT > 0) { D.rfT -= dt; rf = D.rf * Math.sin(Math.PI * clamp(1 - D.rfT / D.rfDur, 0, 1)); }
+    if (D.wagT > 0) D.wagT -= dt;
+    D.proud += (D.gProud - D.proud) * Math.min(1, dt * 3);
+    Object.assign(A, { walk: 0, peck: 0, sit: 0, kick: 0, flap: 0, crow: 0, turn: 0, sing: 0, kawk: 0, brood: 0, duck: 0, stretch: 0, sleep: 0, up: 0,
+      hopT: D.hopT, lookYaw: D.yaw, lookTilt: D.tilt, cluck: ck, ruffle: rf, wag: D.wagT > 0 ? 1 : 0, proud: D.proud });
+  };
+  const body = B.rig.bones && B.rig.bones.body;
+  const step = dt => {
+    D.t += dt; if (D.hopT >= 0 && (D.hopT += dt / 0.8) >= 1) D.hopT = -1;
+    B.update(dt); B.root.position.set(0, 0.015, 0); B.root.rotation.y = -1.0;      // (her body where it is: the marks stay on her)
+    if (body) { const b = Math.sin(D.t * 2.3); body.scale.set(1 + 0.01 * b, 1 + 0.016 * b, 1 + 0.01 * b); }      // (breathing)
+    G.updateMatrixWorld(true);
+  };
+  const L = { on: true, raf: 0, last: performance.now(), drawn: 0, frames: 0, manual: false, w: 0, h: 0, dpr: 0, first: null };
+  const fit = () => {
+    const w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return false;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    if (w !== L.w || h !== L.h || dpr !== L.dpr) { L.w = w; L.h = h; L.dpr = dpr; R2.setPixelRatio(dpr); R2.setSize(w, h, false); paintBg(); }
+    setFar(false); setFurDetail(h * dpr * V.N / (V.crop[2] * V.span), 1);      // (her finest feathers, for her size here)
+    return true;
+  };
+  const draw = () => { if (!L.on || !fit()) return; R2.render(sc, cam); L.frames++; if (L.frames === 1 && L.first) { const f = L.first; L.first = null; f(); } };
+  const frame = now => {
+    if (!L.on) return; L.raf = requestAnimationFrame(frame); if (L.manual) return;
+    if (now - L.drawn < 1000 / 30 - 3) return;      // (30 pictures a second are plenty)
+    const dt = Math.min(0.1, Math.max(0, (now - L.last) / 1000)); L.last = now; L.drawn = now; step(dt); draw();
+  };
+  // (her shut-eyed look and her own light made ready before the first picture: no stall at her first blink)
+  try { step(1 / 30); B.rig.sleepy(true); R2.compile(sc, cam); B.rig.sleepy(false); R2.compile(sc, cam); } catch (e) { /* (drawn as it comes) */ }
+  const ev = (type, d) => {
+    if (!L.on) return;
+    if (type === 'tool') D.tool = d || null;
+    else if (type === 'rub') D.content = Math.min(1, D.content + 0.06);
+    else if (type === 'against') { D.rf = Math.max(D.rfT > 0 ? D.rf : 0, 0.45); D.rfT = D.rfDur = 0.38; D.ck = [D.t]; }      // (ruffled: a cross little cluck)
+    else if (type === 'spot') { D.wagT = 0.8; D.ck = [D.t + 0.05, D.t + 0.27]; }
+    else if (type === 'step') { if (d === 'wash') { D.rf = 1; D.rfT = D.rfDur = 0.9; D.tool = null; } else { D.wagT = 1.2; D.gProud = Math.min(1, D.gProud + 0.1); } }      // (washed: she shakes the water off)
+    else if (type === 'done') { D.tool = null; D.gProud = hen ? 0.6 : 1; D.hopT = 0; D.hopped = true; D.wagT = 1.6; D.ck = [D.t + 0.6, D.t + 0.82, D.t + 1.04]; D.gYaw = 0.5; D.lookIn = 2.5; }      // (all ready: a little hop, and proud)
+  };
+  const dispose = () => {
+    if (!L.on) return; L.on = false; cancelAnimationFrame(L.raf);
+    try { B.rig.sleepy(false); } catch (e) { /* */ }
+    B.root.removeFromParent(); G.removeFromParent(); blobTex.dispose(); bgTex.dispose(); blob.geometry.dispose(); blob.material.dispose(); ground.geometry.dispose(); ground.material.dispose(); sunL.shadow.dispose();
+    R2.dispose(); try { R2.forceContextLoss(); } catch (e) { /* */ } cv.remove();
+    GROOM_LIVE.on = false; applyDaylight(clockHour()); setFar(view.size > 5.5); furDetail(); wake(600);
+  };
+  return { el: cv, ev, dispose, start: onFirst => { L.first = onFirst || null; L.last = performance.now(); L.raf = requestAnimationFrame(frame); },
+    // (tests and films: her clock stepped by hand)
+    manual: on => { L.manual = !!on; }, step: dt => { step(dt); draw(); }, state: () => ({ on: L.on, frames: L.frames, yaw: +D.yaw.toFixed(3), tilt: +D.tilt.toFixed(3), blink: D.blink > 0, ruffle: D.rfT > 0, wag: D.wagT > 0, proud: +D.proud.toFixed(2), hop: D.hopT >= 0, hopped: !!D.hopped, tool: D.tool }) };
 }
 // ---- the show day (release 1 step 9b; showday.js): the results in and the farm free, by day: "🎀 Show day!" with "Watch
 // the judging" (the view goes to the show tent on the green: the player's tap) or "Just the results". The scene, then the
@@ -10082,8 +10198,14 @@ const HINT_NEXT = [];                                    // (words to say once t
 // the card)
 function hint(t) { hintEl.textContent = t; hintEl.classList.add('on'); hintEl.classList.toggle('gover', !!(gameUI && gameUI.isOpen)); hintLeft = 4.5; }      // (a new one gets its full time; it goes with the farm's own time)
 function payEnd() { if (hintEl.textContent === game.t('pay_busy')) { hintLeft = 0; hintEl.classList.remove('on'); } }      // (15 Nov 2026: "One moment…" goes as soon as Apple has answered, not seconds after)
-function hintNext(t) { if (hintLeft > 0) HINT_NEXT.push(t); else hint(t); }
-function tickHint(dt) { if (hintLeft > 0 && (hintLeft -= dt) <= 0) { if (HINT_NEXT.length) hint(HINT_NEXT.shift()); else hintEl.classList.remove('on'); } }
+// (ok: a word that's only still true while ok() says so: 22 Nov 2026, the play-through, "A new coop is waiting in your Book"
+// said just after its coop had been placed from the level's card, the word queued as the level came)
+function hintNext(t, ok) { if (hintLeft > 0) HINT_NEXT.push(ok ? { t, ok } : t); else if (!ok || ok()) hint(t); }
+function tickHint(dt) {
+  if (!(hintLeft > 0 && (hintLeft -= dt) <= 0)) return;
+  while (HINT_NEXT.length) { const n = HINT_NEXT.shift(); if (typeof n === 'string') { hint(n); return; } if (n.ok()) { hint(n.t); return; } }
+  hintEl.classList.remove('on');
+}
 // jobs just done (game.js job): said after what was done, the clipboard's number up
 function jobsDone(done) { if (!done || !done.length) return; for (const j of done) hintNext(game.t('job_done', { job: game.jobText(j) })); gameUI.refresh(); }
 
@@ -10613,8 +10735,9 @@ function frame(now) {
   findFarmerBtn(); tickFocus(dt); tickViewTurn(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt); tickFarmerSay();
   if (GAME_MODE) { gameTick(); tickBusy(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); tickRain(dt); tickVisit(dt); placeBubbles(); tickTurnTip(now); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
-  if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(clockHour()); }      // the light follows the clock
-  if (inside.open) { updateInside(dt); renderFarm(inside.scene, inside.camera); }
+  if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(GROOM_LIVE.on ? 12.5 : clockHour()); }      // the light follows the clock (held at midday while a bird is groomed: groomLive)
+  if (GROOM_LIVE.on) { /* (the grooming game over the farm: her drawn live, the farm not) */ }
+  else if (inside.open) { updateInside(dt); renderFarm(inside.scene, inside.camera); }
   else { drawFarmerShadows(renderer); renderFarm(); }
   redrawNow = false;
   if (GAME_MODE && now - barTint.at > 1500) tintBars(now);

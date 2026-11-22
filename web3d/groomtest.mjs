@@ -25,13 +25,21 @@ const por = await p.evaluate(() => { const f = window.__farm, g = f.game(), hen 
 ok('her picture is made: a square with her in it', por.size && por.size[0] > 200 && por.size[0] === por.size[1], por);
 for (const id of await p.evaluate(() => window.__farm.game().data.birds.map(x => x.id))) { const u = await p.evaluate(id => window.__farm.groom.portrait(id, true), id); if (u) fs.writeFileSync(OUT + '/portrait_' + id + '.png', Buffer.from(u.url.split(',')[1], 'base64')); }
 // Enter on the shows' card: the game, nothing paid yet
-await ctx.addInitScript(() => { window.__FF_GROOM_SECS = 45; }); await p.evaluate(() => { window.__FF_GROOM_SECS = 45; });      // (the test browser draws slowly: each part given the time a finger needs in eight seconds)
+await ctx.addInitScript(() => { window.__FF_GROOM_SECS = 120; }); await p.evaluate(() => { window.__FF_GROOM_SECS = 120; });      // (the test browser draws slowly, and she's drawn alive too: each part given the time a finger needs in eight seconds)
 await p.evaluate(() => window.__farm.showsSheet()); await p.waitForTimeout(300);
 const s0 = await S();
 await p.evaluate(() => { const bt = [...document.querySelectorAll('.gsheet .gshow .gbtn')].find(x => !x.disabled); bt.click(); }); await p.waitForTimeout(500);
 let s = await S();
 ok('"Enter": the grooming game opens with her alone, nothing paid, not entered yet', s.open && s.st && s.st.step === 'wash' && s.st.on >= 5 && s.coins === s0.coins && s.in.length === 0, s);
 await p.screenshot({ path: OUT + '/groom_1_wash.png' });
+// (22 Nov 2026, Audrey: "can the move of the chicken be more natural, it currently is just an image moving": she's drawn
+// alive over her picture, main.js groomLive; her clock stepped by hand here to see what she does)
+const lv = () => p.evaluate(() => { const L = window.__L || (window.__L = window.__farm.groom.now() && window.__farm.groom.now().live); return L ? L.state() : null; });
+await p.waitForTimeout(1500); const L0 = await lv();
+const over = await p.evaluate(() => { const c = document.querySelector('.groom-pic .groom-live'), i = document.querySelector('.groom-img'), q = document.querySelector('.groom-pic').getBoundingClientRect(); if (!c) return null; const a = c.getBoundingClientRect(); return { under: i.classList.contains('groom-under'), dx: Math.abs(a.left - q.left) + Math.abs(a.top - q.top), dw: Math.abs(a.width - q.width) + Math.abs(a.height - q.height) }; });
+ok('she is drawn alive, where her picture was (its own little drawing over it), the picture hidden under her', !!L0 && L0.on && L0.frames > 0 && over && over.under && over.dx < 1 && over.dw < 1, { L0, over });
+const lives = await p.evaluate(() => { const L = window.__L; L.manual(true); const seen = { yaw: new Set(), tilt: new Set(), blink: false }; for (let i = 0; i < 240; i++) { L.step(1 / 30); const q = L.state(); seen.yaw.add(q.yaw.toFixed(2)); seen.tilt.add(q.tilt.toFixed(2)); seen.blink = seen.blink || q.blink; } L.manual(false); return { yaw: seen.yaw.size, tilt: seen.tilt.size, blink: seen.blink }; });
+ok('in eight seconds of her own: she looks about (her head turning and cocking) and blinks', lives.yaw > 5 && lives.tilt > 5 && lives.blink, lives);
 const filled = await p.evaluate(() => { const c = document.querySelector('.groom-img'), g = c.getContext('2d'), d = g.getImageData(0, 0, c.width, c.height).data; let a = 0, n = 0; for (let i = 3; i < d.length; i += 4) { n++; if (d[i] > 128) a++; } return a / n; });
 ok('her picture: she fills a fair part of it, the rest see-through', filled > 0.15 && filled < 0.8, filled);
 // each part: its own tool in hand, five places on her to see to, a bar that fills as they're done (19 Nov 2026)
@@ -45,6 +53,8 @@ heads.push(offHead(s.st));
 ok('washing: a sponge in hand, five muddy patches on her, the bar empty', s.st.tool === 'wash' && s.st.spots.length === 5 && s.st.spots.every(q => q[2] === 0) && (await p.evaluate(() => document.querySelectorAll('.groom-mud').length)) === 5 && (await p.evaluate(() => document.querySelector('.groom-time i').style.width)) === '0%', s.st);
 { const far = [[0.03, 0.03], [0.97, 0.03], [0.03, 0.97], [0.97, 0.97]].sort((a, b2) => Math.min(...s.st.spots.map(q => Math.hypot(q[0] - b2[0], q[1] - b2[1]))) - Math.min(...s.st.spots.map(q => Math.hypot(q[0] - a[0], q[1] - a[1]))))[0]; await drag([await XY(far[0], far[1]), await XY(far[0] + (far[0] < 0.5 ? 0.06 : -0.06), far[1])]); }      // (the corner furthest from every patch)
 ok('rubbing where there is no mud does nothing', (await S()).st.scores[0] === 0 && !(await S()).st.started);
+const looked = await p.evaluate(async ([x, y]) => { const L = window.__L, pic = document.querySelector('.groom-pic'); L.manual(true); const y0 = L.state().yaw; pic.dispatchEvent(new PointerEvent('pointerdown', { clientX: x, clientY: y, pointerId: 7, bubbles: true })); for (let i = 0; i < 20; i++) L.step(1 / 30); const q = L.state(); pic.dispatchEvent(new PointerEvent('pointerup', { clientX: x, clientY: y, pointerId: 7, bubbles: true })); L.step(1 / 30); const r = L.state(); L.manual(false); return { y0, tool: q.tool, yaw: q.yaw, after: r.tool }; }, await XY(0.85, 0.5));
+ok('the sponge held by her back: she turns her head round to it; let go, she\'s free to look about', !!looked.tool && looked.yaw > 0.5 && looked.after === null, looked);
 await stroke(s.st.spots[0], 1); const half = (await S()).st;
 ok('a patch rubbed: it fades, the bar moves on', half.scores[0] > 0 && half.scores[0] < 1 && half.started, half.scores);
 await p.screenshot({ path: OUT + '/groom_1b_washing.png' });
@@ -54,8 +64,11 @@ ok('washed: every patch gone, on to the brush', s.st.step === 'brush' && s.st.sc
 heads.push(offHead(s.st));
 ok('brushing: a little brush in hand, five ruffled places', s.st.tool === 'brush' && s.st.spots.length === 5 && (await p.evaluate(() => document.querySelectorAll('.groom-tuft').length)) === 5, s.st.tool);
 await p.screenshot({ path: OUT + '/groom_2_brush.png' });
-const br0 = s.st.scores[1]; await stroke(s.st.spots[0], -1);
+const br0 = s.st.scores[1];
+await p.evaluate(() => window.__L.manual(true)); { const sp = s.st.spots[0], a = await XY(sp[0] + 0.075, sp[1]), b2 = await XY(sp[0] - 0.075, sp[1]); await p.mouse.move(a[0], a[1]); await p.mouse.down(); await p.mouse.move(b2[0], b2[1], { steps: 4 }); await p.mouse.up(); }      // (a quick swipe the wrong way)
+const ruf = await p.evaluate(() => { const L = window.__L, a = L.state().ruffle; L.step(1 / 30); const b = L.state().ruffle; L.manual(false); return [a, b]; });
 const against = (await S()).st.scores[1] - br0;
+ok('brushed the wrong way: she ruffles her feathers', ruf[0] || ruf[1], ruf);
 await doStep('brush', false);
 s = await S();
 ok('brushed: against the feathers counts for nothing, from head to tail does; on to the shine', against === 0 && s.st.step === 'shine' && s.st.scores[1] > 0.9, { against, st: s.st });
@@ -68,9 +81,12 @@ ok('none of the marks on her head or neck, in any of the three parts', heads.len
 ok('shone: every spot polished; all three done, her score and her better chance shown', s.st.step === 'done' && s.st.scores[2] > 0.9 && s.st.score > 85, s.st);
 const txt = await p.evaluate(() => document.querySelector('.groom-card').innerText);
 ok('the card: show-ready, her chance going up', /\d+% → \d+%/.test(txt) || /100%/.test(txt), txt.replace(/\n+/g, ' | '));
+const proud = await p.evaluate(() => { const L = window.__L; L.manual(true); let hop = false; for (let i = 0; i < 45; i++) { L.step(1 / 30); hop = hop || L.state().hop; } const q = L.state(); L.manual(false); return { hop, hopped: q.hopped, proud: q.proud, wag: q.wag }; });
+ok('all ready: a little hop, and she stands proud', (proud.hop || proud.hopped) && proud.proud > 0.4, proud);
 await p.screenshot({ path: OUT + '/groom_3_done.png' });
 // off to the show
 await p.tap('.groom [data-groom=go]'); await p.waitForTimeout(500); s = await S();
+ok('gone with the game: her drawing put away', !(await p.evaluate(() => !!document.querySelector('.groom-live'))) && (await p.evaluate(() => window.__L.state().on)) === false);
 ok('"Off to the show": the fee paid, she is entered, how well she was groomed kept', !s.open && s.in.length === 1 && s.in[0].g === s.st?.score || (!s.open && s.in.length === 1 && s.in[0].g > 60 && s.coins < s0.coins), s);
 const ch = await p.evaluate(() => { const g = window.__farm.game(), e = g.shows().in[0], b = g.bird(e.bird); return [g.showChance(b, e.id, 0).rosette, g.showChance(b, e.id, e.g).rosette, g.showScore(b, e.id, e.g) - g.showScore(b, e.id, 0)]; });
 ok('her chance of a rosette: a little better for it (two points at the most in the judge\'s eyes)', ch[1] >= ch[0] && ch[2] > 0 && ch[2] <= 2.2, ch);

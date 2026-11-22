@@ -8,8 +8,12 @@
 // they gleam). A bar fills as the places are done. How well it went, 0 to 100, raises her chance of a rosette a little
 // (game.js GROOM, showChance). No way to lose: a bird can always be entered as she is. Names and words are set as text,
 // never as HTML (the tools' and the marks' drawings are this file's own).
-//   openGroom({ img (a canvas: her alone, see-through round her), name, show, fee, secs, t(key, vars), chance(g) -> 0..100,
-//               onGo(score), onSkip(), onClose() })  ->  { el, finish(scores), state() }
+//   openGroom({ img (a canvas: her alone, see-through round her), live (main.js groomLive: her drawn live over it, or null),
+//               name, show, fee, secs, t(key, vars), chance(g) -> 0..100, onGo(score), onSkip(), onClose() })
+//     ->  { el, finish(scores), state() }
+// (22 Nov 2026, Audrey: "can the move of the chicken be more natural, it currently is just an image moving": with `live`, her
+// picture stays underneath till she's first drawn, and she's told what's going on (live.ev): where the tool is, a place
+// rubbed, the brush the wrong way, a place done, a part done, all ready; the picture's own little wobbles left out)
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
 const STEPS = ['wash', 'brush', 'shine'];
 const SVG = {
@@ -23,8 +27,10 @@ const icon = k => { const s = el('span', 'groom-ic'); s.innerHTML = SVG[k]; retu
 export function openGroom(o) {
   const root = el('section', 'groom'), stage = el('div', 'groom-stage'), tip = el('p', 'groom-tip'), prog = el('div', 'groom-time'), progFill = el('i'), clock = el('span', 'groom-clock');
   const pic = el('div', 'groom-pic'), fx = el('div', 'groom-fx'), tool = el('div', 'groom-tool'), card = el('div', 'groom-card'), top = el('div', 'groom-top');
-  prog.append(progFill); top.append(prog, clock); pic.append(o.img, fx, tool); stage.append(tip, top, pic);
+  prog.append(progFill); top.append(prog, clock); pic.append(o.img, ...(o.live ? [o.live.el] : []), fx, tool); stage.append(tip, top, pic);
   o.img.classList.add('groom-img');
+  const live = o.live || null, tell = (k, d) => { if (live) live.ev(k, d); };
+  if (live) { root.classList.add('groom-alive'); live.start(() => o.img.classList.add('groom-under')); }
   // the card: her name and the show, the three parts, how ready she is, her chance, Go and "as she is"
   const x = el('button', 'gicon gx groom-x', '✕'); x.type = 'button'; x.setAttribute('aria-label', 'Close');
   const head = el('div', 'groom-h'), hw = el('div'); hw.append(el('h2', null, o.t('groom_title', { name: o.name })), el('p', 'gsub', o.show)); head.append(hw, x);
@@ -86,7 +92,8 @@ export function openGroom(o) {
     if (S.done) return;
     S.t = -1; S.last = null; clock.textContent = '';
     for (const b of fx.querySelectorAll('.groom-bub')) { b.classList.add('pop'); setTimeout(() => b.remove(), 400); }      // (rinsed)
-    if (S.step >= 2) { S.done = true; pic.classList.add('groom-proud'); for (const e of fx.querySelectorAll('.groom-spot')) e.remove(); } else { S.step++; lay(); }
+    tell('step', STEPS[S.step]);
+    if (S.step >= 2) { S.done = true; if (live) tell('done'); else pic.classList.add('groom-proud'); for (const e of fx.querySelectorAll('.groom-spot')) e.remove(); } else { S.step++; lay(); }
     show();
   };
   // the clock of a part: from the first touch
@@ -104,7 +111,7 @@ export function openGroom(o) {
   let down = false;
   const move = e => {
     if (S.done || !down) return; const P = at(e);
-    tool.style.left = P.u * 100 + '%'; tool.style.top = P.v * 100 + '%';
+    tool.style.left = P.u * 100 + '%'; tool.style.top = P.v * 100 + '%'; tell('tool', { u: P.u, v: P.v });
     const L = S.last; S.last = P; if (!L) return;
     const dx = P.x - L.x, dy = P.y - L.y, d = Math.hypot(dx, dy); if (d < 1) return;
     const k = STEPS[S.step]; let near = null, nd = 9;
@@ -112,26 +119,26 @@ export function openGroom(o) {
     if (near && nd < R * 1.5) {
       if (S.t < 0) S.t = 0;
       let add = d;
-      if (k === 'brush') { if (dx > Math.abs(dy) * 0.6) add = dx; else { add = 0; if (dx < -6) { pic.classList.remove('groom-ruffle'); void pic.offsetWidth; pic.classList.add('groom-ruffle'); } } }      // (with the feathers: her head is on the left)
+      if (k === 'brush') { if (dx > Math.abs(dy) * 0.6) add = dx; else { add = 0; if (dx < -6) { if (live) tell('against'); else { pic.classList.remove('groom-ruffle'); void pic.offsetWidth; pic.classList.add('groom-ruffle'); } } } }      // (with the feathers: her head is on the left)
       if (add > 0) {
         near.p = Math.min(1, near.p + add / (P.w * (k === 'brush' ? 0.42 : 0.55)));
         near.e.style.opacity = String(1 - near.p * 0.95); near.e.style.transform = 'translate(-50%, -50%) rotate(var(--r)) scale(' + (1 - near.p * 0.35) + ')';
-        S.fxT = (S.fxT || 0) + add;
+        S.fxT = (S.fxT || 0) + add; if (k !== 'brush') tell('rub');
         if (S.fxT > 18) { S.fxT = 0; if (k === 'wash') dot('groom-bub', P.x + (Math.random() - 0.5) * 26, P.y + (Math.random() - 0.5) * 26, 12 + Math.random() * 20, 1400); else if (k === 'brush') dot('groom-stroke', P.x, P.y, 0, 500); }
-        if (near.p >= 1) { near.e.classList.add('gone'); const gl = dot('groom-glint', near.u * P.w, near.v * P.w, 0, k === 'shine' ? 0 : 900); gl.textContent = k === 'shine' ? '✨' : '✓'; if (k !== 'shine') gl.classList.add('ok'); }
+        if (near.p >= 1) { tell('spot'); near.e.classList.add('gone'); const gl = dot('groom-glint', near.u * P.w, near.v * P.w, 0, k === 'shine' ? 0 : 900); gl.textContent = k === 'shine' ? '✨' : '✓'; if (k !== 'shine') gl.classList.add('ok'); }
         S.scores[S.step] = S.spots.reduce((a, s) => a + s.p, 0) / S.spots.length; show();
       }
     }
   };
-  pic.addEventListener('pointerdown', e => { e.preventDefault(); down = true; try { pic.setPointerCapture(e.pointerId); } catch (x) { /* */ } const P = at(e); S.last = P; tool.classList.add('held'); tool.style.left = P.u * 100 + '%'; tool.style.top = P.v * 100 + '%'; });
+  pic.addEventListener('pointerdown', e => { e.preventDefault(); down = true; try { pic.setPointerCapture(e.pointerId); } catch (x) { /* */ } const P = at(e); S.last = P; tool.classList.add('held'); tool.style.left = P.u * 100 + '%'; tool.style.top = P.v * 100 + '%'; if (!S.done) tell('tool', { u: P.u, v: P.v }); });
   pic.addEventListener('pointermove', move);
-  const up = () => { down = false; S.last = null; tool.classList.remove('held'); };
+  const up = () => { down = false; S.last = null; tool.classList.remove('held'); tell('tool', null); };
   pic.addEventListener('pointerup', up); pic.addEventListener('pointercancel', up);
-  const close = () => { if (S.closed) return; S.closed = true; cancelAnimationFrame(raf); root.remove(); };
+  const close = () => { if (S.closed) return; S.closed = true; cancelAnimationFrame(raf); if (live) live.dispose(); root.remove(); };
   go.addEventListener('click', () => { const g = score(); close(); o.onGo(g); });
   skip.addEventListener('click', () => { close(); o.onSkip(); });
   x.addEventListener('click', () => { close(); if (o.onClose) o.onClose(); });
   lay(); show();
-  return { el: root, close, state: () => ({ step: S.done ? 'done' : STEPS[S.step], scores: S.scores.slice(), score: score(), on: body.length, started: S.t >= 0, spots: S.spots.map(s => [s.u, s.v, s.p]), tool: tool.dataset.tool, head: H || null }),
+  return { el: root, close, live, state: () => ({ step: S.done ? 'done' : STEPS[S.step], scores: S.scores.slice(), score: score(), on: body.length, started: S.t >= 0, spots: S.spots.map(s => [s.u, s.v, s.p]), tool: tool.dataset.tool, head: H || null }),
     finish: (scores) => { S.scores = scores.slice(0, 3); S.step = 2; S.done = true; for (const e of fx.querySelectorAll('.groom-spot')) e.remove(); show(); } };      // (the tests: every part done, this well)
 }

@@ -10,6 +10,11 @@
 // new things the first time they're seen (OUT/NNN_*.png). Ends with how far it got and any page errors. Since the second
 // play-through (8 Nov 2026) it spends as a keen player would too (SHOP=0: not): the coops' next looks, the geese once the
 // fox has called, the decorations, the farmer's outfits, the dog; the shows each day; the honey; the doors shut at night.
+// (22 Nov 2026, Audrey: "try to play the game end to end with our 3 personas and come back with suggestions": brought up to
+// date: the farm moments (a hen out, a rainy day's worms, a lost chick, Mrs Potts at the stall; RAINTAP: how many of the
+// worms the player taps, 0 to 1), every bed and vegetable (the lowest in the basket sown), the beds and the second wheat field
+// bought, each coop's favourite feed mixed in, the collector's shelf (SHELF=1: its breeds bought with coins, in level order),
+// and a tally of every tap at each visit by kind, with how long the visit took on the farm's clock (END lines: taps {...})
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const OUT = process.argv[2] || '/tmp/claude-0/farmer/playthrough', LANG = process.env.LANG || 'en', W = +(process.env.W || 874), H = +(process.env.H || 402);
@@ -28,6 +33,8 @@ let seed = +(process.env.SEED || 7); const rnd = () => { seed = (seed * 11035152
 // farm before and after. PEEK=1: once a day, where the money buttons are to be seen (no purchase).)
 const MONEY = (process.env.MONEY || '').split(',').filter(Boolean).map(x => { const [what, r] = x.split('@'), [d, how] = (r || '0').split(':'); return { what, day: +d, how: how || 'bought', done: false, tries: 0 }; });
 const STORE = MONEY.length > 0 || process.env.PEEK === '1', bought = [];
+const RAINTAP = +(process.env.RAINTAP ?? 1), SHELFBUY = process.env.SHELF === '1';
+let taps = {}; const tally = (k, n = 1) => { taps[k] = (taps[k] || 0) + n; };
 fs.mkdirSync(OUT, { recursive: true });
 const LOC = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', es: 'es-ES', it: 'it-IT', pt: 'pt-BR' }[LANG];
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
@@ -51,7 +58,7 @@ if (STORE) await ctx.addInitScript(() => {
 const p = await ctx.newPage();
 const errs = []; p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n').slice(0, 2).join(' / ')));
 const log = [], seen = new Set(); let pic = 0, lastHint = '';
-const URL = `http://localhost:${process.env.PORT || 8770}/play.html?q=0&lang=${LANG}&story`;
+const URL = `http://localhost:${process.env.PORT || 8770}/play.html?q=0&lang=${LANG}&story&moments`;
 const run = s => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < s * 30; i++) { window.__T = Math.round(window.__T + 1000 / 30); f.step(1 / 30, 1); f.gameTick(window.__T, false); } sessionStorage.setItem('__T', window.__T); }, s);      // (no drawing: the test browser draws slowly; a frame is drawn just for each picture)
 const state = () => p.evaluate(() => { const f = window.__farm, g = f && f.game(), d = new Date(window.__T); if (!g || !g.data) return { day: 0, hm: '--:--', level: 0, coins: 0, xp: 0 }; return { day: Math.floor((window.__T - new Date('2026-11-09T00:00:00Z').getTime()) / 86400e3), hm: String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0'), level: g.level, coins: g.data.coins, xp: g.data.xp }; });
 const note = async (kind, text) => { const s = await state(); const line = `d${s.day} ${s.hm} L${s.level} ${s.coins}c ${s.xp}xp · ${kind}: ${String(text).replace(/\s*\n\s*/g, ' | ').slice(0, 900)}`; log.push(line); console.log(line); fs.writeFileSync(`${OUT}/log.txt`, log.join('\n') + '\n'); };
@@ -172,11 +179,27 @@ async function spend() {
       await p.evaluate(i => window.__farm.coopCard(i), u.i); await act(0.4); await once('card:coop', 'card_coop');
       const c = await cardNow(); if (c && !seen.has('uptext:' + u.look)) { seen.add('uptext:' + u.look); await note('card coop', c.text); }
       if (!(await click('.gsheet .gup .gbtn:not(.galt)'))) { await p.evaluate(() => window.__farm.gameUI().close()); return; }
+      tally('coop look');
       await act(1.5);
       const why = await p.evaluate(() => { const w = document.querySelector('.gsheet .gup-why'); return w && !w.hidden ? w.textContent : ''; });
       if (why) { await note('upgrade refused', why); await p.evaluate(() => window.__farm.gameUI().close()); return; }
       const P = await p.evaluate(i => { const q = window.__farm.gamePlots()[i].group.position; return [q.x, q.z]; }, u.i);
       await look(P[0], P[1], 2.4); await act(1); await once('look:' + u.look, 'coop_' + u.look);
+    });
+  }
+  // (22 Nov 2026) the next bed and the second wheat field, then the collector's shelf (SHELF=1), level order
+  const nb = await p.evaluate(() => { const n = window.__farm.game().bedNext(); return n && !n.locked ? n.price : null; });
+  if (nb && await coins() >= nb + KEEP) await safe('bed', async () => { await p.evaluate(() => window.__farm.garden.open()); await act(0.4); if (await click('.gsheet [data-buybed]')) { tally('buy bed'); await note('bought a bed', nb); await act(1); } await p.evaluate(() => { const u = window.__farm.gameUI(); if (u.isOpen) u.close(); }); });
+  const w2 = await p.evaluate(() => { const g = window.__farm.game(); return !g.data.wheat2 && g.level >= 12; });
+  if (w2 && await coins() >= 1200 + KEEP) await safe('wheat2', async () => { await p.evaluate(() => window.__farm.deco.wheat.wild()); await act(0.4); await once('card:wheat2', 'card_wheat2'); if (await click('.gsheet .gbtn:not(.galt)')) { tally('buy wheat 2'); await note('bought the second wheat field', ''); await act(2); } await p.evaluate(() => { const u = window.__farm.gameUI(); if (u.isOpen) u.close(); }); });
+  if (SHELFBUY) for (const sh of await p.evaluate(() => window.__farm.game().shelfList().filter(x => x.open && !x.had))) {
+    if (await coins() < sh.price + 1000) break;
+    await safe('shelf ' + sh.breed, async () => {
+      await waitFarmer(20); await closeCard(); await p.evaluate(() => { const f = window.__farm; f.gameUI().bookTab = 'shelf'; f.book(); }); await act(0.4); await once('card:shelf', 'card_shelf');
+      if (!(await click(`.gsheet .gshelf-t[data-shelf="${sh.breed}"] [data-shelfgo="coins"]`))) { await closeCard(); return; }
+      tally('shelf buy'); await note('bought from the shelf', `${sh.breed} for ${sh.price}`); await act(1.5);
+      for (let k = 0; k < 8 && !(await p.evaluate(() => window.__farm.move.state().ok)); k++) await p.evaluate(k => { const f = window.__farm, M = f.move.state(); f.move.to(M.at.x + [3, -3, 0, 0, 5, -5, 5, -5][k], M.at.z + [0, 0, 3, -3, 5, 5, -5, -5][k]); }, k).catch(() => {});
+      if (await p.evaluate(() => window.__farm.move.state().on)) { if (await p.evaluate(() => window.__farm.move.state().ok)) { await click('.gmove-go'); await act(2); await note('placed a coop', sh.breed); } else { await note('no room for', sh.breed); await p.evaluate(() => window.__farm.move.cancel()); } }
     });
   }
   const g2 = () => p.evaluate(() => { const g = window.__farm.game(); return { level: g.level, fox: !!g.foxLast(), geese: g.animalNext('geese'), dog: g.animalNext('dog'), decor: ['flowers', 'birdbath', 'beehives', 'duckhouse', 'greenhouse'].filter(id => g.decorNext(id)), outfits: ['market', 'garden'].filter(id => g.outfitNext(id)) }; });
@@ -221,28 +244,62 @@ const enterShows = async () => {
   if (await cardNow()) await p.evaluate(() => window.__farm.gameUI().close());
 };
 
+// ---- the farm moments (22 Nov 2026): a hen out, a rainy day, a lost chick, Mrs Potts at the stall; dealt with as the
+// player would: the hen or chick found with a tap, the worms tapped as they come up (RAINTAP of them), Mrs Potts given
+// what she asks for when there's enough (else "Not today")
+const momentNow = () => p.evaluate(() => { const m = window.__farm.game().moment(); return m ? { ...m } : null; });
+async function moments() {
+  for (let k = 0; k < 4; k++) {
+    await act(1); const m = await momentNow(); if (!m) return;
+    const pill = await p.evaluate(() => window.__farm.moment.pill()); await note('moment ' + m.k, pill || '');
+    if (m.k === 'hen' || m.k === 'chick') {
+      const B = await p.evaluate(() => window.__farm.moment.bird()); if (B) { await look(B.at[0], B.at[1], 2.2); await run(0.4); await once('moment:' + m.k, 'moment_' + m.k); }
+      await p.evaluate(() => window.__farm.moment.tap()); tally(m.k === 'hen' ? 'hen out' : 'lost chick'); await act(1);
+      for (let i = 0; i < 60 && (await momentNow() || await p.evaluate(() => window.__farm.moment.seq())); i++) await act(1);
+      await hintNow();
+    } else if (m.k === 'rain') {
+      let got = 0, seenW = new Set();
+      for (let i = 0; i < 180 && (await momentNow()); i++) {
+        await run(1);
+        const W = await p.evaluate(() => window.__farm.rain.state().worms.filter(w => !w.pen && w.t > 0.8 && w.x > 60 && w.x < innerWidth - 60 && w.y > 60 && w.y < innerHeight - 60));
+        for (const w of W) { const key = w.at.map(v => v.toFixed(1)).join(); if (seenW.has(key)) continue; seenW.add(key); if (rnd() > RAINTAP) continue;
+          await p.evaluate(() => window.__farm.pause(false)); await p.touchscreen.tap(w.x, w.y); await p.waitForTimeout(120); await p.evaluate(() => window.__farm.pause(true)); got++; tally('rain worm'); }
+        if (i === 6) await once('moment:rain', 'moment_rain');
+      }
+      await hintNow(); await note('rain over', `${got} worms tapped`);
+    } else if (m.k === 'visit') {
+      for (let i = 0; i < 90 && (await p.evaluate(() => window.__farm.visitor.state().phase)) !== 'wait'; i++) await act(1);
+      await p.evaluate(() => window.__farm.visitor.card()); await act(0.4); const c = await cardNow(); if (c) await note('card visitor', c.text); await once('card:visit', 'card_visitor');
+      if (await click('.gsheet [data-visit="give"]')) { tally('Mrs Potts'); await note('Mrs Potts', 'given'); } else { await click('.gsheet [data-visit="no"]'); tally('Mrs Potts (not today)'); await note('Mrs Potts', 'not today'); }
+      for (let i = 0; i < 60 && (await momentNow()); i++) await act(1);
+      await hintNow();
+    } else { await act(5); }
+  }
+}
+
 // ---- a visit
 async function visit(first = false) {
-  const s = await state(); await note('VISIT', `day ${s.day} ${s.hm}`);
+  const s = await state(); await note('VISIT', `day ${s.day} ${s.hm}`); taps = {}; const t0 = await p.evaluate(() => window.__T);
   await cards('opening');
+  await safe('moments', moments);
   const g = () => p.evaluate(() => { const f = window.__farm, G = f.game(); return { level: G.level, coins: G.data.coins, coops: G.data.coops.map(c => ({ id: c.id, eggs: c.eggs, feed: G.feedLeft(c) })), birds: G.data.birds.map(b => b.id), fish: G.fishOpen('pond'), worms: G.worms(), hunt: f.hunt.at(), ordersReady: G.ordersReady(), garden: G.data.garden ? [0, 1, 2].map(i => G.bedStage(i)) : null, veg: G.data.garden ? { ...G.data.garden.veg } : null, wheat: G.wheatStage(), sale: G.landForSale(), jobs: G.jobsReady() }; });
   let S = await g();
   // the golden egg
-  if (S.hunt) await safe('golden egg', async () => { await look(S.hunt[0], S.hunt[1], 2.2); await run(0.3); await once('hunt', 'golden_egg'); await p.evaluate(() => window.__farm.hunt.tap()); await act(1.5); });
+  if (S.hunt) await safe('golden egg', async () => { await look(S.hunt[0], S.hunt[1], 2.2); await run(0.3); await once('hunt', 'golden_egg'); await p.evaluate(() => window.__farm.hunt.tap()); tally('golden egg'); await act(1.5); });
   // the eggs
-  for (let i = 0; i < S.coops.length; i++) if (S.coops[i].eggs) await safe('eggs', async () => { await p.evaluate(i => window.__farm.collectAt(i), i); await act(1.2); });
+  for (let i = 0; i < S.coops.length; i++) if (S.coops[i].eggs) await safe('eggs', async () => { await p.evaluate(i => window.__farm.collectAt(i), i); tally('eggs'); await act(1.2); });
   // the pantry (10 Nov 2026): what the orders don't want, sold shelf by shelf (the grain kept for the feeders)
-  await safe('pantry', async () => { await p.evaluate(() => window.__farm.pantrySheet()); await act(0.3); for (let k = 0; k < 8; k++) { const sold = await p.evaluate(() => { const q = [...document.querySelectorAll('.gpan-r [data-sell]:not([data-all])')].find(x => x.closest('.gpan-r').dataset.shelf !== 'grain'); if (q) q.click(); return !!q; }); if (!sold) break; await act(0.3); } await p.evaluate(() => { const u = window.__farm.gameUI(); if (u.isOpen && u.kind === 'pantry') u.close(); }); });
+  await safe('pantry', async () => { await p.evaluate(() => window.__farm.pantrySheet()); await act(0.3); for (let k = 0; k < 8; k++) { const sold = await p.evaluate(() => { const q = [...document.querySelectorAll('.gpan-r [data-sell]:not([data-all])')].find(x => x.closest('.gpan-r').dataset.shelf !== 'grain'); if (q) q.click(); return !!q; }); if (!sold) break; tally('pantry sell'); await act(0.3); } await p.evaluate(() => { const u = window.__farm.gameUI(); if (u.isOpen && u.kind === 'pantry') u.close(); }); });
   // the apple eggs under the Gluttons' apple trees
   const apples = await p.evaluate(() => { const f = window.__farm; return f.gamePlots().map((q, i) => { const A = f.apples.of(i); return A && A.egg && A.egg.visible ? i : -1; }).filter(i => i >= 0); });
-  for (const i of apples) await safe('apple egg', async () => { const P = await p.evaluate(i => { const e = window.__farm.apples.of(i).egg; e.updateWorldMatrix(true, false); const m = e.matrixWorld.elements; return [m[12], m[14]]; }, i); await look(P[0], P[1], 2.2); await once('apple', 'apple_egg'); await p.evaluate(i => window.__farm.apples.eggTap(i), i); await act(1); });
+  for (const i of apples) await safe('apple egg', async () => { const P = await p.evaluate(i => { const e = window.__farm.apples.of(i).egg; e.updateWorldMatrix(true, false); const m = e.matrixWorld.elements; return [m[12], m[14]]; }, i); await look(P[0], P[1], 2.2); await once('apple', 'apple_egg'); await p.evaluate(i => window.__farm.apples.eggTap(i), i); tally('apple egg'); await act(1); });
   await cards('after eggs');
   // the village orders
   S = await g();
   if (S.ordersReady) await safe('orders', async () => {
     await click('.gordbtn'); await act(0.4); await once('orders', 'orders_card');
     const c = await cardNow(); if (c) await note('card orders', c.text);
-    if (await click('.gsheet [data-ord=deliver]')) { await act(2); for (let i = 0; i < 40 && await p.evaluate(() => !!window.__farm.orders.run()); i++) await act(1); }
+    if (await click('.gsheet [data-ord=deliver]')) { tally('orders'); await act(2); for (let i = 0; i < 40 && await p.evaluate(() => !!window.__farm.orders.run()); i++) await act(1); }
     else await p.evaluate(() => window.__farm.gameUI().close());
   });
   // a cuddle (and the worms) for each bird, the farmer's visits one after another
@@ -252,47 +309,63 @@ async function visit(first = false) {
     const r = await p.evaluate(id => { const f = window.__farm, B = f.allBirds.find(x => x.gid === id); if (!B || !B.root.visible) return null; f.gameUI().close(); f.openBirdCard(B); return { cuddle: !!document.querySelector('.gsheet .gcuddle'), worms: !!document.querySelector('.gsheet button[data-worms=ask]'), treat: !!document.querySelector('.gsheet [data-treat]') }; }, id);
     if (!r) return;
     await once('card:bird', 'card_bird');
-    if (r.cuddle) { await click('.gsheet .gcuddle'); await act(1); }
-    else if (r.worms) { await click('.gsheet button[data-worms=ask]'); await act(1); }
+    if (r.cuddle) { await click('.gsheet .gcuddle'); tally('cuddle'); await act(1); }
+    else if (r.worms) { await click('.gsheet button[data-worms=ask]'); tally('worms'); await act(1); }
     else await p.evaluate(() => window.__farm.gameUI().close());
   });
   await waitFarmer(30); await cards('after cuddles');
   // the feeders
   S = await g();
-  for (let i = 0; i < S.coops.length; i++) if (S.coops[i].feed < 0.4) await safe('feeder', async () => { await waitFarmer(20); await p.evaluate(i => window.__farm.feederCard(i), i); await act(0.4); await once('card:feeder', 'card_feeder'); const c = await cardNow(); if (c) await note('card feeder', c.text); if (!(await click('.gsheet .gbtn:not(.galt)'))) await p.evaluate(() => window.__farm.gameUI().close()); await act(1.5); });
+  for (let i = 0; i < S.coops.length; i++) if (S.coops[i].feed < 0.4) await safe('feeder', async () => { await waitFarmer(20); await p.evaluate(i => window.__farm.feederCard(i), i); await act(0.4); await once('card:feeder', 'card_feeder'); const c = await cardNow(); if (c) await note('card feeder', c.text); if (!(await click('.gsheet .gbtn:not(.galt):not([data-mix])'))) await p.evaluate(() => window.__farm.gameUI().close()); else tally('feeder'); await act(1.5); });
+  // each coop's favourite feed (15 Nov 2026), mixed in whenever there are enough of its vegetable
+  for (let i = 0; i < S.coops.length; i++) await safe('favourite', async () => {
+    const can = await p.evaluate(id => { const G = window.__farm.game(), s = G.favState(G.coop(id)); return s && s.state === 'can'; }, S.coops[i].id); if (!can) return;
+    await waitFarmer(20); await p.evaluate(i => window.__farm.feederCard(i), i); await act(0.4); await once('card:fav', 'card_feeder_fav');
+    if (await click('.gsheet [data-mix]')) { tally('favourite feed'); await act(1.5); } else await p.evaluate(() => window.__farm.gameUI().close());
+  });
   // the wheat
-  for (let w = 0; w < 2; w++) if (((S = await g()).wheat === 'ripe' || S.wheat === 'soil')) await safe('wheat', async () => { await waitFarmer(30); await p.evaluate(() => window.__farm.deco.wheat.tap()); await act(0.6); const c = await cardNow(); if (c) { await note('card ' + c.kind, c.text); await once('card:wheat', 'card_wheat'); if (!(await click('.gsheet .gbtn:not(.galt)'))) await p.evaluate(() => window.__farm.gameUI().close()); } await act(2); });
-  // the vegetable garden: what's ripe picked, the empty beds sown (strawberries in the middle; carrots in the morning,
-  // pumpkins in the evening), then a treat for each coop
+  for (const k of [0, 1]) for (let w = 0; w < 2; w++) { const st = await p.evaluate(k => { const G = window.__farm.game(); return G.wheat(k) ? G.wheatStage(Date.now(), k) : null; }, k); if (st !== 'ripe' && st !== 'soil') break;
+    await safe('wheat', async () => { await waitFarmer(30); await p.evaluate(k => window.__farm.deco.wheat.tap(k), k); await act(0.6); const c = await cardNow(); if (c) { await note('card ' + c.kind, c.text); await once('card:wheat', 'card_wheat'); if (!(await click('.gsheet .gbtn:not(.galt)'))) await p.evaluate(() => window.__farm.gameUI().close()); else tally('wheat'); } else tally('wheat'); await act(2); }); }
+  // the vegetable garden (22 Nov 2026: every bed, every vegetable its level has opened): what's ripe picked, each empty bed
+  // sown with what the basket has least of (the longest of those at the last visit of the day), each from its own card;
+  // then a treat for each coop
   if (S.garden) await safe('garden', async () => {
     const at = await p.evaluate(() => window.__farm.garden.mid(1)); await look(at[0], at[2], 3.2); await run(0.3);
     await once('garden', 'garden');
-    for (let i = 0; i < 3; i++) if ((await g()).garden[i] === 'ripe') { await waitFarmer(25); await p.evaluate(() => window.__farm.garden.tap(true)); await act(1); }
-    await waitFarmer(30);
-    for (let i = 0; i < 3; i++) if ((await g()).garden[i] === 'empty') {
-      const k = i === 1 ? 'straw' : first || (await state()).hm >= '15:00' ? 'pump' : 'carrot';
-      await p.evaluate(() => window.__farm.garden.tap()); await act(0.4); await once('card:garden', 'card_garden');
-      const c = await cardNow(); if (c && !seen.has('gtext')) { seen.add('gtext'); await note('card garden', c.text); }
-      if (!(await click(`.gsheet .gbed[data-bed="${i}"] [data-sow="${k}"]`))) { await p.evaluate(() => window.__farm.gameUI().close()); continue; }
-      await act(1); await waitFarmer(25);
+    const beds = await p.evaluate(() => window.__farm.game().garden().beds.length);
+    const hr = +(await state()).hm.slice(0, 2), last = VISITS.every(h => h <= hr);
+    for (let i = 0; i < beds; i++) {
+      const st = await p.evaluate(i => window.__farm.game().bedStage(i), i);
+      if (st !== 'ripe' && st !== 'empty') continue;
+      await p.evaluate(i => window.__farm.garden.bedCard(i), i); await act(0.3); await once('card:bed:' + st, 'card_bed_' + st);
+      if (st === 'ripe') { if (await click(`.gsheet [data-pick="${i}"]`)) tally('garden pick'); await act(0.6); }
+      const st2 = await p.evaluate(i => window.__farm.game().bedStage(i), i);
+      if (st2 === 'empty') {
+        if (!(await cardNow())) { await p.evaluate(i => window.__farm.garden.bedCard(i), i); await act(0.3); }
+        const k = await p.evaluate(last => { const G = window.__farm.game(), B = G.vegBasket(), ks = [...document.querySelectorAll('.gsheet [data-sow]:not(:disabled)')].map(e => e.dataset.sow);
+          const grow = { carrot: 1, straw: 3, pump: 8, lettuce: 0.5, peas: 2, corn: 4, beet: 5, sunf: 6 }; ks.sort((a, b) => (B[a] || 0) - (B[b] || 0) || (last ? grow[b] - grow[a] : grow[a] - grow[b])); return ks[0] || null; }, last);
+        if (k && await click(`.gsheet [data-sow="${k}"]`)) { tally('garden sow'); if (!seen.has('sowk:' + k)) { seen.add('sowk:' + k); await note('sowed', k); } }
+        await act(0.6);
+      }
+      await p.evaluate(() => { const u = window.__farm.gameUI(); if (u.isOpen) u.close(); });
     }
     S = await g();
     for (const c of S.coops) {
-      const best = await p.evaluate(id => { const G = window.__farm.game(), c = G.coop(id); return ['pump', 'straw', 'carrot'].find(k => G.treatCan(c, k)) || null; }, c.id);
+      const best = await p.evaluate(id => { const G = window.__farm.game(), c = G.coop(id), B = G.vegBasket(); return Object.keys(B).sort((a, b) => (B[b] || 0) - (B[a] || 0)).find(k => G.treatCan(c, k)) || null; }, c.id);
       if (!best) continue;
       await waitFarmer(25);
       await p.evaluate(id => window.__farm.treat.card(id), c.id); await act(0.4); await once('card:treat', 'card_treat');
       const t = await cardNow(); if (t && !seen.has('ttext')) { seen.add('ttext'); await note('card treat', t.text); }
-      if (await click(`.gsheet [data-give="${best}"]`)) { await act(3); if (!seen.has('treatpen')) { const P = await p.evaluate(id => { const f = window.__farm, q = f.gamePlots().find(x => x.gc.id === id); return q ? [q.group.position.x, q.group.position.z] : null; }, c.id); if (P) { for (let k = 0; k < 20 && !(await p.evaluate(() => !!window.__farm.farmer().pen)); k++) await act(1); await act(4); await look(P[0], P[1], 2.2); await once('treatpen', 'treat_in_pen'); } } }
+      if (await click(`.gsheet [data-give="${best}"]`)) { tally('treat'); await act(3); if (!seen.has('treatpen')) { const P = await p.evaluate(id => { const f = window.__farm, q = f.gamePlots().find(x => x.gc.id === id); return q ? [q.group.position.x, q.group.position.z] : null; }, c.id); if (P) { for (let k = 0; k < 20 && !(await p.evaluate(() => !!window.__farm.farmer().pen)); k++) await act(1); await act(4); await look(P[0], P[1], 2.2); await once('treatpen', 'treat_in_pen'); } } }
       else await p.evaluate(() => window.__farm.gameUI().close());
     }
   });
   // the jobs
   S = await g();
-  if (S.jobs) await safe('jobs', async () => { await p.evaluate(() => window.__farm.jobsSheet()); await act(0.4); await once('card:jobs', 'card_jobs'); const c = await cardNow(); if (c) await note('card jobs', c.text); for (let k = 0; k < 3; k++) { if (!(await p.evaluate(() => { const e = [...document.querySelectorAll('.gsheet .gsmallbtn')].find(x => !x.disabled); if (!e) return false; e.click(); return true; }))) break; await act(0.6); } await p.evaluate(() => window.__farm.gameUI().close()); });
+  if (S.jobs) await safe('jobs', async () => { await p.evaluate(() => window.__farm.jobsSheet()); await act(0.4); await once('card:jobs', 'card_jobs'); const c = await cardNow(); if (c) await note('card jobs', c.text); for (let k = 0; k < 3; k++) { if (!(await p.evaluate(() => { const e = [...document.querySelectorAll('.gsheet .gsmallbtn')].find(x => !x.disabled); if (!e) return false; e.click(); return true; }))) break; tally('jobs'); await act(0.6); } await p.evaluate(() => window.__farm.gameUI().close()); });
   // the next field
   S = await g();
-  if (S.sale && S.coins >= S.sale.price + 60) await safe('land', async () => { await p.evaluate(() => window.__farm.landCard()); await act(0.4); await once('card:land', 'card_land'); const c = await cardNow(); if (c) await note('card land', c.text); await click('.gsheet .gbtn:not(.galt)'); await act(2); });
+  if (S.sale && S.coins >= S.sale.price + 60) await safe('land', async () => { await p.evaluate(() => window.__farm.landCard()); await act(0.4); await once('card:land', 'card_land'); const c = await cardNow(); if (c) await note('card land', c.text); if (await click('.gsheet .gbtn:not(.galt)')) tally('land'); await act(2); });
   // spending, as a keen player would (SHOP=0: not): the coops' next looks first, then the geese (once the fox has called),
   // the decorations, the farmer's outfits, the dog; always keeping some coins back for feed and seed
   if (STORE) { await safe('peek', peek); await safe('money', money); }
@@ -341,8 +414,10 @@ async function visit(first = false) {
     await note('fishing done', `${got} caught, ${lost} got away; species so far ${await p.evaluate(() => Object.keys(window.__farm.game().fishBag().got).length)} of 20; worms left ${await p.evaluate(() => window.__farm.game().worms())}`);
     await act(2);
   });
+  await safe('moments', moments);
   await cards('end of visit');
-  const e = await state(); await note('END', `level ${e.level}, ${e.coins} coins, ${e.xp} XP`);
+  const e = await state(), mins = Math.round(((await p.evaluate(() => window.__T)) - t0) / 60000), n = Object.values(taps).reduce((a, b) => a + b, 0);
+  await note('END', `level ${e.level}, ${e.coins} coins, ${e.xp} XP · ${n} taps in ${mins} min on the farm's clock · taps ${JSON.stringify(taps)}`);
 }
 
 // ---- the start: the story, the welcome, the first day's pictures, the guide
