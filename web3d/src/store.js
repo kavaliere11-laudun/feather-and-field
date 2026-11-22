@@ -70,7 +70,8 @@ export class Store {
   async load() {                                     // (the prices as Apple gives them, in the player's own money)
     try { const r = await this.S.products({ ids: this.ids() }), known = new Set(this.ids());
       for (const p of (r && Array.isArray(r.products) ? r.products : [])) if (p && known.has(p.id) && typeof p.price === 'string' && p.price.length < 24) this.prices[p.id] = p.price;
-    } catch (e) { /* (no prices: no money buttons) */ }
+      this.diag = { found: Object.keys(this.prices).length, asked: known.size, store: r && typeof r.store === 'string' ? r.store.slice(0, 8) : '' };      // (22 Nov 2026: what Apple gave, shown when it gives nothing)
+    } catch (e) { this.diag = { err: String(e && e.message || e || '').slice(0, 140) || 'no answer' }; /* (no prices: no money buttons) */ }
     if (this.o.onChange) this.o.onChange();
   }
   async refresh() { try { const r = await this.S.owned(); if (r && Array.isArray(r.ids)) this.apply(r.ids); } catch (e) { /* (Apple not heard: the last answer stands) */ } }

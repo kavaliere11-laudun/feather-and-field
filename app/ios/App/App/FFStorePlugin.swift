@@ -46,11 +46,14 @@ public class FFStorePlugin: CAPInstancePlugin, CAPBridgedPlugin {
     @objc func products(_ call: CAPPluginCall) {
         let ids = (call.getArray("ids") ?? []).compactMap { $0 as? String }
         Task {
+            // (22 Nov 2026, Audrey's shop empty in TestFlight: which country's App Store the phone uses, said with the answer,
+            // so the game can show what Apple gave when it gives nothing)
+            let store = await Storefront.current?.countryCode ?? ""
             do {
                 let list = try await Product.products(for: Set(ids))
-                call.resolve(["products": list.map { ["id": $0.id, "price": $0.displayPrice] }])
+                call.resolve(["products": list.map { ["id": $0.id, "price": $0.displayPrice] }, "store": store, "asked": ids.count])
             } catch {
-                call.reject("products")
+                call.reject("products: \(String(String(describing: error).prefix(120))) · \(store)")
             }
         }
     }

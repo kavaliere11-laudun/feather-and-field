@@ -1262,7 +1262,10 @@ export class GameUI {
     // has given no prices: said, with a way to ask again, in place of an empty shelf)
     if (PAY && !b.querySelector('.giap')) { const c = el('div', 'gcard giap-off'), go = el('button', 'gbtn gsmallbtn galt', this.t('shop_again')); go.type = 'button'; go.dataset.again = '1';
       go.addEventListener('click', () => { go.disabled = true; Promise.resolve(PAY.reload ? PAY.reload() : null).then(() => { if (this.kind === 'shop' && go.isConnected) { c.remove(); this.coinCards(b, true); } }); });
-      c.append(el('p', 'gtext', this.t('shop_noapple')), go); b.append(c); }
+      c.append(el('p', 'gtext', this.t('shop_noapple')), go);
+      const D = PAY.diag ? PAY.diag() : null;      // (22 Nov 2026: what Apple answered, small, to find why: "Apple: 0 of 39 · GBR")
+      if (D) c.append(el('p', 'gnote giap-diag', 'Apple: ' + (D.err ? D.err : D.found + ' / ' + D.asked + (D.store ? ' · ' + D.store : ''))));
+      b.append(c); }
   }
   // a purchase: in the store app, Apple's own payment (o.pay.buy: done once Apple confirms it); in the preview, its stand-in
   payOn() { return this.o.pay && this.g.level >= PAY_LEVEL ? this.o.pay : null; }
