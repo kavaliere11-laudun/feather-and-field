@@ -34,7 +34,7 @@ const sheet = () => p.evaluate(() => document.querySelector('.gsheet').innerText
 const money = () => p.evaluate(() => { const g = window.__farm.game(); return { coins: g.data.coins, xp: g.data.xp, decor: JSON.parse(JSON.stringify(g.data.decor || [])) }; });
 const S = () => p.evaluate(() => window.__farm.deco.state());
 const items = () => p.evaluate(() => window.__farm.deco.items());
-const T = { title: fr ? /La boutique de la ferme/ : /The farm shop/, buy: fr ? /Acheter et placer · 400/ : /Buy and place · 400/, lvl13: fr ? /Arrive au niveau 13/ : /Comes at level 13/,
+const T = { title: fr ? /La boutique de la ferme/ : /The farm shop/, buy: fr ? /Acheter et placer · 400/ : /Buy and place · 400/, lvl13: fr ? /Arrive au niveau 16/ : /Comes at level 16/,
   pond: fr ? /Acheter · 3[\s  ]000/ : /Buy · 3,000/, placed: fr ? /Nouveau dans la ferme : Massif de fleurs ! \+8 XP/ : /New on the farm: Cottage flower bed! \+8 XP/,
   moved: fr ? /Massif de fleurs : c’est déplacé !/ : /Cottage flower bed: moved!/, owned: fr ? /Dans votre ferme/ : /On your farm/, move: fr ? /Déplacer/ : /Move/,
   hint: fr ? /Faites-le glisser/ : /Drag it, or tap/, land: fr ? /Seulement sur votre terrain/ : /Only on your own land/ };

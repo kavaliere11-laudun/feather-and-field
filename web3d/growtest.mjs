@@ -24,7 +24,7 @@ await run(2); await p.evaluate(() => { const f = window.__farm; if (f.gameUI().i
 const small = await p.evaluate(() => { const f = window.__farm, t0 = performance.now(); f.place('orp'); const s = f.move.state(); f.move.cancel(); s.ms = Math.round(performance.now() - t0); return s; });
 ok('a farm with no fields restored yet: the coop can still be put down, keeping what room the land allows (look ' + small.grow + ', no Deluxe yet)', small.on && small.ok && small.grow < 4, small);
 // four fields restored (level 6): room for Deluxe pens
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(7) + 5; g.data.lvSeen = 6; for (let i = 0; i < 4; i++) { g.data.coins = 30000; f.buyLand(); for (let k = 0; k < 120; k++) { window.__T += 33; f.step(1 / 30, 1); f.gameTick(window.__T, false); } } g.data.coins = 30000; g.save(); if (f.gameUI().isOpen) f.gameUI().close(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(7) + 5; g.data.lvSeen = 7; for (let i = 0; i < 4; i++) { g.data.coins = 30000; f.buyLand(); for (let k = 0; k < 120; k++) { window.__T += 33; f.step(1 / 30, 1); f.gameTick(window.__T, false); } } g.data.coins = 30000; g.save(); if (f.gameUI().isOpen) f.gameUI().close(); });
 await run(2); await p.evaluate(() => { const f = window.__farm; if (f.gameUI().isOpen) f.gameUI().close(); });
 // the Buff Orpingtons' coop: offered where its Deluxe look will fit, its outline with that room dotted
 const placed = await p.evaluate(() => { const f = window.__farm, t0 = performance.now(); const r = f.place('orp'); const s = f.move.state(); return { r, s, ms: Math.round(performance.now() - t0) }; });

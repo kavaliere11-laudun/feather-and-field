@@ -12,7 +12,7 @@ const run = s => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < 
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=10:30`, { waitUntil: 'domcontentloaded' });
 await p.waitForSelector('.gsheet:not([hidden])'); await p.evaluate(() => document.querySelector('.gsheet .gbtn').click());
 await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
-await p.evaluate(() => { const f = window.__farm, g = f.game(); f.pause(true); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(11) + 5; g.data.lvSeen = 9; g.data.coins = 5000; g.garden(); for (const [i, k] of [[0, 'carrot'], [1, 'lettuce'], [2, 'straw']]) { g.sowBed(i, k); g.data.garden.beds[i].ripe = Date.now() - 1; } g.save(); f.gameUI().close(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); f.pause(true); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(11) + 5; g.data.lvSeen = 11; g.data.coins = 5000; g.garden(); for (const [i, k] of [[0, 'carrot'], [1, 'lettuce'], [2, 'straw']]) { g.sowBed(i, k); g.data.garden.beds[i].ripe = Date.now() - 1; } g.save(); f.gameUI().close(); });
 await run(4); for (let i = 0; i < 30 && !(await p.evaluate(() => !!window.__farm.garden.mid(0))); i++) await run(1);
 await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); f.lookAt(-32.5, -23.5, 2.6); }); await run(1);
 const tapBed = async i => { const at = await p.evaluate(i => { const f = window.__farm, m = f.garden.mid(i); return f.toScreen(m[0], 0.2, m[2]); }, i); await p.touchscreen.tap(at[0], at[1]); await run(0.3); };

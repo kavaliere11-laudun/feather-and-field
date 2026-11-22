@@ -16,7 +16,7 @@ const shut = () => p.evaluate(() => { const u = window.__farm.gameUI(); if (u.is
 const hintT = () => p.evaluate(() => document.getElementById('hint').textContent);
 await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&lang=${L}&time=10:00`, { waitUntil: 'domcontentloaded' });
 await p.waitForSelector('.gsheet:not([hidden])'); await p.tap('.gsheet .gbtn'); await load();
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(5) + 5; g.data.lvSeen = 4; g.orders(); g.data.orders.list = []; g.data.orders.next = Date.now() + 9e8; g.save(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(5) + 5; g.data.lvSeen = 5; g.orders(); g.data.orders.list = []; g.data.orders.next = Date.now() + 9e8; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await run(1); await shut();
 // ---- eggs collected: to the pantry, no coins yet, XP at once; the Pantry button has a dot
 const c0 = await p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops[0]; c.eggs = 5; c.bonus = 4; c.lt = []; g.save(); return { coins: g.data.coins, xp: g.data.xp, price: g.eggPrice(c) }; });

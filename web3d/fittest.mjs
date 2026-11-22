@@ -12,7 +12,7 @@ let fails = 0; const ok = (m, c, d) => { console.log((c ? 'ok   ' : 'FAIL ') + m
 const load = async () => { await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 300000 }); await p.evaluate(() => { const f = window.__farm; f.pause(true); if (f.gameUI().isOpen) f.gameUI().close(); }); };
 const go = t => p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&lang=${L}&time=${t}`, { waitUntil: 'domcontentloaded' });
 await go('10:00'); await p.waitForSelector('.gsheet:not([hidden])'); await p.tap('.gsheet .gbtn'); await load();
-await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(6) + 5; g.data.lvSeen = 5; g.data.land = [0, 1, 2, 3, 4]; g.save(); });
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = f.xpFor(6) + 5; g.data.lvSeen = 6; g.data.land = [0, 1, 2, 3, 4]; g.save(); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 // ---- every field that can hold a full-grown pen at all: let go anywhere in it that's refused, it's nudged to a place that fits
 const R = await p.evaluate(() => { const f = window.__farm, g = f.game(); f.move.start(0); const d0 = f.move.state().at.deg, out = { tried: 0, refused: 0, settled: 0, turned: 0, far: 0, bad: [] };
