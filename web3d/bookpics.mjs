@@ -36,8 +36,8 @@ for (const breed of BREEDS) {
   const res = await p.evaluate(([breed, S, SIZE]) => {
     const f = window.__farm, T = f.THREE, duck = breed === 'call', DL = duck && f.geeseLineup(), line = duck ? DL.ducks : f.allBirds.filter(x => x.plot.kind === 'lineup');
     f.pause(true);
-    const base = breed.startsWith('sil') ? 'sil' : breed, col = breed === 'sil' ? 'white' : breed.slice(4);
-    const pick = kind => duck ? line.find(x => x.linePose === 'look' && x.kind === (kind === 'hen' ? 'call_f' : 'call_m')) : line.find(x => x.breed === base && x.kind === kind && (base !== 'sil' || x.colour === col));
+    const base = breed.startsWith('sil') ? 'sil' : breed.startsWith('pol_') ? 'pol' : breed, col = breed === 'sil' ? 'white' : breed.includes('_') ? breed.slice(4) : null;      // (a Polish's shelf colour, pol_gold...: 22 Nov 2026)
+    const pick = kind => duck ? line.find(x => x.linePose === 'look' && x.kind === (kind === 'hen' ? 'call_f' : 'call_m')) : line.find(x => x.breed === base && x.kind === kind && (base === 'sil' ? x.colour === col : (x.colour || null) === col));
     const hen = pick('hen'), roo = pick('rooster');
     // stood together, posed (held each frame, as the welcome picture's birds), everyone else out of sight
     const stand = duck ? (x, s) => { x.pos.set(s.x, 0, s.z); x.heading = s.yaw; x.linePose = 'book'; x.bookPose = s; } : (x, s) => {

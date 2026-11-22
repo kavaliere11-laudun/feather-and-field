@@ -621,10 +621,12 @@ export class GameUI {
       c.append(h, el('p', 'gtext', this.t(this.g.dk('trio_body', this.g.kindOf(b)))));
       body.append(c);
     }
-    for (const b of this.g.shelfNew(L, from)) {        // (a breed come onto the collector's shelf: a look at it in the Book)
-      const c = el('div', 'gcard gnewcoop gshelfnew'), hd = el('div', 'gcard-h'); c.dataset.shelf = b;
-      hd.append(this.breedPic(b), el('span', 'gcard-t', this.t('shelf_new', { breed: this.g.bookName(b) }))); c.append(hd);
-      if (this.o.shelf) { const go = el('button', 'gbtn galt gsmallbtn', this.t('shelf_see')); go.type = 'button'; go.dataset.shelfsee = b; go.addEventListener('click', () => { this.close(); this.o.shelf(); }); c.append(go); }
+    const sn = this.g.shelfNew(L, from);
+    if (sn.length) {        // (the breeds come onto the collector's shelf: a look at them in the Book; two or more in one card, 22 Nov 2026)
+      const c = el('div', 'gcard gnewcoop gshelfnew'), hd = el('div', 'gcard-h'); c.dataset.shelf = sn.join();
+      for (const b of sn) hd.append(this.breedPic(b));
+      hd.append(el('span', 'gcard-t', this.t('shelf_new', { breed: sn.map(b => this.g.bookName(b)).join(', ') }))); c.append(hd);
+      if (this.o.shelf) { const go = el('button', 'gbtn galt gsmallbtn', this.t('shelf_see')); go.type = 'button'; go.dataset.shelfsee = sn[0]; go.addEventListener('click', () => { this.close(); this.o.shelf(); }); c.append(go); }
       body.append(c);
     }
     const decs = Object.keys(DECOR).filter(id => since(DECOR[id].level));      // (a decoration to buy now: the shop, the coins at the top)

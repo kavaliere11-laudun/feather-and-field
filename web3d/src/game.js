@@ -840,6 +840,12 @@ export const BREED_INFO = {
   ara: { name: ['Lavender Araucana', 'Araucana lavande'], coop: ['Mountain Hut', 'Cabane des Andes'] },
   // (21 Nov 2026, Audrey: "Partridge Cochin (Recommended)", its look "Yes, put it in": on the collector's shelf, its Round Yurt)
   coc: { name: ['Partridge Cochin', 'Cochin perdrix'], coop: ['Round Yurt', 'Yourte ronde'] },
+  // (22 Nov 2026, Audrey: "Yes, all four", "As proposed", "In their colour": the Polish's laced colours on the collector's shelf,
+  // each its own forever trio and Little Windmill in its colour; a line of the Polish (`pol_<colour>`), as the Silkies' colours)
+  pol_gold: { name: ['Gold-laced Polish', 'Padoue dorée liserée'], kind: ['Polish', 'Padoue'], col: ['Gold-laced', 'dorée liserée'], coop: ['Little Windmill', 'Petit moulin'] },
+  pol_blue: { name: ['White-crested Blue Polish', 'Padoue bleue huppe blanche'], kind: ['Polish', 'Padoue'], col: ['White-crested Blue', 'bleue huppe blanche'], coop: ['Little Windmill', 'Petit moulin'] },
+  pol_buff: { name: ['Buff-laced Polish', 'Padoue chamois liserée'], kind: ['Polish', 'Padoue'], col: ['Buff-laced', 'chamois liserée'], coop: ['Little Windmill', 'Petit moulin'] },
+  pol_silver: { name: ['Silver-laced Polish', 'Padoue argentée liserée'], kind: ['Polish', 'Padoue'], col: ['Silver-laced', 'argentée liserée'], coop: ['Little Windmill', 'Petit moulin'] },
   // (30 Oct 2026, Audrey's call ducks: "call duck (new type of eggs!)", at level 10 in her own order; their Floating House:
   // "a little wooden house on a raft in the middle of their pond". A drake and two ducks; duck eggs. `duck`: not chickens:
   // no chicken shows (their ducklings: as the hens' chicks, 30 Oct), and Rusty can't reach a house out on a pond)
@@ -887,8 +893,10 @@ export const rarePrice = stars => RARE.price + RARE.starPrice * stars;
 export const isDuck = k => !!(BREED_INFO[k] && BREED_INFO[k].duck);      // (the call ducks: not chickens)
 export const isPea = k => !!(BREED_INFO[k] && BREED_INFO[k].pea);        // (the peafowl: nor these)
 export const kindOf = k => isDuck(k) ? 'duck' : isPea(k) ? 'pea' : null;      // (whose words: a duck's, a peafowl's or a chicken's)
-export function baseBreed(k) { return typeof k === 'string' && k.startsWith('sil') ? 'sil' : k; }
+export function baseBreed(k) { return typeof k === 'string' && k.startsWith('sil') ? 'sil' : typeof k === 'string' && k.startsWith('pol_') ? 'pol' : k; }      // (22 Nov 2026: the Polish's shelf colours, pol_<colour>, are lines of the Polish as the Silkies' are of theirs)
 export function silColour(k) { return k === 'sil' ? 'white' : typeof k === 'string' && k.startsWith('sil_') ? k.slice(4) : null; }
+export const POL_COLOURS = ['gold', 'blue', 'buff', 'silver'];
+export function lineColour(k) { return silColour(k) || (typeof k === 'string' && k.startsWith('pol_') && POL_COLOURS.includes(k.slice(4)) ? k.slice(4) : null); }      // (a bird's paint: a Silkie's colour, or a Polish's shelf colour; null: the breed's own)
 
 // the five personalities (the 2D game's), with what each is like in a line, for a hen (h) and a rooster (r)
 export const PERS = ['mum', 'rebel', 'diva', 'glutton', 'brave'];
@@ -973,7 +981,8 @@ export const BREED_LEVEL = { rir: 1, orp: 3, sil: 5, aya: 7, call: 10, sus: 12, 
 // (money: £2.99 a trio); each a forever trio with its own coop, as a level's. `came`: the level it came at on the level
 // path before (a farm from before that had reached it keeps the breed, free). The Araucana, the Cochin and the Polish's
 // new colours are to join it
-export const SHELF = { sil_buff: { level: 8, price: 5000, money: 2.99, came: 12 }, ara: { level: 10, price: 8000, money: 3.99 }, sil_partridge: { level: 12, price: 9000, money: 2.99, came: 21 }, coc: { level: 14, price: 15000, money: 3.99 } };      // (in level order: the shelf's tiles; the Lavender Araucana joined the same day, never on the level path)
+export const SHELF = { sil_buff: { level: 8, price: 5000, money: 2.99, came: 12 }, ara: { level: 10, price: 8000, money: 3.99 }, sil_partridge: { level: 12, price: 9000, money: 2.99, came: 21 }, coc: { level: 14, price: 15000, money: 3.99 },
+  pol_gold: { level: 18, price: 20000, money: 3.99 }, pol_blue: { level: 18, price: 20000, money: 3.99 }, pol_buff: { level: 20, price: 28000, money: 3.99 }, pol_silver: { level: 22, price: 40000, money: 4.99 } };      // (22 Nov 2026, Audrey: the Polish's four laced colours, "Yes, all four", "As proposed")      // (in level order: the shelf's tiles; the Lavender Araucana joined the same day, never on the level path)
 export const SHELF_IDS = Object.keys(SHELF);
 // (the order before: a coop placed then stays good on a farm that had reached its level then, the Blue and Grey Silkies too)
 const BREED_LEVEL_29OCT = { rir: 1, orp: 5, sil: 6, sil_black: 8, leg: 11, sil_buff: 13, sil_blue: 15, bra: 17, sil_partridge: 20, sil_grey: 23, pol: 26, aya: 29 };

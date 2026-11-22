@@ -167,6 +167,27 @@ const SIL_CHICK = {
   splash: { down: '#ebe9e3', spot: '#8a96a8', pattern: 'splash' }, cuckoo: { down: '#8e9095', spot: '#d8d8d4', pattern: 'splash' },
   red: { down: '#c56a33' }, paint: { down: '#f4f1e8', spot: '#2a2a30', pattern: 'paint' }, lavender: { down: '#c1bbcb' },
 };
+// the Polish's laced colours on the collector's shelf (22 Nov 2026, Audrey: "Yes, all four"): its own model in each colour's paint,
+// each feather edged all round (pattern 'laced', the shader's mode 11; the White-crested Blue's lacing a darker blue), hen h,
+// rooster r, chick, legs (the lines pol_gold, pol_blue, pol_buff, pol_silver; the White-crested Black keeps 'pol')
+const POL = {
+  gold: {      // (Gold-laced)
+    h: { body: '#c98a38', top: '#cf913f', hackle: '#c98a38', head: '#c08236', crest: '#cf9340', crestLace: 0.75, dark: '#1c1612', wing: '#c3863a', prim: '#2a211a', tail: '#2a1f17', pattern: 'laced', hackleLace: 0.7 },
+    r: { body: '#c4843a', top: '#cc8e40', hackle: '#d6993f', saddle: '#d29540', head: '#c08236', crest: '#d29745', crestLace: 0.7, dark: '#1c1612', wing: '#bf8034', prim: '#241c16', tail: '#171310', pattern: 'laced', hackleLace: 0.55 },
+    chick: { down: '#c99a52', top: '#a8743a', face: '#ead2a0', wing: '#b88a48', stripe: '#5e4026', pattern: 'chipmunk', leg: '#7a8090', beak: '#8a8478' }, leg: '#5f6878' },
+  blue: {      // (White-crested Blue)
+    h: { body: '#7d889e', top: '#8792a7', hackle: '#7f8aa0', head: '#76819a', crest: '#f4f1ea', crestFront: [0.62, -0.05], dark: '#47506a', wing: '#7a859b', prim: '#5d6880', tail: '#58627b', pattern: 'laced', lace: 0.85, hackleLace: 0.5 },
+    r: { body: '#7a859b', top: '#8590a5', hackle: '#56607a', saddle: '#5b6680', head: '#76819a', crest: '#f6f3ec', crestFront: [-0.1, 0.6], dark: '#454e68', wing: '#77829a', prim: '#57627a', tail: '#4c566e', pattern: 'laced', lace: 0.85, hackleLace: 0.3 },
+    chick: { down: '#8a93a6', top: '#7c859a', face: '#e9e5dc', wing: '#7a8398', leg: '#7a8090', beak: '#6a6670' }, leg: '#5f6878' },
+  buff: {      // (Buff-laced)
+    h: { body: '#dba658', top: '#e1ae62', hackle: '#dfab5e', head: '#d6a256', crest: '#e3b468', crestLace: 0.7, dark: '#f7eedb', wing: '#d6a052', prim: '#e6c488', tail: '#dcae62', pattern: 'laced', lace: 0.9, hackleLace: 0.6, tailSheen: '#ffd890' },
+    r: { body: '#d6a052', top: '#ddaa5c', hackle: '#e6b468', saddle: '#e2b064', head: '#d6a256', crest: '#e6b86c', crestLace: 0.65, dark: '#f7eedb', wing: '#d19b4e', prim: '#e3bf80', tail: '#d8a85a', pattern: 'laced', lace: 0.9, hackleLace: 0.5, tailSheen: '#ffd890' },
+    chick: { down: '#ecd08e', top: '#e0bd76', face: '#f6e6bf', wing: '#dfbe7c', leg: '#7a8090', beak: '#a89f90' }, leg: '#5f6878' },
+  silver: {      // (Silver-laced)
+    h: { body: '#eeebe4', top: '#f2efe9', hackle: '#efece6', head: '#e9e6df', crest: '#f1eee8', crestLace: 0.8, dark: '#1d1c22', wing: '#e9e6de', prim: '#26252b', tail: '#222127', pattern: 'laced', hackleLace: 0.7 },
+    r: { body: '#ebe8e1', top: '#f0ede7', hackle: '#f3f0ea', saddle: '#f0ede7', head: '#e9e6df', crest: '#f3f0ea', crestLace: 0.7, dark: '#1d1c22', wing: '#e6e3db', prim: '#222127', tail: '#1a191e', pattern: 'laced', hackleLace: 0.45 },
+    chick: { down: '#d9d7d2', top: '#a9a7a3', face: '#f1efe9', wing: '#c4c2bd', stripe: '#55534f', pattern: 'chipmunk', leg: '#7a8090', beak: '#8a8478' }, leg: '#5f6878' },
+};
 const LEG = { rir: '#efbd3c', orp: '#ecc6b2', leg: '#e9bd45', bra: '#efc24a', pol: '#6c7383', aya: '#1e1d23', sus: '#f0dccf', mar: '#dccbc3', ara: '#7f8878', coc: '#e3b548', pea: '#a99a8a', sil: '#5c5868' };
 
 // ------------------------------------------------------------------ a little value noise for patterns (splashes, spots, mottling)
@@ -260,6 +281,10 @@ function adultColour(S, rooster, reg, x, y, z, hw, top, out, nb, hc, tp) {
     case 'speckle': if (key !== 'tail' && key !== 'prim' && key !== 'saddle') {      // (15 Nov 2026, a Speckled Sussex, Audrey's choice for level 12: each feather tipped white with a black bar behind the tip, drawn feather by feather by the shader: mode 2; a hackle's only a small tip)
       FEAT.mode = 2; FEAT.c.copy(lin(S.spot)); FEAT.amt = key === 'body' && hw > 0.04 ? 0.45 : 1; } break;
     case 'pencilled': if (key === 'body' || key === 'wing' || key === 'legfeather') { FEAT.mode = 10; FEAT.c.copy(lin(S.dark)); FEAT.amt = key === 'body' && hw > 0.04 ? 0.4 : 0.7; } break;      // (a partridge hen's, drawn by the shader: mode 10)
+    case 'laced': if (key === 'body' || key === 'wing' || key === 'legfeather') {      // (22 Nov 2026, the Polish's laced colours: each feather edged all round in S.dark, drawn by the shader: mode 11; the face's tiny feathers only a hint)
+      FEAT.mode = 11; FEAT.c.copy(lin(S.dark)); FEAT.amt = key === 'body' && hw > 0.97 ? 0.35 : key === 'body' && hw > 0.04 ? (S.hackleLace ?? 0.8) : (S.lace ?? 1);
+    } else if (key === 'crest' && S.crestLace) out.lerp(lin(S.dark), smooth(0.46, 0.66, noise(x * 45 + 5, y * 45, z * 45 + 3)) * S.crestLace);      // (a laced crest: its feathers' edges seen as flecks)
+    break;
     case 'pencil': if (!(key === 'body' && hw > 0.04)) { const m = noise(x * 90, y * 90, z * 90); out.lerp(lin(S.dark), smooth(0.45, 0.75, m) * 0.7); } break;
   }
   const shade = 0.84 + 0.16 * smooth(0.15, 0.6, h) + (n - 0.5) * 0.07;      // a touch darker underneath, soft feather texture
@@ -323,14 +348,15 @@ export function paintedGeometry(model, breed, colour) {
   const col = new Float32Array(n * 3), c = new THREE.Color();
   const base_ = model.replace(/_lo$/, ''), rooster = base_.endsWith('_r'), chick = base_ === 'chick';
   let S;
-  if (chick) S = breed === 'sil' ? Object.assign({}, SIL_CHICK[colour] || SIL_CHICK.white) : CHICK[breed];
+  const PC = breed === 'pol' && POL[colour];      // (a Polish in one of its shelf colours)
+  if (chick) S = breed === 'sil' ? Object.assign({}, SIL_CHICK[colour] || SIL_CHICK.white) : PC ? PC.chick : CHICK[breed];
   else if (breed === 'sil') { const s = SIL[colour] || SIL.white; S = rooster && s.rooster ? Object.assign({}, s, s.rooster) : s; }
-  else S = ADULT[base_];
+  else S = PC ? PC[rooster ? 'r' : 'h'] : ADULT[base_];
   // (15 Nov 2026, mock-ups of new breeds for Audrey to look at before any model is made: a test page may lend a model another
   // paint, globalThis.__FF_MOCK = { orp_h: {...}, leg: { orp: '#...' } }; never set in the game)
   const MK = typeof globalThis !== 'undefined' && globalThis.__FF_MOCK;
   if (MK && !chick && MK[base_]) S = MK[base_];
-  const legHex = (MK && !chick && MK.leg && MK.leg[breed]) || (chick && S.leg) || (breed === 'sil' ? '#55505c' : chick ? '#f0be42' : LEG[breed]);
+  const legHex = (MK && !chick && MK.leg && MK.leg[breed]) || (chick && S.leg) || (breed === 'sil' ? '#55505c' : chick ? '#f0be42' : PC ? PC.leg : LEG[breed]);
   const beakHex = (chick && S.beak) || (breed === 'sil' ? '#757688' : '#e9b24c');
   const k = base.normalized ? 1 / 255 : 1;
   const fpat = new Float32Array(n * 4), fmode = new Float32Array(n), feathered = !chick && breed !== 'sil';
@@ -795,6 +821,11 @@ function birdMaterial(indoor, goose) {
             float rings = smoothstep(0.3, 0.8, sin(t * 26.0 + 0.6 + id * 2.0)) * smoothstep(0.98, 0.86, t);
             diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, vPat.a * (1.0 - 0.5 * boost) * rings);      // (fainter when the feathers are small on screen: from the farm's usual distance the rings read as a fine texture, not a busy pattern)
           }
+          else if (vMode > 10.5 && vMode < 11.5) {     // (11, laced, 22 Nov 2026: each feather edged all round in vPat, its ground colour inside, a little darker where the next feather lies over it)
+            diffuseColor.rgb = mix(diffuseColor.rgb, diffuseColor.rgb * 0.62, 0.6 * smoothstep(0.2, -0.7, along));
+            float pole = mix(smoothstep(0.015, 0.055, length(vec2(vRest.x, vRest.y - 0.2))), 1.0, max(neck, step(0.001, wingT)));      // (fading where the rows of feathers meet in a whorl: the breast's front and under the tail)
+            diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, vPat.a * pole * smoothstep(0.63 - aa, 0.74 + aa, t));
+          }
           else if (capeA > 0.0) {          // each cape feather black down its middle, edged white all round (its tip too)
             float w = clamp(vMode - 3.0, 0.1, 0.49), on = step(0.1 + 0.8 * fract(id * 5.37), capeA);
             diffuseColor.rgb = mix(diffuseColor.rgb, vPat.rgb, on * smoothstep(w + 0.09, w - 0.04, abs(across)) * smoothstep(0.9, 0.74, t) * smoothstep(-0.99, -0.7, along));
@@ -803,7 +834,7 @@ function birdMaterial(indoor, goose) {
             float band = smoothstep(0.017, 0.008, abs(vFUV.x)) * smoothstep(0.0, 0.03, vFUV.y) * smoothstep(0.16, 0.12, vFUV.y) * smoothstep(0.05, 0.08, abs(vRest.x));
             diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.012), band * smoothstep(0.74, 0.5, abs(across)) * smoothstep(0.97, 0.84, t));
           }
-          else if (vMode > 3.5) diffuseColor.rgb = mix(diffuseColor.rgb, vMode > 5.5 ? diffuseColor.rgb * 0.55 : vPat.rgb, min(1.0, onTop * vPat.a) * smoothstep(0.2, -0.7, along));      // (6, a sheen over the body: the overlap darker, not the sheen's colour)
+          else if (vMode > 3.5 && vMode < 10.5) diffuseColor.rgb = mix(diffuseColor.rgb, vMode > 5.5 ? diffuseColor.rgb * 0.55 : vPat.rgb, min(1.0, onTop * vPat.a) * smoothstep(0.2, -0.7, along));      // (6, a sheen over the body: the overlap darker, not the sheen's colour)
           // the vane's barbs: thin strands slanting from the quill towards the tip, lying side by side (the two halves of the
           // vane meet at the quill in a V); their ends make the feather's edge finely ragged
           float ph = (along * 0.85 - abs(across)) * 30.0;
@@ -839,7 +870,7 @@ function birdMaterial(indoor, goose) {
           furShade *= 1.0 + furrow * (0.2 * ridge - 0.08 * smoothstep(0.7, 1.0, abs(ridge)));
           #endif
           furShade *= fluff;
-          furShade = mix(furShade, 1.0, (vMode < 7.5 ? 0.85 : 0.7) * smoothstep(6.0, 7.0, vMode) * (1.0 - smoothstep(0.05, 0.3, capeA)));      // (8: a Brahma's soft white plumage; 7: the call ducks' smooth white)
+          furShade = mix(furShade, 1.0, (vMode < 7.5 ? 0.85 : 0.7) * smoothstep(6.0, 7.0, vMode) * step(vMode, 10.5) * (1.0 - smoothstep(0.05, 0.3, capeA)));      // (11, laced: not softened)      // (8: a Brahma's soft white plumage; 7: the call ducks' smooth white)
         }
         if (vFUV.x > 0.01 && vFeather <= 0.0) {
           // a modelled feather (tail, sickles, saddle hackles, flight feathers, crest): a pale quill down the middle, barbs
@@ -872,8 +903,8 @@ function birdMaterial(indoor, goose) {
         }
         diffuseColor.rgb *= furShade;`)
       .replace('#include <roughnessmap_fragment>', `#include <roughnessmap_fragment>
-        if (vMode > 4.5) roughnessFactor = (vMode > 5.5 && vMode < 8.5) ? 0.64 : vMode > 8.5 ? 0.55 : 0.34;      // (9, a peacock's train: soft, not plastic)`)
-      .replace('#include <opaque_fragment>', `if (vMode > 4.5) {        // glossy tail feathers: a coloured sheen at glancing angles
+        if (vMode > 4.5 && vMode < 10.5) roughnessFactor = (vMode > 5.5 && vMode < 8.5) ? 0.64 : vMode > 8.5 ? 0.55 : 0.34;      // (9, a peacock's train: soft, not plastic)`)
+      .replace('#include <opaque_fragment>', `if (vMode > 4.5 && vMode < 10.5) {        // glossy tail feathers: a coloured sheen at glancing angles
           float fr = 1.0 - abs(dot(normalize(normal), normalize(vViewPosition)));
           outgoingLight += vPat.rgb * vPat.a * ((vMode > 5.5 && vMode < 8.5) ? (0.05 + fr * fr * 0.5) * sheenMul : 0.04 + fr * fr * 0.6);
         }

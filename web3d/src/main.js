@@ -30,7 +30,7 @@ import { initFarmer, FarmerLineup, FARMER_NAME, Farmer, loadOutfit, outfitLoaded
 import { FarmLife } from './farmlife.js';
 import { Corn } from './penvisit.js';
 import { DecorLife, Butterflies } from './decorlife.js';
-import { GROOM, SHOWS, FIXED, GARDEN, landLevel, CROPS, CROP_IDS, xpFor, Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE, FISH_RULES, FEATHERS, APPLES as APPLES_RULE } from './game.js';
+import { GROOM, SHOWS, FIXED, GARDEN, landLevel, CROPS, CROP_IDS, xpFor, Game, NEST_MAX, SIT_MS, GROW_MS, YOUNG_MS, HOME_COOP, DECOR, ANIMALS, WHEAT, GUIDE, gameText, baseBreed, silColour, lineColour, POL_COLOURS, KENNEL_DEG, foxAt, foxNight, nightKey, UPGRADES, FISHING as FISHING_RULE, FISH_RULES, FEATHERS, APPLES as APPLES_RULE } from './game.js';
 import { GameUI } from './gameui.js';
 import { Account } from './account.js';
 import { Notes } from './notify.js';
@@ -517,14 +517,24 @@ const SIL_FROM = { house: [[['#b0322a'], 0, false], [['#1c5d55'], 1, false], [['
   rustic: [[['#9d6962', '#93625c', '#98655f'], 0, true], [['#455851', '#4b5f58', '#495c55'], 1, true], [['#556e66', '#5c766d'], 2, true]],
   box: [[['#a0625b'], 0, true]], shed: [[['#b0322a'], 0, false]] };
 const SIL_MODELS = { house_sil: 'house', cosy_sil: 'house', deluxe_sil: 'house', popdoor_sil: 'house', rustic_sil: 'rustic', box_sil: 'box', shed_sil: 'shed' };
+// the Polish's shelf colours' Little Windmills (22 Nov 2026, Audrey: "In their colour"): the Rustic mill an old one like any
+// other; the Mended its roof and new paint in the colour; the Snug its cap in the colour, its door and pop door in the trim; the Cosy
+// its Dutch green; the Deluxe its copper roof and cap in the colour, its Delft blue in the trim. Each colour: [main, trim]
+const POL_TINT = { gold: ['#a8782c', '#2b2420'], blue: ['#566890', '#2f3a58'], buff: ['#c99a52', '#6e4624'], silver: ['#9aa0a8', '#25252b'] };
+const POL_FROM = { shed: [[['#403d3d'], 0, false], [['#efeadf', '#f2ede2', '#f5f0e5'], 0, false]],
+  house: [[['#353b45', '#494f5a', '#454b56', '#424953'], 0, false], [['#2e6a4f', '#326c51', '#2e684d'], 1, false]],
+  cosy: [[['#609669', '#5d9266', '#5f9468'], 0, false], [['#2e6a4f'], 1, false]], deluxe: [[['#5c9a86', '#4d8575', '#589480', '#60a08b', '#77b29e'], 0, false], [['#2e5aa8', '#2e58a4'], 1, false]],
+  popdoor: [[['#2e684d', '#326c51'], 1, false]] };
+const POL_MODELS = { shed_pol: 'shed', house_pol: 'house', cosy_pol: 'cosy', deluxe_pol: 'deluxe', popdoor_pol: 'popdoor' };
 function keepSilkieColours(glb) {
-  for (const name in SIL_MODELS) { const src = glb.scene.getObjectByName(name); if (!src) continue; for (const m of meshesOf(src)) { const a = m.geometry.attributes.color; if (a) m.geometry.userData.raw = a.array.slice(); } }
+  for (const name in { ...SIL_MODELS, ...POL_MODELS }) { const src = glb.scene.getObjectByName(name); if (!src) continue; for (const m of meshesOf(src)) { const a = m.geometry.attributes.color; if (a) m.geometry.userData.raw = a.array.slice(); } }
 }
 function tintedPart(name, col) {
   const key = name + '@' + col; if (parts[key]) return key;
-  const src = parts[name], kind = SIL_MODELS[name]; if (!src || !kind || !SIL_TINT[col]) return name;
+  const P = POL_MODELS[name], TINT = P ? POL_TINT : SIL_TINT, FROM = P ? POL_FROM : SIL_FROM;      // (a Polish's windmill, or a Silkie's Pagoda)
+  const src = parts[name], kind = P || SIL_MODELS[name]; if (!src || !kind || !TINT[col]) return name;
   const lum = c => 0.2126 * c.r + 0.7152 * c.g + 0.0722 * c.b, FADE = new THREE.Color('#8c8780');
-  const refs = SIL_FROM[kind].map(([hexes, which, faded]) => { const to = new THREE.Color(SIL_TINT[col][which]); if (faded) to.lerp(FADE, 0.45); return { cols: hexes.map(h => new THREE.Color(h)), l: lum(new THREE.Color(hexes[0])), to }; });
+  const refs = FROM[kind].map(([hexes, which, faded]) => { const to = new THREE.Color(TINT[col][which]); if (faded) to.lerp(FADE, 0.45); return { cols: hexes.map(h => new THREE.Color(h)), l: lum(new THREE.Color(hexes[0])), to }; });
   const near = (c, r) => Math.abs(c.r - r.r) < 0.012 && Math.abs(c.g - r.g) < 0.012 && Math.abs(c.b - r.b) < 0.012;      // (linear: about 3 steps in 255 round these dark reds and teals)
   const o = src.clone(true); o.name = key; const c = new THREE.Color();
   for (const m of meshesOf(o)) {
@@ -533,14 +543,14 @@ function tintedPart(name, col) {
     for (let i = 0; i < a.count; i++) {
       c.setRGB(a.getX(i), a.getY(i), a.getZ(i));
       const R = refs.find(R => R.cols.some(q => near(c, q)));
-      if (R) { const t = R.to.clone().multiplyScalar(lum(c) / R.l); a.setXYZ(i, t.r, t.g, t.b); }
+      if (R) { const t = R.to.clone().multiplyScalar(lum(c) / R.l), mx = Math.max(t.r, t.g, t.b); if (mx > 1) t.multiplyScalar(1 / mx); a.setXYZ(i, t.r, t.g, t.b); }      // (never past full: a stored colour past it wraps round to dark, 22 Nov 2026)
     }
     a.needsUpdate = true; richer(m.geometry, SAT, 1); ambientShade(m.geometry);
   }
   o.updateMatrixWorld(true); parts[key] = o;
   return key;
 }
-const tintOf = p => p.col && p.col !== 'white' && SIL_TINT[p.col] ? '@' + p.col : '';      // (a coop's model names: its Silkie colour's)
+const tintOf = p => p.col && p.col !== 'white' && (p.breed === 'pol' ? POL_TINT : SIL_TINT)[p.col] ? '@' + p.col : '';      // (a coop's model names: its Silkie colour's)
 const inColour = (name, p) => tintOf(p) ? tintedPart(name, p.col) : name;
 function part(name) {
   const p = parts[name];
@@ -2041,7 +2051,7 @@ function buildPlots(nCoops) {
   batchCoops();
   buildDoors();
 }
-const TEST_COOPS = (() => { const l = !GAME_MODE && params.get('coopbreeds') ? params.get('coopbreeds').split(',').filter(b => ALL_BREEDS.includes(b) || b === 'call') : []; return l.length ? l : BREEDS; })();      // (?coopbreeds=call: the call ducks' Floating House)
+const TEST_COOPS = (() => { const l = !GAME_MODE && params.get('coopbreeds') ? params.get('coopbreeds').split(',').filter(b => ALL_BREEDS.includes(baseBreed(b)) || b === 'call') : []; return l.length ? l : BREEDS; })();      // (?coopbreeds=call: the call ducks' Floating House)
 function makePlot(i, pos, deg, gc, r, kind, trio = null) {
   const g = new THREE.Group();
   g.position.set(pos[0], 0, pos[2]); g.rotation.y = deg * DEG;
@@ -2053,7 +2063,7 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
     plot.frame = frame;
     const TB = TEST_COOPS;          // (the test page's coops: ?coopbreeds=pol,aya for just those, the new breeds' coops)
     const look = params.has('looks') ? (params.get('looks') ? +params.get('looks') : Math.floor(i / TB.length)) % 5 : -1;      // (the test page's ?looks: rows of the five looks, Rustic to Deluxe; ?looks=N: all in look N)
-    plot.breed = gc ? baseBreed(gc.breed) : TB[i % TB.length]; plot.line = gc ? gc.breed : plot.breed; plot.col = gc ? silColour(gc.breed) : null; plot.deluxe = gc ? gc.tier >= 4 : look >= 0 ? look === 4 : Math.floor(i / TB.length) % 2 === 1;
+    plot.breed = baseBreed(gc ? gc.breed : TB[i % TB.length]); plot.line = gc ? gc.breed : TB[i % TB.length]; plot.col = lineColour(plot.line);      // (the test page's ?coopbreeds=pol_gold too: a line's coop in its colour) plot.deluxe = gc ? gc.tier >= 4 : look >= 0 ? look === 4 : Math.floor(i / TB.length) % 2 === 1;
     plot.gc = gc; plot.rustic = gc ? gc.tier === 0 : look >= 0 && look <= 1;     // (a new breed's coop comes rustic)
     plot.tier = gc ? gc.tier : look >= 0 ? look : plot.deluxe ? 4 : 2;
     plot.theme = gc ? gc.theme || null : params.get('theme');      // (a themed building: the game's, or the test page's ?theme=winter)
@@ -2066,14 +2076,14 @@ function makePlot(i, pos, deg, gc, r, kind, trio = null) {
     g.updateMatrixWorld(true);                            // the coop itself stays put (till it's moved): it joins its style's batch
     const silk = plot.breed === 'sil' ? Math.floor(i / TB.length) : 0;
     let k = 0;
-    const colour = () => plot.breed === 'sil' ? (gc ? 'white' : SILKIE[(silk * 7 + k++) % SILKIE.length]) : null;      // (the game's Silkies: the white trio)
+    const colour = () => plot.breed === 'sil' ? (gc ? 'white' : SILKIE[(silk * 7 + k++) % SILKIE.length]) : plot.breed === 'pol' ? plot.col : null;      // (the game's Silkies: the white trio)
     if (plot.breed === 'call') addCallDucks(plot, r, trio);      // (the call ducks: their own life in their pen, callpen.js; the game's own)
     else if (gc) {                                        // the game: this coop's forever birds, each with its own name and personality
       const henAt = penOf(plot).hens.filter(h => h.model === 'hen'), rooAt = penOf(plot).hens.find(h => h.model === 'rooster'); let k = 0;
       for (const gb of trio || game.birdsIn(gc.id)) {
         if (STRAY.gid === gb.id) continue;                // (out on the farm just now: farm moments)
         const h = gb.sex === 'r' ? rooAt : henAt[k++ % henAt.length];
-        const b = new Bird(plot, plot.breed, gb.sex === 'r' ? 'rooster' : 'hen', plot.breed === 'sil' ? silColour(gb.breed) || 'white' : null, h.pos, -h.yaw * DEG + Math.PI, r);      // (a Silkie in her own colour)
+        const b = new Bird(plot, plot.breed, gb.sex === 'r' ? 'rooster' : 'hen', plot.breed === 'sil' ? silColour(gb.breed) || 'white' : lineColour(gb.breed), h.pos, -h.yaw * DEG + Math.PI, r);      // (a Silkie in her own colour; a Polish in its shelf colour)
         b.name = gb.name; b.pers = gb.pers; b.gid = gb.id; plot.birds.push(b);
       }
     } else {
@@ -4505,6 +4515,7 @@ function buildLineup() {
     row(0.45, SILKIE.map(c => ['sil', 'chick', c]), 0.45);
     row(-0.1, SILKIE.map(c => ['sil', 'hen', c]), 0.45);
     row(-0.75, SILKIE.map(c => ['sil', 'rooster', c]), 0.45);
+    row(-1.4, POL_COLOURS.flatMap(c => [['pol', 'hen', c], ['pol', 'rooster', c], ['pol', 'chick', c]]), 0.45);      // (the Polish's shelf colours, 22 Nov 2026)
   }
   allBirds.push(...lineup.birds);
   frame.updateMatrixWorld(true);
@@ -5882,7 +5893,7 @@ function gameChicks(plot) { const out = plot.birds.filter(b => b.gameChick && !b
 const kidRng = (plot) => rng(9001 + plots.indexOf(plot) * 31 + plot.birds.length * 7 + (Date.now() % 997));
 function addChick(plot, mum, x, z, asleep, i, kid) {
   const r = kidRng(plot), rare = kid && kid.rare;
-  const c = new Bird(plot, plot.breed, 'chick', rare ? silColour(rare) : plot.breed === 'sil' ? mum.colour : null, [x, 0, z], r() * 6.28, r);      // (a rare one in her own colour)
+  const c = new Bird(plot, plot.breed, 'chick', rare ? silColour(rare) : plot.breed === 'sil' ? mum.colour : plot.breed === 'pol' ? plot.col : null, [x, 0, z], r() * 6.28, r);      // (a rare one in her own colour)
   c.mum = mum; c.gameChick = true; c.kidI = i; c.rare = rare || null; c.blob = freeBlobs.length ? freeBlobs.pop() : -1; c.size = 1; c.appear = asleep ? 1 : 0; c.root.scale.setScalar(asleep ? 1 : 0.05);
   plot.birds.push(c); allBirds.push(c);
   if (asleep) c.sleepNow();
@@ -5891,7 +5902,7 @@ function addChick(plot, mum, x, z, asleep, i, kid) {
 // a young hen (sex 'h') or rooster ('r'): her own bird, smaller than the grown ones and growing, her mum's for the card
 function addYoung(plot, mum, sex, x, z, yaw, asleep, i, name, rare) {
   const r = kidRng(plot);
-  const y = new Bird(plot, plot.breed, sex === 'r' && plot.breed !== 'pea' ? 'rooster' : 'hen', rare ? silColour(rare) : plot.breed === 'sil' && mum ? mum.colour : null, [x, 0, z], yaw ?? r() * 6.28, r);      // (a young peacock looks like a peahen: his train comes later)
+  const y = new Bird(plot, plot.breed, sex === 'r' && plot.breed !== 'pea' ? 'rooster' : 'hen', rare ? silColour(rare) : plot.breed === 'sil' && mum ? mum.colour : plot.breed === 'pol' ? plot.col : null, [x, 0, z], yaw ?? r() * 6.28, r);      // (a young peacock looks like a peahen: his train comes later)
   if (name) y.name = name;
   y.gameChick = true; y.young = sex === 'r' ? 'r' : 'h'; y.kidOf = mum; y.kidI = i; y.rare = rare || null; y.blob = freeBlobs.length ? freeBlobs.pop() : -1;
   y.size = 0.62; y.appear = 1; y.root.scale.setScalar(0.62); y.stepRate = 22;
@@ -7657,7 +7668,7 @@ function birdPortrait(gb, SIZE = 640) {
   const G = new THREE.Group(), from = new THREE.Vector3(-SUN_DIR.x, 0, -SUN_DIR.z).normalize().applyAxisAngle(new THREE.Vector3(0, 1, 0), 0.5);
   G.position.set(view.target.x + 400, 0, view.target.z + 400); G.rotation.y = Math.atan2(from.x, from.z); scene.add(G);      // (far off the farm: out of reach of the farm's own shadows, which would fall across her)
   const plot = { kind: 'lineup', frame: G, birds: [], centre: G.position.clone() };
-  const B = new Bird(plot, baseBreed(gb.breed), hen ? 'hen' : 'rooster', real ? real.colour : silColour(gb.breed), [0, 0, 0], -1.0, rng(5));
+  const B = new Bird(plot, baseBreed(gb.breed), hen ? 'hen' : 'rooster', real ? real.colour : lineColour(gb.breed), [0, 0, 0], -1.0, rng(5));
   B.stay = true; plot.birds.push(B);
   B.posterPose = A => Object.assign(A, { walk: 0, peck: 0, sit: 0, kick: 0, flap: 0, crow: 0, ruffle: 0, hopT: -1, wag: 0, turn: 0, sing: 0, cluck: 0, kawk: 0, brood: 0, duck: 0, stretch: 0, sleep: 0, proud: hen ? 0.15 : 0.5, lookYaw: 0.32, lookTilt: 0.05 });
   const hour = DAY.hour, bg = scene.background.clone(), hidden = [], keep = new Set(), pr = renderer.getPixelRatio();
@@ -7786,7 +7797,7 @@ async function startShowDay(r, list) {
   try { await loadShow(loadGLB, loadJSON); } catch (e) { gameUI.showResults(list); return; }
   const f = gb.sex === 'h';
   SHOWDAY = new ShowDay({ scene, grade: nightGrade, newBird: (...a) => new Bird(...a), plots, allBirds, r: rng([...(r.id + r.bird)].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7)), at, look: FARMER_LOOK,
-    bird: { breed: baseBreed(gb.breed), kind: f ? 'hen' : 'rooster', colour: real ? real.colour : silColour(gb.breed) }, place: r.place, champTier: r.id[0] !== 'v',
+    bird: { breed: baseBreed(gb.breed), kind: f ? 'hen' : 'rooster', colour: real ? real.colour : lineColour(gb.breed) }, place: r.place, champTier: r.id[0] !== 'v',
     title: game.t('show_sign_' + r.id[0]), sub: r.id[0] === 'n' ? '' : game.showName(r.id).replace(/ (Village|County) Show$/, '').replace(/^Concours (de |d’|régional du )/, ''),
     hearts: w => spawnHeart(w), say: k => hint(game.t('sd_' + k, { farmer: game.farmerName(), name: gb.name }, f)),
     onEnd: () => { if (SHOWDAY) gameUI.showResults(list); } });
@@ -7866,7 +7877,7 @@ const joinNames = n => game.andList(n);
 // a forever bird joining her coop on the farm (a rare one kept, her colour's coop there already): as makePlot draws them
 function addGameBird(plot, gb) {
   const h = gb.sex === 'r' ? penOf(plot).hens.find(x => x.model === 'rooster') : penOf(plot).hens.filter(x => x.model === 'hen')[plot.birds.filter(b => b.gid && b.kind === 'hen').length % 2];
-  const b = new Bird(plot, plot.breed, gb.sex === 'r' ? 'rooster' : 'hen', plot.breed === 'sil' ? silColour(gb.breed) || 'white' : null, h.pos, -h.yaw * DEG + Math.PI, rng(311 + plots.indexOf(plot) * 17 + allBirds.length));
+  const b = new Bird(plot, plot.breed, gb.sex === 'r' ? 'rooster' : 'hen', plot.breed === 'sil' ? silColour(gb.breed) || 'white' : lineColour(gb.breed), h.pos, -h.yaw * DEG + Math.PI, rng(311 + plots.indexOf(plot) * 17 + allBirds.length));
   b.name = gb.name; b.pers = gb.pers; b.gid = gb.id; b.blob = freeBlobs.length ? freeBlobs.pop() : -1;
   if (!b.free(b.root.position.x, b.root.position.z)) { b.pickTarget(); b.root.position.copy(b.target); }
   plot.birds.push(b); allBirds.push(b); heartOver(b);
@@ -9216,7 +9227,7 @@ function strayMake(gid, at) {
   const old = allBirds.find(x => x.gid === gid && x.plot && x.plot.kind === 'coop');
   if (old) { if (heldBird === old) holdBird(null); removeBird(old); }
   const SP = strayPlot(), r = rng(901 + allBirds.length);
-  const b = new Bird(SP, home.breed, 'hen', home.breed === 'sil' ? silColour(gb.breed) || 'white' : null, [at[0], 0, at[1]], r() * 6.28, r);
+  const b = new Bird(SP, home.breed, 'hen', home.breed === 'sil' ? silColour(gb.breed) || 'white' : lineColour(gb.breed), [at[0], 0, at[1]], r() * 6.28, r);
   b.name = gb.name; b.pers = gb.pers; b.gid = gb.id; b.blob = freeBlobs.length ? freeBlobs.pop() : -1;
   b.root.position.y = 0.015 + groundY(at[0], at[1]);
   b.stray = { at: [at[0], at[1]], t: 0.6, to: null, act: null, carry: null, called: false, fade: 0 };
