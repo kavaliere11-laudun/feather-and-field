@@ -137,7 +137,7 @@ ok('a save changed outside (a Partridge coop never had): checked and flagged, th
 // farms from before the shelf (no shelfV): what they had come to on the level path kept, free
 const before = async (L, extra) => p.evaluate(([L, extra]) => { const f = window.__farm, g = f.game(), d = g.data;
   for (const k of ['sil_buff', 'sil_partridge']) { const c = d.coops.find(x => x.breed === k); if (c) { d.birds = d.birds.filter(b => b.coop !== c.id); d.coops = d.coops.filter(x => x !== c); } }
-  d.xp = [0, 0, 15, 45, 120, 230, 380, 580, 880, 1320, 1950, 2800, 3850, 5100, 6650, 8400, 10550, 13050, 16000, 19350, 23200, 27400, 32100][L] + 5; d.lvSeen = L; delete d.shelf; delete d.shelfV; delete d.road; delete d.roadNew; delete d.jobs; Object.assign(d, extra || {}); g.save(); }, [L, extra]);      // (a farm from before the shelf was on the road of 30 levels: its experience then, no `road`)
+  d.xp = [0, 0, 15, 45, 120, 230, 380, 580, 880, 1320, 1950, 2800, 3850, 5100, 6650, 8400, 10550, 13050, 16000, 19350, 23200, 27400, 32100][L] + 5; d.lvSeen = L; delete d.shelf; delete d.shelfV; delete d.road; delete d.roadNew; delete d.jobs; d.land = d.land.slice(0, Math.min(d.land.length, L)); Object.assign(d, extra || {});      // (no more fields than it could have had then) g.save(); }, [L, extra]);      // (a farm from before the shelf was on the road of 30 levels: its experience then, no `road`)
 await before(13); await reload(); s = await st();
 ok('a farm from before at (old) level 13: the Buff Silkies kept, waiting to be placed; unflagged', s.shelf === 'sil_buff' && /sil_buff/.test(s.waiting) && !/sil_partridge/.test(s.waiting) && !s.edited, s);
 await before(22); await reload(); s = await st();
