@@ -393,6 +393,7 @@
   .groom-glint.ok { color: #3c8f3a; font: 800 20px Nunito, sans-serif; text-shadow: 0 0 4px #fff, 0 0 4px #fff; }
   .groom-pic { position: relative; flex: 1 1 auto; min-height: 0; aspect-ratio: 1; max-width: 100%; touch-action: none; cursor: pointer; }
   .groom-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: drop-shadow(0 12px 9px rgba(90, 60, 10, 0.3)); pointer-events: none; }
+  .groom-live { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; } .groom-img.groom-under { visibility: hidden; }      /* (22 Nov 2026: her, drawn live over her picture: main.js groomLive) */
   .groom-fx { position: absolute; inset: 0; pointer-events: none; } .groom-fx > * { position: absolute; transform: translate(-50%, -50%); font-style: normal; }
   .groom-bub { border-radius: 50%; background: radial-gradient(circle at 30% 30%, #fff, rgba(255, 255, 255, 0.35) 60%, rgba(160, 210, 255, 0.5)); box-shadow: inset 0 0 0 1.5px rgba(255, 255, 255, 0.9); animation: grbub 0.25s ease-out; transition: opacity 0.35s, transform 0.35s; }
   .groom-bub.pop { opacity: 0; transform: translate(-50%, -50%) scale(1.6); }
@@ -876,6 +877,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1795346433"></script>
+<script src="app.js?v=1795356592"></script>
 </body>
 </html>
