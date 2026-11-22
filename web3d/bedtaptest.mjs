@@ -33,7 +33,7 @@ await tapBed(3); c = await card(); await p.screenshot({ path: OUT + '/bedtap_2_n
 ok('the next bed to unlock tapped: its own card, with its price to buy', c && c.beds === 0 && c.buy && /4/.test(c.title) && /400/.test(c.text), c);
 await p.evaluate(() => window.__farm.gameUI().close());
 await tapBed(8); c = await card(); await p.screenshot({ path: OUT + '/bedtap_3_locked.png' });
-ok('a bed further on tapped: its own card: its level and price, nothing to tap', c && c.beds === 0 && !c.buy && /9/.test(c.title) && /27/.test(c.text) && /5[,.\s  ]?000/.test(c.text), c);
+ok('a bed further on tapped: its own card: its level and price, nothing to tap', c && c.beds === 0 && !c.buy && /9/.test(c.title) && /43/.test(c.text) && /5[,.\s  ]?000/.test(c.text), c);
 await p.evaluate(() => window.__farm.gameUI().close());
 // the next bed bought from its card: the new bed's own card (to sow it), not the whole garden's (17 Nov 2026, Audrey: "Too busy")
 await tapBed(3); await p.tap('.gsheet:not([hidden]) [data-buybed]'); await run(0.5); c = await card(); await p.screenshot({ path: OUT + '/bedtap_5_bought.png' });
@@ -59,6 +59,6 @@ await p.evaluate(() => window.__farm.gameUI().close());
 const w = await p.evaluate(() => { const f = window.__farm; f.lookAt(-21, -31, 3.2); return null; }); await run(1);
 const at = await p.evaluate(() => window.__farm.toScreen(-19.9, 0.1, -32)); await p.touchscreen.tap(at[0], at[1]); await run(0.3);
 c = await card(); await p.screenshot({ path: OUT + '/bedtap_4_wheat2.png' });
-ok('the wild second wheat field tapped: its own card (level 12, 1,200 coins)', c && /12/.test(c.text) && /1[,.\s  ]?200/.test(c.text) && !/Sow|Semer/.test(c.text), c);
+ok('the wild second wheat field tapped: its own card (level 14, 1,200 coins)', c && /14/.test(c.text) && /1[,.\s  ]?200/.test(c.text) && !/Sow|Semer/.test(c.text), c);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? `FAILED: ${fails}` : 'ALL PASS'); await b.close(); process.exit(fails ? 1 : 0);
