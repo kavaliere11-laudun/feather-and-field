@@ -105,7 +105,7 @@ ok('a save changed outside (the Partridge Silkies at level 15 not had, the Buff 
 // a farm from before the new order (30 Oct 2026): at level 16 with Blue Silkies (they came at 15 then) and Black ones (8 then)
 await p.evaluate(() => { localStorage.removeItem('ff3d.farm'); sessionStorage.removeItem('__T'); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 }); await p.tap('.gsheet .gbtn'); await load();
-await p.evaluate(L16 => { const g = window.__farm.game(), d = g.data, c0 = d.coops[0]; d.xp = L16; d.lvSeen = 16; delete d.road; d.land = Array.from({ length: 16 }, (_, i) => i); d.guide = { step: 5, done: true };      // (on the road of 30 levels then: its experience at level 16 then, no `road`)
+await p.evaluate(L16 => { const g = window.__farm.game(), d = g.data, c0 = d.coops[0]; d.xp = L16; d.lvSeen = 16; delete d.road; delete d.jobs; d.land = Array.from({ length: 16 }, (_, i) => i); d.guide = { step: 5, done: true };      // (on the road of 30 levels then: its experience at level 16 then, no `road`)
   const R = d.birds.find(b => b.sex === 'r'), H = d.birds.find(b => b.sex === 'h');      // (birds as the game makes them, in those colours)
   const add = (breed, x) => { const id = 'c' + d.next++; d.coops.push({ ...c0, id, breed, x, eggs: 0, brood: null }); [R, H, H].forEach(t => d.birds.push({ ...JSON.parse(JSON.stringify(t)), id: 'b' + d.next++, name: 'Zed', breed, coop: id })); };
   add('sil_blue', -10); add('sil_black', -14); g.save(); }, 10550 + 5);

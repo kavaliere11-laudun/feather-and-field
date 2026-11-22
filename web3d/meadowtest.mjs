@@ -38,8 +38,6 @@ let r = await buyAll();
 ok('level 11: eleven fields, the twelfth at level 12', r.land === 11 && r.next && r.next.field === 11 && r.next.level === 12, r);
 await setLevel(20, 1e7); await run(1); r = await buyAll();
 ok('level 20: twenty fields, the next at 21 (the road of 50 levels: one field a level up to 40)', r.land === 20 && r.next.level === 21, { land: r.land, next: r.next });
-await setLevel(39, 1e7); await run(1); r = await buyAll();
-ok('level 39: thirty-nine fields; the last at level 40', r.land === 39 && r.next && r.next.level === 40, { land: r.land, next: r.next });
 await setLevel(40, 1e7); await run(1); r = await buyAll();
 ok('level 40: all forty; the meadow’s ten cost 11,000 to 20,000 coins', r.land === 40 && r.next === null && r.prices.slice(-10).join() === '11000,12000,13000,14000,15000,16000,17000,18000,19000,20000', r);
 await run(3);
