@@ -944,12 +944,13 @@ export class GameUI {
         side.append(btns);
       }
       c.append(pic, side); tiles.append(c); notes.append(m);
+      this.viewable(c, h, { pv: ['trio', S.breed], pic: 'book/' + S.breed + '.webp', name, words: this.t('egg_' + g.baseOf(S.breed)) + ' · ' + this.t('book_coop', { coop: g.coopName({ breed: S.breed, name: '' }) }), facts: [this.t('prev_trio')] });
     }
     b.append(tiles, notes, el('p', 'gnote gcenter gshelf-more', this.t('shelf_more')));
   }
   // the rare Silkie trios as the shop's tiles (23 Nov 2026, the shop's Chickens shelf): only where they can be had (Apple's
   // price in the app, or the preview), each its picture, its name and its price; the four together; once had: on the farm
-  rareTiles(b) {
+  rareTiles(b, h = {}) {
     const g = this.g, PAY = this.payOn(); if (!(IAP_DEMO || (PAY && PAY.price('trios')))) return;
     const pages = g.bookPages(), lines = TRIO_LINES.filter(l => pages.some(p => p.breed === l));
     if (!lines.length) return;
@@ -964,6 +965,7 @@ export class GameUI {
       else if (pr) { const bs = el('div', 'gtheme-b'), go = el('button', 'gbtn gsmallbtn gpay giap-adopt', pr); go.type = 'button'; go.dataset.adopt = line; go.setAttribute('aria-label', this.dt('adopt', { p: pr }));
         go.addEventListener('click', () => this.payFor('trio:' + line, { what: name, price: RARE_PRICE, done: () => this.thanksDemo(this.dt('thanks_rare', { breed: name })) })); bs.append(go); side.append(bs); }
       c.append(pic, side); tiles.append(c);
+      this.viewable(c, h, { pv: ['trio', line], pic: 'book/' + line + '.webp', name, words: this.t('egg_' + g.baseOf(line)) + ' · ' + this.t('book_coop', { coop: g.coopName({ breed: line, name: '' }) }), facts: [this.t('prev_trio')] });
     }
     b.append(tiles);
     if (lines.filter(l => !pages.find(p => p.breed === l).found).length >= 2) {
@@ -1245,9 +1247,9 @@ export class GameUI {
     }
     wrap.append(rail, b); body.append(wrap);
     // (a tile's words: shown when its picture is tapped, one at a time)
-    b.addEventListener('click', e => { const pic = e.target.closest('.gpage > .gpic'); if (!pic || pic.classList.contains('gprev-open')) return; const card = pic.parentNode, was = card.classList.contains('gsay'); for (const x of b.querySelectorAll('.gsay')) x.classList.remove('gsay'); card.classList.toggle('gsay', !was); });
+    b.addEventListener('click', e => { const pic = e.target.closest('.gpage > .gpic'); if (!pic || pic.closest('.gviewable')) return; const card = pic.parentNode, was = card.classList.contains('gsay'); for (const x of b.querySelectorAll('.gsay')) x.classList.remove('gsay'); card.classList.toggle('gsay', !was); });
     if (tab === 'coins' && (IAP_DEMO || this.payOn())) { this.coinCards(b); return; }
-    if (tab === 'hens' && g.level >= PAY_LEVEL) { this.shelfPages(b, h); this.rareTiles(b); return; }
+    if (tab === 'hens' && g.level >= PAY_LEVEL) { this.shelfPages(b, h); this.rareTiles(b, h); return; }
     if (tab === 'coops' && h.coops) { this.coopTiles(b, h); return; }
     if (tab === 'outfits') { this.outfitCards(b, h, fmt); return; }
     if (tab === 'seasons') { this.dressCards(b, h, fmt); return; }
@@ -1271,6 +1273,7 @@ export class GameUI {
         info.append(go);
       }
       card.append(pic, info); b.append(card);
+      this.viewable(card, h, { pv: ['decor', id], pic: 'decor/' + id + '.webp', name: g.decorName(id), words: this.t('decl_' + id), facts: own ? [] : ['⭐ ' + this.t('dec_xp', { xp: decorXp(id) })] });
     }
   }
   // the shop's Coops shelf (23 Nov 2026, Audrey: "we need to add the coops", then, of it: "Only the seasonal coops should be in
@@ -1296,14 +1299,14 @@ export class GameUI {
     for (const S of list) {
       const name = g.themeName(S.t, S.b), card = el('div', 'gcard gpage gdec gshopcoop' + (!S.coops.length || !S.season ? ' glock' : '') + (S.owned ? ' gdec-own' : '')), info = el('div', 'gpage-i');
       card.dataset.coop = S.key;
-      const pic = this.picOf('themes/' + S.key + '.webp' + (this.o.bust || ''), false); pic.classList.add('gprev-open'); pic.setAttribute('role', 'button'); pic.setAttribute('aria-label', name + ' · ' + this.t('prev_360'));
-      // (23 Nov 2026, Audrey: "add something to let the user know the 360 view is available": a "360° view" pill on its picture,
-      // and the whole tile opens it, its buttons apart)
-      const badge = el('span', 'gprev-badge'); badge.innerHTML = PREV_360_SVG; badge.append(document.createTextNode(this.t('prev_360'))); pic.append(badge);
-      card.addEventListener('click', e => { if (!e.target.closest('button')) this.coopView(h, S); });
+      const pic = this.picOf('themes/' + S.key + '.webp' + (this.o.bust || ''), false); pic.setAttribute('aria-label', name + ' · ' + this.t('prev_360'));
       info.append(el('span', 'glabel', g.bookName(S.b)), el('span', 'gcard-t', name));
       this.coopState(info, h, S, PAY, true);
       card.append(pic, info); b.append(card);
+      // (23 Nov 2026, Audrey: "add something to let the user know the 360 view is available": a "360° view" pill on its picture,
+      // and the whole tile opens it, its buttons apart)
+      if (h.preview) { card.classList.add('gviewable'); pic.classList.add('gprev-open'); const badge = el('span', 'gprev-badge'); badge.innerHTML = PREV_360_SVG; badge.append(document.createTextNode(this.t('prev_360'))); pic.append(badge);
+        card.addEventListener('click', e => { if (!e.target.closest('button')) this.coopView(h, S, card); }); }
     }
   }
   // what a seasonal building's tile (or its own page) says or offers: yours (and Move in, none of its coops living there);
@@ -1324,22 +1327,44 @@ export class GameUI {
     if (pr) { const pb = el('button', 'gbtn gsmallbtn gpay', pr); pb.type = 'button'; pb.dataset.themego = 'pay'; pb.setAttribute('aria-label', this.t('pay_buy', { p: pr })); pb.addEventListener('click', () => h.theme(target.id, S.t, 'pay')); row.append(pb); }
     box.append(row);
   }
-  // a seasonal building's own page in the shop: the building in 3D to turn all the way round (main.js coopPreview; its picture
-  // until it's drawn, or where it can't be), its words, what comes with it, its buttons; back to the shelf
-  coopView(h, S) {
-    const g = this.g, main = this.body.querySelector('.gshop-main'); if (!main) return;
-    this.dropPreview(); main.scrollTop = 0; main.replaceChildren(); main.classList.add('gprev-on');
-    const back = el('button', 'gshop-back', '‹ ' + this.t('shop_coops')); back.type = 'button'; back.addEventListener('click', () => this.shopSheet(h, 'coops'));
-    const page = el('div', 'gprev'), stage = el('div', 'gprev-stage'), img = el('img'), info = el('div', 'gprev-i'), name = g.themeName(S.t, S.b);
-    img.alt = name; img.decoding = 'async'; img.src = 'themes/' + S.key + '.webp' + (this.o.bust || ''); stage.append(img);
+  // a thing in the shop with its 3D page (23 Nov 2026, Audrey: "This 360 view works very well. Offer it for all items ... We
+  // should have the same preview in big when you click for all items"): a "360° view" pill on its picture, and the tile (its
+  // buttons apart) opens its page. d: pv [kind, id, t] for main.js shopPreview, pic, name, label, words, facts, acts (what
+  // offers it: built there, or else the tile's own status and buttons moved onto the page)
+  viewable(card, h, d) {
+    if (!h || !h.preview) return;
+    const pic = card.querySelector(':scope > .gpic, :scope > .gtheme-pic'); if (!pic) return;
+    card.classList.add('gviewable'); pic.classList.add('gprev-open');
+    const badge = el('span', 'gprev-badge'); badge.innerHTML = PREV_360_SVG; badge.append(document.createTextNode(this.t('prev_360'))); pic.append(badge);
+    card.addEventListener('click', e => { const bt = e.target.closest('button'); if (bt && !bt.classList.contains('gtheme-pic')) return; e.stopPropagation(); this.itemView(h, d, card); });
+  }
+  coopView(h, S, card) {
+    const g = this.g, facts = [this.t('prev_garden'), this.t('prev_keep')];
+    if (S.season && !S.owned) facts.push('📅 ' + this.t('coops_until', { d: this.seasonDay(THEMES[S.t].to) }));
+    this.itemView(h, { pv: ['theme', S.b, S.t], pic: 'themes/' + S.key + '.webp', label: this.t('theme_' + S.t + '_l') + ' · ' + g.bookName(S.b), name: g.themeName(S.t, S.b), words: this.t('themel_' + S.key), facts,
+      acts: box => this.coopState(box, h, S, this.payOn(), false) }, card);
+  }
+  // its own page in the shop: the thing in 3D to turn all the way round (main.js shopPreview; its picture until it's drawn,
+  // or where it can't be), its name, its buttons, its words, what comes with it; back to its shelf where it was
+  itemView(h, d, card) {
+    const main = this.body.querySelector('.gshop-main'); if (!main) return;
+    const tab = this.shopTab, y = main.scrollTop;
+    this.dropPreview(); main.replaceChildren(); main.scrollTop = 0; this.body.scrollTop = 0; main.classList.add('gprev-on');
+    const tabName = (this.body.querySelector('.gshop-tabs .gchip.on') || {}).textContent || '';
+    const back = el('button', 'gshop-back', '‹ ' + tabName.replace(/^\W+/u, '').trim()); back.type = 'button';
+    back.addEventListener('click', () => { this.shopSheet(h, tab); const m = this.body.querySelector('.gshop-main'); if (m) m.scrollTop = y; });
+    const page = el('div', 'gprev'), stage = el('div', 'gprev-stage'), img = el('img'), info = el('div', 'gprev-i');
+    img.alt = d.name; img.decoding = 'async'; if (d.pic) img.src = d.pic.includes('?') || !this.o.bust ? d.pic : d.pic + this.o.bust; stage.append(img);
     const tip = el('span', 'gprev-tip', '↻ ' + this.t('prev_turn')), hand = el('span', 'gprev-hand', '👆'); hand.setAttribute('aria-hidden', 'true'); stage.append(tip, hand);      // (a finger swiping over it until it's turned once: it can be turned)
-    const acts = el('div', 'gprev-b'); this.coopState(acts, h, S, this.payOn(), false);      // (its buttons right under its name: in sight on a phone on its side)
-    info.append(el('span', 'glabel', this.t('theme_' + S.t + '_l') + ' · ' + g.bookName(S.b)), el('h3', 'gprev-n', name), acts, el('p', 'gprev-l', this.t('themel_' + S.key)));
-    const facts = el('ul', 'gprev-f'); for (const k of ['prev_garden', 'prev_keep']) facts.append(el('li', null, this.t(k)));
-    if (S.season && !S.owned) facts.append(el('li', null, '📅 ' + this.t('coops_until', { d: this.seasonDay(THEMES[S.t].to) })));
-    info.append(facts);
+    const acts = el('div', 'gprev-b');      // (its buttons right under its name: in sight on a phone on its side)
+    if (typeof d.acts === 'function') d.acts(acts);
+    else if (card) for (const n of [...card.querySelectorAll(':scope > .gpage-i > *, :scope > .gcoop-ts > *')]) if (!n.matches('.gcard-t, .glabel, .gdec-l, .gdec-p, .gtheme-n')) acts.append(n);      // (the tile's own: they keep their doings)
+    if (d.label) info.append(el('span', 'glabel', d.label));
+    info.append(el('h3', 'gprev-n', d.name), acts);
+    if (d.words) info.append(el('p', 'gprev-l', d.words));
+    if (d.facts && d.facts.length) { const f = el('ul', 'gprev-f'); for (const x of d.facts) f.append(el('li', null, x)); info.append(f); }
     page.append(stage, info); main.append(back, page);
-    const pv = h.preview ? h.preview(S.b, S.t) : null;
+    const pv = h.preview ? h.preview(...d.pv) : null;
     if (pv) {
       this.preview = pv; pv.el.classList.add('gprev-cv'); stage.append(pv.el);
       pv.start(() => { stage.classList.add('gprev-live'); }, () => { tip.classList.add('gone'); stage.classList.add('gprev-touched'); });
@@ -1440,6 +1465,7 @@ export class GameUI {
         info.append(go);
       }
       card.append(pic, info); b.append(card);
+      this.viewable(card, h, { pv: ['animal', id], pic: 'decor/' + id + '.webp', name: g.animalName(id), words: this.t('anil_' + id), facts: own ? [] : ['⭐ ' + this.t('dec_xp', { xp: animalXp(id) })] });
     }
   }
   // the farmer's outfits (the shop's third shelf): each with its picture (the 2D game's, for the farm's farmer), what it is,
@@ -1464,6 +1490,7 @@ export class GameUI {
         info.append(go);
       }
       card.append(pic, info); b.append(card);
+      this.viewable(card, h, { pv: ['outfit', id], pic: pic.querySelector('img') && pic.querySelector('img').getAttribute('src'), name: g.outfitName(id), words: this.t('ofd_' + id), facts: own ? [] : ['⭐ ' + this.t('dec_xp', { xp: outfitXp(id) })] });
     }
   }
   // the seasons' dresses for the coops (the shop's fourth shelf, release 4): each with its picture, what it is, and Buy
@@ -1486,6 +1513,7 @@ export class GameUI {
         info.append(go);
       }
       card.append(pic, info); b.append(card);
+      this.viewable(card, h, { pv: ['dress', id], pic: 'decor/' + id + '.webp', name: cap(g.dressName(id)), words: this.t('dressl_' + id) });
     }
   }
   // a time to wait, in hours and minutes ("3 h 59 min", "25 min")

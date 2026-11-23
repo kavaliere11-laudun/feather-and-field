@@ -67,17 +67,50 @@ for (const [k, sel] of [['decor', '.gdec'], ['animals', '.gani'], ['outfits', '.
   ok(`${k}: what's to come in colour (its picture, no dark shape), "🔒" and its level, no button`, cards.length > 0 && cards.every(c => c.img && !c.sil && /🔒/.test(c.lv) && /\d/.test(c.lv) && !c.btn), cards);
   if (k === 'decor') await shot('3_decor');
 }
-// the shop rethought: the shelves down the left, the tiles beside them, three a row; their words when the picture is tapped
+// the shop rethought: the shelves down the left, the tiles beside them, three a row
 await setLevel(9); await openTab('decor');
 const lay = await p.evaluate(() => { const S = document.querySelector('.gsheet:not([hidden])'), r = e => e.getBoundingClientRect(), rail = r(S.querySelector('.gshop-rail')), main = r(S.querySelector('.gshop-main')), sh = r(S);
   const tiles = [...S.querySelectorAll('.gshop-main > .gpage')].slice(0, 3).map(t => Math.round(r(t).top)), tabs = [...S.querySelectorAll('.gshop-tabs .gchip')].map(c => r(c));
   const words = [...S.querySelectorAll('.gshop-main > .gpage .gdec-l')].filter(e => e.offsetParent !== null).length;
   return { left: rail.right <= main.left, tabsIn: tabs.every(t => t.bottom <= sh.bottom - 4 && t.left >= sh.left), row3: tiles.length === 3 && tiles.every(t => t === tiles[0]), pill: !!S.querySelector('.gshop-rail .gshop-c'), words }; });
 ok('sideways: the shelves down the left, all in sight, the coins at their top; the tiles beside them, three a row; no words yet', lay.left && lay.tabsIn && lay.row3 && lay.pill && lay.words === 0, lay);
-await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gshop-main > .gpage > .gpic').click()); await p.waitForTimeout(300);
-let say = await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gshop-main > .gpage')].map(c => c.classList.contains('gsay') && c.querySelector('.gdec-l').offsetParent !== null));
-ok('a picture tapped: its words, that tile only', say[0] === true && say.slice(1).every(x => !x), say);
-await shot('4_words');
+// every thing with its 3D page (23 Nov 2026, Audrey: "Offer it for all items ... For the chickens if you can try to make them
+// alive in the 360 preview, moves needs to be subtle and natural please. We should have the same preview in big when you click
+// for all items"): a "360° view" pill on each tile of every shelf but the coins; each tile's picture whole (not cut)
+const all = {};
+for (const k of ['hens', 'decor', 'animals', 'outfits', 'seasons']) {
+  await setLevel(30); await openTab(k);
+  all[k] = await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gshop-main .gviewable')].map(c => { const pic = c.querySelector('.gprev-open'), im = pic.querySelector('img'), a = pic.getBoundingClientRect(), b = im ? im.getBoundingClientRect() : a;
+    return { badge: /360°/.test((pic.querySelector('.gprev-badge') || {}).textContent || ''), whole: b.left >= a.left - 1 && b.right <= a.right + 1 && b.top >= a.top - 1 && b.bottom <= a.bottom + 1 }; }));
+}
+ok('every shelf\'s things (the chickens, decorations, animals, outfits, seasons): a "360° view" pill, their pictures whole', Object.values(all).every(l => l.length > 0 && l.every(x => x.badge && x.whole)), Object.fromEntries(Object.entries(all).map(([k, l]) => [k, l.length + ' ' + l.filter(x => x.badge && x.whole).length])));
+// a decoration's page: the bird bath in 3D, its words, its buy button moved there; back: the shelf as it was
+await setLevel(9); await openTab('decor');
+await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gpage[data-decor="birdbath"] .gcard-t').click());
+await p.waitForFunction(() => { const v = window.__farm.gameUI().preview; return v && v.state().frames > 0; }, null, { timeout: 60000 }).catch(() => {});
+const dp = await p.evaluate(() => { const S = document.querySelector('.gsheet:not([hidden])'), v = window.__farm.gameUI().preview; return { pv: v ? v.state() : null, name: (S.querySelector('.gprev-n') || {}).textContent || '', words: (S.querySelector('.gprev-l') || {}).textContent || '', btn: (S.querySelector('.gprev-b .gbtn') || {}).textContent || '', back: (S.querySelector('.gshop-back') || {}).textContent || '' }; });
+ok('a decoration\'s tile tapped: its page, the bird bath in 3D, its words, its buy button there, "‹ Decorations"', dp.pv && dp.pv.frames > 0 && !dp.pv.live && (fr ? /Bain d/ : /Bird bath/).test(dp.name) && dp.words.length > 10 && /800/.test(dp.btn) && (fr ? /Décorations/ : /Decorations/).test(dp.back), dp);
+await shot('4_decor_page');
+await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gprev-b .gbtn').click()); await p.waitForTimeout(1200);
+const bb = await p.evaluate(() => ({ open: window.__farm.gameUI().kind || null, moving: JSON.stringify(window.__farm.deco.state()), pv: !!window.__farm.gameUI().preview, cv: document.querySelectorAll('canvas.gprev-cv').length }));
+ok('…its button there does as on the tile: the shop closed to place it, its 3D let go', !bb.open && /birdbath/.test(bb.moving) && !bb.pv && bb.cv === 0, bb);
+await p.evaluate(() => window.__farm.deco.cancel()); await p.waitForTimeout(400);
+// the chickens: a breed's trio alive, quietly (the view never moves by itself)
+await setLevel(30); await openTab('hens');
+await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gshelf-t[data-shelf="coc"] .gprev-open').click());
+await p.waitForFunction(() => { const v = window.__farm.gameUI().preview; return v && v.state().frames > 0; }, null, { timeout: 60000 }).catch(() => {});
+const tr0 = await p.evaluate(() => window.__farm.gameUI().preview.state()); await p.waitForTimeout(2500);
+const tr1 = await p.evaluate(() => window.__farm.gameUI().preview.state());
+ok('a breed\'s tile: its trio alive (drawn on by itself), the view still', tr0.live && tr1.frames > tr0.frames && tr1.yaw === tr0.yaw && tr1.zoom === tr0.zoom && tr1.el === tr0.el, { tr0, tr1 });
+await shot('4b_trio');
+// the geese, Biscuit, the farmer in an outfit, the Christmas dress: each its page in 3D
+for (const [k, sel, live] of [['animals', '[data-animal="geese"]', true], ['animals', '[data-animal="dog"]', true], ['outfits', '[data-outfit="rodeo"]', true], ['seasons', '[data-dress="xmas"]', false]]) {
+  await setLevel(30); await openTab(k);
+  await p.evaluate(sel => document.querySelector('.gsheet:not([hidden]) ' + sel + ' .gprev-open').click(), sel);
+  const ok3 = await p.waitForFunction(() => { const v = window.__farm.gameUI().preview; return v && v.state().frames > 0; }, null, { timeout: 60000 }).then(() => true, () => false);
+  const st = await p.evaluate(() => window.__farm.gameUI().preview.state());
+  ok(`${k} ${sel}: its page drawn in 3D` + (live ? ', alive' : ''), ok3 && st.parts > 0 && st.live === live, st);
+}
 // the Coops shelf: the season's buildings only (23 Nov 2026, Audrey: "Only the seasonal coops should be in there and when you
 // click on it you should have a bigger picture ideally 3D/ 360 and some copy. Review the CTA ... get rid of the progression bar")
 await setLevel(9); await openTab('coops');

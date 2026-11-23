@@ -7841,33 +7841,129 @@ function groomLive(gb, img) {
     // (tests and films: her clock stepped by hand)
     manual: on => { L.manual = !!on; }, step: dt => { step(dt); draw(); }, state: () => ({ on: L.on, frames: L.frames, yaw: +D.yaw.toFixed(3), tilt: +D.tilt.toFixed(3), blink: D.blink > 0, ruffle: D.rfT > 0, wag: D.wagT > 0, proud: +D.proud.toFixed(2), hop: D.hopT >= 0, hopped: !!D.hopped, tool: D.tool }) };
 }
-// ---- a seasonal building in the shop, in 3D (23 Nov 2026, Audrey of the shop's Coops shelf: "when you click on it you should
-// have a bigger picture ideally 3D/ 360 and some copy"): the building as a coop of that breed wears it, with its Deluxe
-// garden, its snow and its toys, made from the farm's own models and drawn in a little canvas of its own (its own drawing
-// context, as the groomed hen), at midday whatever the farm's hour (the farm's own light left as it is), on a round of
-// lawn. Dragged sideways it turns all the way round, up and down it tilts, pinched (or scrolled) it comes closer; it never
-// moves by itself, and is drawn only when it's moved. No second drawing context to be had: null (its picture instead)
+// ---- the shop's things in 3D (23 Nov 2026, Audrey of the shop's Coops shelf: "when you click on it you should have a bigger
+// picture ideally 3D/ 360 and some copy"; then "This 360 view works very well. Offer it for all items ... For the chickens if
+// you can try to make them alive in the 360 preview, moves needs to be subtle and natural please"): each thing made from the
+// farm's own models and drawn in a little canvas of its own (its own drawing context, as the groomed hen), at midday whatever
+// the farm's hour (the farm's own light left as it is), on a round of lawn. Dragged sideways it turns all the way round, up
+// and down it tilts, pinched (or scrolled) it comes closer; the view never moves by itself. What's alive in it (a breed's
+// trio, the geese, Biscuit, the farmer in an outfit, the windmill's sails) goes on quietly; else it's drawn only when moved.
+// kind: theme (a seasonal building: id the breed, t the theme), dress (the Christmas dress on her first coop), decor,
+// animal (geese, dog), outfit, trio (a breed's or a Silkie colour's rooster and two hens). No second drawing context to be
+// had, or nothing to show: null (its picture instead)
 const DRAG_TURN = 0.011, DRAG_TILT = 0.007;
-function coopPreview(breed, theme = 'winter') {
-  const base = baseBreed(breed);
-  if (!parts['theme_' + theme + '_' + base] || !hasLooks(base)) return null;
-  let R2 = null;
-  try { R2 = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', stencil: false }); if (!R2.getContext()) throw new Error('no context'); }
-  catch (e) { if (R2) R2.dispose(); return null; }
-  R2.outputColorSpace = renderer.outputColorSpace; R2.toneMapping = renderer.toneMapping; R2.toneMappingExposure = renderer.toneMappingExposure;
-  R2.shadowMap.enabled = true; R2.shadowMap.type = THREE.PCFSoftShadowMap;
-  const cv = R2.domElement, sc = new THREE.Scene(), G = new THREE.Group(); sc.add(G);
-  cv.style.touchAction = 'none';
-  // the building, its garden and its toys (a coop of that breed at Deluxe wearing it; nothing of it on the farm)
-  const plot = { kind: 'preview', index: 0, breed: base, line: base, col: null, tier: 4, deluxe: true, rustic: false, theme, dress: null, frame: G, group: G, birds: [], centre: new THREE.Vector3() };
-  plot.pen = tierPen(base, 4);
+// a bird of the shop's trios alive, quietly (Audrey: "moves needs to be subtle and natural"): she stays where she stands and
+// looks about in little darts of the head, now and then pecks at the grass (once or a few times), scratches once (a hen),
+// shakes her feathers, wags her tail, blinks; a rooster stands a little prouder. No flapping, no crowing, no sound
+function quietBird(B, r) {
+  B.chooseAct = () => null;      // (none of the farm's own: they'd flap and crow)
+  const hen = B.kind !== 'rooster', D = { yaw: (r() - 0.5) * 0.6, tilt: 0, gYaw: 0, gTilt: 0, lookIn: 0.4 + r() * 1.8, peckIn: 2 + r() * 5, peckT: -1, n: 1,
+    kickIn: hen ? 7 + r() * 9 : 1e9, kickT: -1, leg: 0, rfIn: 14 + r() * 16, rfT: -1, wagIn: 4 + r() * 7, wagT: -1, blinkIn: 1 + r() * 3, blink: 0 };
+  B.posterPose = (A, dt) => {
+    if ((D.lookIn -= dt) <= 0) { D.lookIn = 1.1 + r() * 2.6; const x = r(); D.gYaw = x < 0.4 ? (r() - 0.5) * 0.5 : (r() - 0.5) * 1.5; D.gTilt = (r() - 0.45) * 0.4; }
+    const k = Math.min(1, dt * 10); D.yaw += (D.gYaw - D.yaw) * k; D.tilt += (D.gTilt - D.tilt) * k;      // (a hen's head: quick little darts, then held still)
+    let peck = 0, kick = 0, ruffle = 0;
+    if (D.peckT < 0 && D.kickT < 0 && (D.peckIn -= dt) <= 0) { D.peckT = 0; D.n = 1 + Math.floor(r() * 3); D.peckIn = 3 + r() * 6; }
+    if (D.peckT >= 0) { D.peckT += dt; const u = D.peckT / 0.5; if (u >= D.n) D.peckT = -1; else peck = Math.pow(Math.sin(Math.PI * (u % 1)), 1.5); }
+    if (D.kickT < 0 && D.peckT < 0 && (D.kickIn -= dt) <= 0) { D.kickT = 0; D.leg = r() < 0.5 ? 0 : 1; D.kickIn = 8 + r() * 10; }
+    if (D.kickT >= 0) { D.kickT += dt; if (D.kickT > 1.5) D.kickT = -1; else if (D.kickT < 0.9) { kick = 1; A.kickLeg = D.kickT < 0.45 ? D.leg : 1 - D.leg; A.kickT = D.kickT % 0.45; } else peck = Math.sin(Math.PI * (D.kickT - 0.9) / 0.6); }
+    if (D.rfT < 0 && (D.rfIn -= dt) <= 0) { D.rfT = 0; D.rfIn = 16 + r() * 18; }
+    if (D.rfT >= 0) { D.rfT += dt; if (D.rfT > 0.7) D.rfT = -1; else ruffle = Math.sin(Math.PI * D.rfT / 0.7) * 0.8; }
+    if (D.wagT < 0 && (D.wagIn -= dt) <= 0) { D.wagT = 0; D.wagIn = 5 + r() * 8; }
+    if (D.wagT >= 0 && (D.wagT += dt) > 0.9) D.wagT = -1;
+    if (D.blink > 0) { if ((D.blink -= dt) <= 0) B.rig.sleepy(false); }
+    else if ((D.blinkIn -= dt) <= 0) { D.blinkIn = 2 + r() * 4; D.blink = 0.12; B.rig.sleepy(true); }
+    Object.assign(A, { walk: 0, peck, sit: 0, kick, flap: 0, crow: 0, ruffle, hopT: -1, wag: D.wagT >= 0 ? 1 : 0, turn: 0, sing: 0, cluck: 0, kawk: 0, brood: 0, duck: 0, stretch: 0, sleep: 0, up: 0,
+      proud: hen ? 0.1 : 0.45, lookYaw: peck > 0.1 ? D.yaw * 0.3 : D.yaw, lookTilt: peck > 0.1 ? 0 : D.tilt });
+  };
+}
+// what each kind of thing is made of (put in G, the preview's own group, its front looking down +z); live: its clock
+const SHOP_STAGES = {
+  theme(G, base, t) { const st = stageCoop(G, { breed: base, line: base, tier: 4, theme: t || 'winter', dress: null }); return st && { ...st, zoom: 0.8, low: true }; },
+  dress(G, id) {      // (the dress on her first coop as it is now: its breed, its look)
+    const c = (GAME_MODE && game.data.coops && game.data.coops[0]) || { breed: 'rir', tier: 2 };
+    const st = stageCoop(G, { breed: baseBreed(c.breed), line: c.breed, tier: c.tier || 0, theme: null, dress: id }); return st && { ...st, zoom: 0.8, low: true };
+  },
+  decor(G, id) {
+    if (!parts[id]) return null;
+    for (const m of meshesOf(parts[id])) { const k = new THREE.Mesh(m.geometry, m.material); k.matrixAutoUpdate = false; k.matrix.copy(m.matrixWorld); k.castShadow = k.receiveShadow = true; G.add(k); }
+    if (id === 'windmill' && parts.sails && DECOR_INFO.hub) {      // (its sails turning slowly, as on the farm)
+      const w = new THREE.Group(), s = part('sails'); w.add(s); w.position.fromArray(DECOR_INFO.hub); s.traverse(o => { if (o.isMesh) o.castShadow = o.receiveShadow = true; }); G.add(w);
+      return { tick: dt => { w.rotation.z += dt * 0.45; } };
+    }
+    return {};
+  },
+  animal(G, id, t, r) {
+    if (id === 'geese') {      // (Gertrude and Hector side by side, grazing, preening, looking about, a waggle of the tail now and then)
+      const out = [];
+      for (const [kind, x, z, h] of [['embden', -0.42, 0.12, 0.55], ['toulouse', 0.4, -0.18, -0.35]]) {
+        const g = new Goose(G, kind, r); g.pos.set(x, 0, z); g.heading = h; g.root.rotation.y = h; out.push(g);
+        const D = { t: 0, next: 1 + r() * 3, what: 'look', left: 2, yaw: 0 };
+        g.task = (b, dt) => {
+          const A = b.A; if ((D.left -= dt) <= 0) { const x2 = r(); D.what = x2 < 0.38 ? 'graze' : x2 < 0.55 ? 'preen' : x2 < 0.7 ? 'wag' : 'look'; D.left = D.what === 'wag' ? 0.9 : 2 + r() * 3; D.yaw = (r() - 0.5) * 1.2; }
+          A.grazeGoal = D.what === 'graze' ? 1 : 0; A.preenGoal = D.what === 'preen' ? 1 : 0; A.wagGoal = D.what === 'wag' ? 1 : 0; A.lookYawGoal = D.what === 'look' ? D.yaw : 0; A.upGoal = D.what === 'look' ? 0.25 : 0;
+          return false;
+        };
+      }
+      return { tick: dt => { for (const g of out) { g.update(dt); g.root.rotation.y = g.heading; } }, fur: true, yaw: -0.4, el: 0.36, dispose: () => { for (const g of out) g.root.removeFromParent(); } };
+    }
+    if (id === 'dog') {      // (his kennel, his name over its door, and Biscuit sitting by it, tail going)
+      const st = SHOP_STAGES.decor(G, 'kennel') || {}, board = nameBoard(), [bx, by] = KENNEL.board;
+      board.mesh.position.set(bx + 0.003, by, 0); board.mesh.rotation.y = Math.PI / 2; G.add(board.mesh); board.draw(dogName);
+      if (!DOG_JOINTS) return { yaw: 0.95, el: 0.4, dispose: () => board.mesh.removeFromParent() };      // (seen from its door's side: the door looks along +x)
+      const dog = new PosterDog(G, 1.02, -0.28, 1.0, DOG_JOINTS, r, dogName); dog.pose = 'sit';
+      return { tick: dt => dog.update(dt), fur: true, yaw: 0.95, el: 0.4, dispose: () => { board.mesh.removeFromParent(); dog.group.removeFromParent(); } };
+    }
+    return null;
+  },
+  outfit(G, id, t, r) {      // (the farmer, Arthur or Rosie as the player chose, in it, standing easy, looking about)
+    const f = new Farmer(G, FARMER_LOOK === 'f' ? 'f' : 'm', nightGrade, r); f.root.rotation.y = 0;
+    const L = { at: 0, look: 0, gl: 0 };
+    f.want.anim = (P, F, tt) => { if ((L.at -= 1 / 30) <= 0) { L.at = 2 + r() * 3; L.gl = (r() - 0.5) * 1.2; } L.look += (L.gl - L.look) * 0.08; F.look = [L.look * 0.8, 0.05]; P.head[2] += L.look * 10; };
+    const ready = id && id !== 'classic' ? loadOutfit(id, loadGLB, loadJSON).then(() => f.wear(id)).catch(() => null) : Promise.resolve(f.wear(null));
+    f.rig.mesh.castShadow = true;
+    return { tick: dt => f.update(dt), ready, yaw: -0.3, el: 0.14, dispose: () => f.root.removeFromParent() };
+  },
+  trio(G, line, t, r) {      // (a rooster at the back, his two hens in front, each in her own little patch)
+    const base = baseBreed(line), col = base === 'sil' ? silColour(line) || 'white' : lineColour(line);
+    const plot = { kind: 'lineup', frame: G, birds: [], centre: new THREE.Vector3() };
+    for (const [kind, x, z, h] of [['rooster', 0.12, -0.42, -0.1], ['hen', -0.5, 0.1, 0.25], ['hen', 0.42, 0.3, -0.7]]) {      // (spread so that, seen as the page opens, none hides another)
+      const B = new Bird(plot, base, kind, col, [x, 0, z], h, r); B.stay = true; plot.birds.push(B);
+      for (const m of [B.rig.mesh, B.rig.lo]) if (m) { m.visible = m === B.rig.mesh; m.castShadow = true; }
+      quietBird(B, r);
+    }
+    for (const B of plot.birds) B.update(1 / 30);
+    return { tick: dt => { for (const B of plot.birds) { const p = B.root.position.clone(), y = B.root.rotation.y; B.update(dt); B.root.position.copy(p); B.root.rotation.y = y; } }, fur: true, yaw: -0.35, el: 0.34, zoom: 0.82,
+      dispose: () => { for (const B of plot.birds) { try { B.rig.sleepy(false); } catch (e) { /* */ } B.root.removeFromParent(); if (B.rig && B.rig.dispose) B.rig.dispose(); } } };
+  },
+};
+// a coop as a preview shows it (a seasonal building with its Deluxe garden, snow and toys; or a coop in its Christmas dress)
+function stageCoop(G, o) {
+  const base = o.breed; if (!hasLooks(base)) return null;
+  if (o.theme && !parts['theme_' + o.theme + '_' + base]) return null;
+  const plot = { kind: 'preview', index: 0, breed: base, line: o.line, col: lineColour(o.line), tier: o.tier, deluxe: o.tier >= 4, rustic: o.tier === 0, theme: o.theme, dress: o.dress, frame: G, group: G, birds: [], centre: new THREE.Vector3() };
+  const L0 = coopLook(plot); plot.pen = dressedPen(plot, L0.penT >= 0 ? tierPen(base, L0.penT) : PEN);
   for (const [name, M] of coopParts(plot)) for (const m of meshesOf(parts[name])) {
     const k = new THREE.Mesh(m.geometry, m.material); k.matrixAutoUpdate = false; k.matrix.copy(M).multiply(m.matrixWorld); k.castShadow = k.receiveShadow = true; G.add(k);
   }
-  const L = coopLook(plot);
-  try { if (penOf(plot).play && parts.swing_seat) { const tr = winterGarden(L.garden).treat; addToys(plot, penOf(plot).play, part, tr && parts[tr] ? tr : 'cabbage'); if (theme === 'winter') addWinter(plot, L.garden, part); } } catch (e) { /* (the building alone) */ }
+  try { if (penOf(plot).play && parts.swing_seat) { const tr = winterGarden(o.theme === 'winter' ? L0.garden : null).treat; addToys(plot, penOf(plot).play, part, tr && parts[tr] ? tr : 'cabbage'); if (o.theme === 'winter') addWinter(plot, L0.garden, part); } } catch (e) { /* (the building alone) */ }
+  return { dispose: () => { try { removeWinter(plot); } catch (e) { /* */ } } };
+}
+function shopPreview(kind, id, t) {
+  const make = SHOP_STAGES[kind]; if (!make) return null;
+  let R2 = null;
+  try { R2 = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', stencil: false }); if (!R2.getContext()) throw new Error('no context'); }
+  catch (e) { if (R2) R2.dispose(); return null; }
+  const cv = R2.domElement, sc = new THREE.Scene(), G = new THREE.Group(); sc.add(G);
+  let stage = null;
+  try { stage = make(G, id, t, rng(29)); } catch (e) { console.warn('preview', kind, id, e); stage = null; }
+  if (!stage) { R2.dispose(); try { R2.forceContextLoss(); } catch (e) { /* */ } return null; }
+  R2.outputColorSpace = renderer.outputColorSpace; R2.toneMapping = renderer.toneMapping; R2.toneMappingExposure = renderer.toneMappingExposure;
+  R2.shadowMap.enabled = true; R2.shadowMap.type = THREE.PCFSoftShadowMap;
+  cv.style.touchAction = 'none';
+  if (stage.tick) stage.tick(1 / 30);
   G.updateMatrixWorld(true);
-  const box = new THREE.Box3().setFromObject(G), mid = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3()), R = Math.max(1, Math.hypot(size.x, size.z) / 2);
+  const box = new THREE.Box3().setFromObject(G), mid = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3()), R = Math.max(0.35, Math.hypot(size.x, size.z) / 2);
   // a round of lawn under it, fading into the page's cream; the page's own soft background behind
   const lawnCv = document.createElement('canvas'); lawnCv.width = lawnCv.height = 256;
   { const g = lawnCv.getContext('2d'), gr = g.createRadialGradient(128, 128, 10, 128, 128, 127); gr.addColorStop(0, '#9cc35a'); gr.addColorStop(0.62, '#8fb851'); gr.addColorStop(0.86, 'rgba(143,184,81,0.55)'); gr.addColorStop(1, 'rgba(143,184,81,0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); }
@@ -7881,54 +7977,66 @@ function coopPreview(breed, theme = 'winter') {
   const h0 = DAY.hour; applyDaylight(12.5);
   const sunL = new THREE.DirectionalLight(sun.color.clone(), sun.intensity), sky = new THREE.HemisphereLight(hemi.color.clone(), hemi.groundColor.clone(), hemi.intensity), sunDir = SUN_DIR.clone();
   applyDaylight(h0);
-  sunL.position.copy(mid).addScaledVector(sunDir, -R * 4); sunL.target.position.copy(mid);
-  sunL.castShadow = true; sunL.shadow.mapSize.set(2048, 2048); sunL.shadow.bias = sun.shadow.bias; sunL.shadow.normalBias = sun.shadow.normalBias;
-  { const c = sunL.shadow.camera; c.left = c.bottom = -R * 1.4; c.right = c.top = R * 1.4; c.near = 0.1; c.far = R * 9; c.updateProjectionMatrix(); }
+  const span = Math.max(R, size.y);
+  sunL.position.copy(mid).addScaledVector(sunDir, -span * 4); sunL.target.position.copy(mid);
+  sunL.castShadow = true; sunL.shadow.mapSize.set(2048, 2048); sunL.shadow.bias = sun.shadow.bias; sunL.shadow.normalBias = R < 1 ? sun.shadow.normalBias * 0.4 : sun.shadow.normalBias;
+  { const c = sunL.shadow.camera; c.left = c.bottom = -span * 1.5; c.right = c.top = span * 1.5; c.near = 0.05; c.far = span * 9; c.updateProjectionMatrix(); }
   sc.add(sunL, sunL.target, sky);
-  // the lens: round the building's middle, a little low; from the front, a little to the side, as on the farm
-  const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 200), at = new THREE.Vector3(mid.x, box.min.y + size.y * 0.36, mid.z);
-  const fit = Math.hypot(R, size.y * 0.6) / Math.sin(15 * DEG);
-  const V = { yaw: -0.62, el: 0.5, zoom: 0.74, frames: 0, turned: 0 };
+  // the lens: round its middle (a coop's a little low); from the front, a little to the side, as on the farm; far enough that
+  // the whole of it is in sight from every side (its bounding sphere: 23 Nov 2026, Audrey, "Be careful some images are cut")
+  const tall = size.y > R * 1.6;
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.02, 200), at = new THREE.Vector3(mid.x, box.min.y + size.y * (stage.low ? 0.36 : 0.47), mid.z);
+  const fit = (size.length() / 2 + Math.abs(mid.y - at.y) * 0.5) / Math.sin(15 * DEG);
+  const V = { yaw: stage.yaw ?? -0.62, el: stage.el ?? (tall ? 0.26 : 0.5), zoom: stage.zoom || 0.92, frames: 0, turned: 0 };
   const aim = () => { const d = fit * V.zoom, c = Math.cos(V.el); cam.position.set(at.x + Math.sin(V.yaw) * c * d, at.y + Math.sin(V.el) * d, at.z + Math.cos(V.yaw) * c * d); cam.lookAt(at); cam.updateMatrixWorld(); };
-  const S = { on: true, w: 0, h: 0, dpr: 0, want: 0, first: null, touched: null };
-  const size2 = () => {
+  const S = { on: true, w: 0, h: 0, dpr: 0, want: 0, raf: 0, last: 0, first: null, touched: null };
+  const sizeUp = () => {
     const w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return false;
     const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
     if (w !== S.w || h !== S.h || dpr !== S.dpr) { S.w = w; S.h = h; S.dpr = dpr; R2.setPixelRatio(dpr); R2.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
     return true;
   };
-  // (drawn at midday: the farm's evening glow, its night grade and its metals' dimming held off while it's drawn, put back after)
+  // (drawn at midday: the farm's evening glow, its night grade and its metals' dimming held off while it's drawn, put back
+  // after; the birds' feathers as fine as this close look needs, the farm's put back after)
   const draw = () => {
-    S.want = 0; if (!S.on || !size2()) return;
+    S.want = 0; if (!S.on || !sizeUp()) return;
     const g0 = DAY.glow.value, gr0 = GRADE.value, w0 = WATER_DAY.value, mk = METALS.map(m => m.envMapIntensity);
     DAY.glow.value = 0; GRADE.value = 0; WATER_DAY.value = 1; for (const m of METALS) m.envMapIntensity = 0.75;
-    try { aim(); R2.render(sc, cam); V.frames++; }
-    finally { DAY.glow.value = g0; GRADE.value = gr0; WATER_DAY.value = w0; METALS.forEach((m, i) => { m.envMapIntensity = mk[i]; }); }
+    try {
+      aim();
+      if (stage.fur) setFurDetail(S.h * S.dpr / Math.max(0.05, 2 * fit * V.zoom * Math.tan(15 * DEG)), 1);
+      R2.render(sc, cam); V.frames++;
+    } finally { DAY.glow.value = g0; GRADE.value = gr0; WATER_DAY.value = w0; METALS.forEach((m, i) => { m.envMapIntensity = mk[i]; }); if (stage.fur) furDetail(); }
     if (V.frames === 1 && S.first) { const f = S.first; S.first = null; f(); }
   };
-  const ask = () => { if (S.on && !S.want) S.want = requestAnimationFrame(draw); };
+  const ask = () => { if (S.on && !S.want && !stage.tick) S.want = requestAnimationFrame(draw); };
+  // (alive: its own clock, 30 pictures a second)
+  const loop = now => { if (!S.on) return; S.raf = requestAnimationFrame(loop); if (S.manual || now - S.last < 1000 / 30 - 3) return; const dt = Math.min(0.1, (now - (S.last || now)) / 1000) || 1 / 30; S.last = now; stage.tick(dt); draw(); };
   // turning it: a finger (or the mouse) dragged; two fingers pinched; the wheel
   const P = new Map(); let pinch0 = 0, zoom0 = 1;
   const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), dist = () => { const [a, b] = [...P.values()]; return Math.hypot(a[0] - b[0], a[1] - b[1]); };
   const touched = () => { if (S.touched) { const f = S.touched; S.touched = null; f(); } };
-  const turn = (dx, dy) => { V.yaw -= dx * DRAG_TURN; V.el = clamp(V.el + dy * DRAG_TILT, 0.16, 1.15); V.turned += Math.abs(dx); touched(); ask(); };
+  const turn = (dx, dy) => { V.yaw -= dx * DRAG_TURN; V.el = clamp(V.el + dy * DRAG_TILT, 0.05, 1.15); V.turned += Math.abs(dx); touched(); ask(); };
   cv.addEventListener('pointerdown', e => { try { cv.setPointerCapture(e.pointerId); } catch (x) { /* */ } P.set(e.pointerId, [e.clientX, e.clientY]); if (P.size === 2) { pinch0 = dist(); zoom0 = V.zoom; } e.preventDefault(); });
   cv.addEventListener('pointermove', e => {
     const q = P.get(e.pointerId); if (!q) return; const dx = e.clientX - q[0], dy = e.clientY - q[1]; P.set(e.pointerId, [e.clientX, e.clientY]);
-    if (P.size === 1) turn(dx, dy); else if (P.size === 2 && pinch0 > 0) { V.zoom = clamp(zoom0 * pinch0 / Math.max(1, dist()), 0.42, 1.2); touched(); ask(); }
+    if (P.size === 1) turn(dx, dy); else if (P.size === 2 && pinch0 > 0) { V.zoom = clamp(zoom0 * pinch0 / Math.max(1, dist()), 0.4, 1.25); touched(); ask(); }
   });
   for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) cv.addEventListener(ev, e => { P.delete(e.pointerId); if (P.size < 2) pinch0 = 0; });
-  cv.addEventListener('wheel', e => { e.preventDefault(); V.zoom = clamp(V.zoom * Math.exp(e.deltaY * 0.0015), 0.42, 1.2); touched(); ask(); }, { passive: false });
+  cv.addEventListener('wheel', e => { e.preventDefault(); V.zoom = clamp(V.zoom * Math.exp(e.deltaY * 0.0015), 0.4, 1.25); touched(); ask(); }, { passive: false });
   const ro = window.ResizeObserver ? new ResizeObserver(() => ask()) : null; if (ro) ro.observe(cv);
   const dispose = () => {
-    if (!S.on) return; S.on = false; if (S.want) cancelAnimationFrame(S.want); if (ro) ro.disconnect();
-    try { removeWinter(plot); } catch (e) { /* */ }
+    if (!S.on) return; S.on = false; if (S.want) cancelAnimationFrame(S.want); if (S.raf) cancelAnimationFrame(S.raf); if (ro) ro.disconnect();
+    try { if (stage.dispose) stage.dispose(); } catch (e) { /* */ }
     G.removeFromParent(); lawn.geometry.dispose(); lawn.material.dispose(); lawnTex.dispose(); bgTex.dispose(); sunL.shadow.dispose();
     R2.dispose(); try { R2.forceContextLoss(); } catch (e) { /* */ } cv.remove();
+    if (stage.fur) furDetail();
   };
-  return { el: cv, dispose, start: (onFirst, onTouch) => { S.first = onFirst || null; S.touched = onTouch || null; ask(); },
-    // (tests: turned by hand, drawn at once; where it's seen from)
-    turn: (dx, dy = 0) => { turn(dx, dy); draw(); }, draw, state: () => ({ on: S.on, frames: V.frames, yaw: +V.yaw.toFixed(3), el: +V.el.toFixed(3), zoom: +V.zoom.toFixed(3), w: S.w, h: S.h, parts: G.children.length, R: +R.toFixed(2) }) };
+  return { el: cv, dispose, live: !!stage.tick,
+    start: (onFirst, onTouch) => { S.first = onFirst || null; S.touched = onTouch || null; const go = () => { if (!S.on) return; if (stage.tick) S.raf = requestAnimationFrame(loop); else ask(); }; if (stage.ready) stage.ready.then(go, go); else go(); },
+    // (tests and films: turned by hand and drawn at once; its clock stepped by hand)
+    turn: (dx, dy = 0) => { turn(dx, dy); draw(); }, draw, manual: on => { S.manual = !!on; }, step: dt => { if (stage.tick) stage.tick(dt); draw(); },
+    state: () => ({ on: S.on, frames: V.frames, live: !!stage.tick, yaw: +V.yaw.toFixed(3), el: +V.el.toFixed(3), zoom: +V.zoom.toFixed(3), w: S.w, h: S.h, parts: G.children.length, R: +R.toFixed(2), size: size.toArray().map(x => +x.toFixed(2)) }) };
 }
 // ---- the show day (release 1 step 9b; showday.js): the results in and the farm free, by day: "🎀 Show day!" with "Watch
 // the judging" (the view goes to the show tent on the green: the player's tap) or "Just the results". The scene, then the
@@ -8505,7 +8613,7 @@ function shopTheme(id, t, how) {
   if (themeCoop(p, t, how) && how !== 'pay') { gameUI.close(); const w = p.frame.localToWorld(new THREE.Vector3()); focusOn(w.x, w.z, Math.min(view.size, sideways() ? 2.6 : 3.4)); }
   else if (themeWhy === 'room') { gameUI.close(); coopCard(p); }
 }
-function shopHands() { return { coops: true, theme: (id, t, how) => shopTheme(id, t, how), preview: (b, t) => coopPreview(b, t), buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, shelf: b => shelfBuy(b), got: b => shelfGot(b, null), place: b => { gameUI.close(); startPlace(b); }, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id), buyAnimal: id => buyAnimal(id), see: id => seeAnimal(id), buyDress: id => buyDress(id),
+function shopHands() { return { coops: true, theme: (id, t, how) => shopTheme(id, t, how), preview: (kind, id, t) => shopPreview(kind, id, t), buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, shelf: b => shelfBuy(b), got: b => shelfGot(b, null), place: b => { gameUI.close(); startPlace(b); }, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id), buyAnimal: id => buyAnimal(id), see: id => seeAnimal(id), buyDress: id => buyDress(id),
   moveKennel: () => { gameUI.close(); startDecor('kennel'); }, rename: () => { gameUI.close(); if (farmDog) openDogName(); } }; }
 // ---- the animals (the shop's Animals shelf, release 3: the guardians). The geese: bought, they come swimming over the pond
 // to their side of it, come ashore with a shake and a honk, and live there (the view to where they come ashore: the
