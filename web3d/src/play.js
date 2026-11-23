@@ -856,14 +856,29 @@ export function removeWinter(plot) {
   if (T.prints) { T.prints.mesh.removeFromParent(); T.prints.mesh.geometry.dispose(); T.prints.mesh.material.dispose(); T.prints = null; }
 }
 export function printsLive(plot) { return plot.toys && plot.toys.prints ? plot.toys.prints.live : 0; }
-function tickPrints(plot, dt) {
-  const T = plot.toys, R = T.prints, I = T.ice, Y = plot.pen && plot.pen.yard;
+function tickPrints(plot, dt) { stepPrints(plot, plot.toys.prints, plot.toys, dt); }
+// footprints in the snow in any coop's yard on a snowy day (23 Nov 2026; main.js tickSnow): made as the snow lies, gone as it
+// melts (a winter garden has its own all winter: left as it is)
+export function snowPrints(plot, on) {
+  if (!plot.frame || (plot.toys && plot.toys.prints)) return;
+  if (on && !plot.snowP) {
+    if (!printTex) printTex = fxTex(64, c => { c.strokeStyle = '#fff'; c.lineWidth = 7; c.lineCap = 'round'; for (const [x, y] of [[32, 6], [12, 16], [52, 16], [32, 58]]) { c.beginPath(); c.moveTo(32, 40); c.lineTo(x, y); c.stroke(); } });
+    const pg = new THREE.PlaneGeometry(1, 1); pg.rotateX(-Math.PI / 2);
+    const pm = new THREE.InstancedMesh(pg, new THREE.MeshLambertMaterial({ map: printTex, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -3, polygonOffsetUnits: -3 }), PRINTS);
+    tmpM.makeScale(0, 0, 0); for (let i = 0; i < PRINTS; i++) { pm.setMatrixAt(i, tmpM); pm.setColorAt(i, PRINT); }
+    pm.material.userData.noSnow = true; pm.frustumCulled = false; pm.receiveShadow = true; pm.renderOrder = 1; pm.userData.moves = true; plot.frame.add(pm);
+    plot.snowP = { mesh: pm, n: 0, age: new Float32Array(PRINTS).fill(-1), at: new Map(), live: 0 };
+  } else if (!on && plot.snowP) { const R = plot.snowP; R.mesh.removeFromParent(); R.mesh.geometry.dispose(); R.mesh.material.dispose(); plot.snowP = null; }
+}
+export function tickSnowPrints(plot, dt) { if (plot.snowP) stepPrints(plot, plot.snowP, null, dt); }
+function stepPrints(plot, R, T, dt) {
+  const I = T && T.ice, Y = plot.pen && plot.pen.yard;
   let moved = false, tinted = false;
   for (const b of plot.birds) {
     const p = b.root.position; let s = R.at.get(b);
     if (!s) { s = { x: p.x, z: p.z, side: 1 }; R.at.set(b, s); }
     const onIce = I && ((p.x - I.at[0]) / I.hw) ** 2 + ((p.z - I.at[1]) / I.hd) ** 2 < 1;
-    const G = T.igloo, inIgloo = (G && Math.hypot(p.x - G.at[0], p.z - G.at[1]) < G.r + 0.05) || (T.spin && Math.hypot(p.x - T.spin.at[0], p.z - T.spin.at[1]) < T.spin.r) || !!(b.play && (b.play.kind === 'spin' || b.play.kind === 'bounce' || b.play.kind === 'chute' || b.play.kind === 'train' || b.play.kind === 'train2' || b.play.kind === 'soak' || b.play.kind === 'lift' || b.play.kind === 'striker') && b.play.phase !== 'walk' && b.play.phase !== 'face');
+    const G = T && T.igloo, inIgloo = (G && Math.hypot(p.x - G.at[0], p.z - G.at[1]) < G.r + 0.05) || (T && T.spin && Math.hypot(p.x - T.spin.at[0], p.z - T.spin.at[1]) < T.spin.r) || !!(b.play && (b.play.kind === 'spin' || b.play.kind === 'bounce' || b.play.kind === 'chute' || b.play.kind === 'train' || b.play.kind === 'train2' || b.play.kind === 'soak' || b.play.kind === 'lift' || b.play.kind === 'striker') && b.play.phase !== 'walk' && b.play.phase !== 'face');
     const out = b.asleep || !b.root.visible || p.y > 0.05 || onIce || inIgloo || (b.play && b.play.phase === 'slide') || (Y && (p.z < Y.min[2] - 0.05 || p.x < Y.min[0] - 0.1 || p.x > Y.max[0] + 0.1));
     if (out) { s.x = p.x; s.z = p.z; continue; }
     const k = b.kind === 'chick' ? 0.5 : b.kind === 'rooster' ? 1.12 : 1, dx = p.x - s.x, dz = p.z - s.z, d = Math.hypot(dx, dz);

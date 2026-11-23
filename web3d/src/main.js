@@ -42,7 +42,7 @@ import { loadShow, ShowLineup, SHOW } from './showground.js';
 import { ShowDay } from './showday.js';
 import { openGroom } from './groom.js';
 import { buildIntro } from './intro.js';
-import { initPlay, addToys, addWinter, removeWinter, winterGarden, printsLive, tickToys, wantPlay, startPlay, endPlay, playStep, tickPlayFx, playFxLive } from './play.js';
+import { initPlay, addToys, addWinter, removeWinter, winterGarden, snowPrints, tickSnowPrints, printsLive, tickToys, wantPlay, startPlay, endPlay, playStep, tickPlayFx, playFxLive } from './play.js';
 import { LOOKS, lookChunks, lookGround, clumpGeo, lookPost } from './looks.js';
 
 const MODELS = './models/';
@@ -263,6 +263,7 @@ const DAY_KEYS = [
 ].map(k => STORY_LOOK && k[0] >= 7.5 && k[0] <= 17.2 ? [k[0], STORY_SUN[k[0]] || k[1], k[2] * 1.06, k[3], k[4], '#9db7e2', '#57603f', k[7] * 0.9, k[8], k[9]] : k)      // (the story look: a warmer sun, the shade cooler and a little deeper)
   .map(k => [k[0], new THREE.Color(k[1]), k[2], k[3], k[4], new THREE.Color(k[5]), new THREE.Color(k[6]), k[7], new THREE.Color(k[8]), k[9]]);
 // (farm moments' rainy day, below: how much it's raining now, 0..1, for the light; the rest of it with tickRain)
+const SNOWF = { on: false, k: 0, t: 0, pts: null, flakes: null, sky: new THREE.Color('#dfe6ec'), bg: new THREE.Color('#cdd6de') };      // (a snowy day's snowfall: tickSnow)
 const RAIN = { on: false, k: 0, wet: 0, lines: null, drops: null, pud: [], worms: [], next: 0, t: 0, spawned: 0, sky: new THREE.Color('#b9c6cf'), bg: new THREE.Color('#93a6b4') };
 const DAY = { hour: 12, glow: { value: 0 }, warm: { value: new THREE.Color('#ffc46e') }, shadowDir: SUN_DIR.clone(), shadowAt: 0 };
 const NOON_FROM = new THREE.Vector3(-SUN_DIR.x, 0, -SUN_DIR.z).normalize();                // where the midday sun is, seen from above
@@ -303,6 +304,8 @@ function applyDaylight(h) {
   SUN_DIR.copy(_dir).negate().normalize();
   // (a rainy day: the sun half hidden, the sky light greyer, the sky behind the trees grey)
   if (RAIN.k > 0) { const k = RAIN.k; sun.intensity *= 1 - 0.62 * k; hemi.color.lerp(RAIN.sky, 0.4 * k); hemi.intensity *= 1 + 0.1 * k; scene.background.lerp(RAIN.bg, 0.6 * k); GRADE.value = Math.max(GRADE.value, 0.16 * k); }      // (and a cool grey over it all, the night's tint a little)
+  // (snowing: the sun veiled, the sky light paler and whiter, the sky behind the trees a soft grey)
+  if (SNOWF.k > 0) { const k = SNOWF.k; sun.intensity *= 1 - 0.42 * k; hemi.color.lerp(SNOWF.sky, 0.35 * k); hemi.intensity *= 1 + 0.15 * k; scene.background.lerp(SNOWF.bg, 0.55 * k); }
   // the farmer's own shadow (farmer.js FarmerShadow): the sun's way, and as dark as the light it takes away (the sun's
   // share of what lights the ground; a little less, as the farm's soft-edged shadows are)
   FARMER_SHADOW.dir.copy(SUN_DIR);
@@ -349,6 +352,12 @@ function metalShine(mat) {
   mat.envMap = METAL_ENV; mat.envMapIntensity = metalK(); METALS.push(mat); mat.needsUpdate = true;
 }
 const metalK = () => 0.75 * (1 - 0.85 * Math.min(1, DAY.glow.value));
+// snow (23 Nov 2026, Audrey: "Can we add snow in the game for winter"; a snowy day, farm moments): as it settles, every face
+// of the farm that looks up turns white, the more the flatter it lies (the ground, the lanes, roofs, the tops of fences and
+// bushes and trees), the grass frosted all over; never the water, nor anything alive (the birds, the farmer, the geese and
+// Biscuit are skinned: drawn as they are), nor inside a coop. One more line in each material's shader, with the night's
+const SNOW_U = { value: 0 }, SNOW_COL = 'vec3(0.7, 0.74, 0.81)';      // (soft white in the sun, blue in the shade: not blinding)
+const snowable = m => !m.userData.noSnow && !!(m.isMeshStandardMaterial || m.isMeshLambertMaterial || m.isMeshPhongMaterial);
 function nightGrade(mat) {
   if (!mat || mat.userData.graded || mat.userData.noGrade || mat.name === 'glow' || mat.name === 'glowc' || mat.name === 'window') return;
   mat.userData.graded = true;
@@ -360,8 +369,18 @@ function nightGrade(mat) {
     sh.fragmentShader = sh.fragmentShader
       .replace('#include <common>', '#include <common>\nuniform float dayNight;\nuniform vec3 nightTint;')
       .replace('#include <opaque_fragment>', '#include <opaque_fragment>\n{ float nl = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722)); gl_FragColor.rgb = mix(gl_FragColor.rgb, nl * nightTint, dayNight); }');
+    if (snowable(mat) && sh.vertexShader.includes('#include <defaultnormal_vertex>') && sh.fragmentShader.includes('#include <color_fragment>')) {
+      sh.uniforms.snowCover = SNOW_U; sh.uniforms.snowAll = { value: mat.userData.snowAll || 0 };
+      sh.vertexShader = sh.vertexShader
+        .replace('#include <common>', '#include <common>\nvarying float vSnowUp;')
+        .replace('#include <defaultnormal_vertex>', '#include <defaultnormal_vertex>\n#ifdef USE_SKINNING\nvSnowUp = -1.0;\n#else\nvSnowUp = (vec4(transformedNormal, 0.0) * viewMatrix).y;\n#endif');
+      sh.fragmentShader = sh.fragmentShader
+        .replace('#include <common>', '#include <common>\nvarying float vSnowUp;\nuniform float snowCover;\nuniform float snowAll;')
+        .replace('#include <color_fragment>', '#include <color_fragment>\nif (snowCover > 0.0 && vSnowUp > -0.5) { float su = max(smoothstep(0.35, 0.8, vSnowUp), snowAll); diffuseColor.rgb = mix(diffuseColor.rgb, ' + SNOW_COL + ', snowCover * su); }');
+    }
   };
-  if (prevKey && prevKey !== THREE.Material.prototype.customProgramCacheKey) mat.customProgramCacheKey = () => prevKey.call(mat) + '+night';
+  const base = prevKey && prevKey !== THREE.Material.prototype.customProgramCacheKey ? () => prevKey.call(mat) + '+night' : () => mat.onBeforeCompile.toString();
+  mat.customProgramCacheKey = () => base() + (snowable(mat) ? '+snow' : '');
   mat.needsUpdate = true;
 }
 function gradeScene() { scene.traverse(o => { if (o.material) for (const m of [].concat(o.material)) nightGrade(m); }); }
@@ -674,7 +693,7 @@ async function start() {
   buildGrass();
   addLampPools();
   gradeScene(); setMaterialHook(nightGrade); for (const m of [WOOD, FENCE_WOOD, BOARD, STAKE, RIBBON]) nightGrade(m);      // (the fences, gates and signs made later too)           // the night colours, also for materials made later (a laying hen's own)
-  for (const k in parts) if (k.startsWith('inside_')) parts[k].traverse(o => { if (o.material) for (const m of [].concat(o.material)) nightGrade(m); });
+  for (const k in parts) if (k.startsWith('inside_')) parts[k].traverse(o => { if (o.material) for (const m of [].concat(o.material)) { m.userData.noSnow = true; nightGrade(m); } });      // (no snow inside a coop)
   applyDaylight(clockHour());
   const s = V.plots[0].pos;
   view.target.set(s[0], 0, s[2]).add(new THREE.Vector3(0.6, 0, -1.2));
@@ -930,6 +949,7 @@ const WATER = new THREE.MeshStandardMaterial({ color: '#5fb3d6', roughness: 0.12
 // is (no textures); the night colours apply as before.
 const WATER_T = { value: 0 }, WATER_DAY = { value: 1 };            // (the sparkles fade out at night)
 function waterShader(mat, kind, extra = {}) {
+  mat.userData.noSnow = true;      // (no snow on the water)
   mat.onBeforeCompile = sh => {
     sh.uniforms.wTime = WATER_T; sh.uniforms.wDay = WATER_DAY;
     for (const k in extra) sh.uniforms[k] = extra[k];
@@ -1153,7 +1173,7 @@ function waterside() {
   }
   const col = new THREE.Color(), out = [];
   if (blades.length) {
-    const g = new THREE.ConeGeometry(0.019, 1, 3, 1).translate(0, 0.5, 0), m = new THREE.MeshLambertMaterial({ color: '#ffffff' });
+    const g = new THREE.ConeGeometry(0.019, 1, 3, 1).translate(0, 0.5, 0), m = new THREE.MeshLambertMaterial({ color: '#ffffff' }); m.userData.snowAll = 0.75;      // (in snow: frosted all over)
     addWind(m, 0.5); nightGrade(m);
     const k = new THREE.InstancedMesh(g, m, blades.length);
     blades.forEach(([x, z, h, tx, tz, yaw, sh], i) => { k.setMatrixAt(i, new THREE.Matrix4().compose(new THREE.Vector3(x, 0, z), q.setFromEuler(e.set(tx, yaw, tz)), new THREE.Vector3(1, h, 1))); k.setColorAt(i, col.set(i % 3 ? '#5f9a3c' : '#7aab47').multiplyScalar(sh)); });
@@ -3691,7 +3711,7 @@ class Bird {
   }
   // something to do while standing still
   chooseAct() {
-    if (RAIN.k > 0.5 && this.plot.kind === 'coop' && this.r() < 0.22) return { type: 'ruffle', left: 0.75 };      // (in the rain: a shake of the wet off, now and then)
+    if ((RAIN.k > 0.5 || SNOWF.k > 0.5) && this.plot.kind === 'coop' && this.r() < 0.22) return { type: 'ruffle', left: 0.75 };      // (and the snow, on a snowy day)      // (in the rain: a shake of the wet off, now and then)
     const x = this.r(), rooster = this.kind === 'rooster', chick = this.kind === 'chick';
     if (x < 0.36) return { type: 'peck', left: 1.2 + this.r() * 1.8 };
     if (x < 0.5 && !chick) return { type: 'scratch', left: 1.9, leg: this.r() < 0.5 ? 0 : 1 };
@@ -8006,12 +8026,13 @@ function shopPreview(kind, id, t) {
   const draw = () => {
     S.want = 0; if (!S.on || !sizeUp()) return;
     const g0 = DAY.glow.value, gr0 = GRADE.value, w0 = WATER_DAY.value, mk = METALS.map(m => m.envMapIntensity);
+    const sn0 = SNOW_U.value; SNOW_U.value = 0;
     DAY.glow.value = 0; GRADE.value = 0; WATER_DAY.value = 1; for (const m of METALS) m.envMapIntensity = 0.75;
     try {
       aim();
       if (stage.fur) setFurDetail(S.h * S.dpr / Math.max(0.05, 2 * fit * V.zoom * Math.tan(15 * DEG)), 1);
       R2.render(sc, cam); V.frames++;
-    } finally { DAY.glow.value = g0; GRADE.value = gr0; WATER_DAY.value = w0; METALS.forEach((m, i) => { m.envMapIntensity = mk[i]; }); if (stage.fur) furDetail(); }
+    } finally { SNOW_U.value = sn0; DAY.glow.value = g0; GRADE.value = gr0; WATER_DAY.value = w0; METALS.forEach((m, i) => { m.envMapIntensity = mk[i]; }); if (stage.fur) furDetail(); }
     if (V.frames === 1 && S.first) { const f = S.first; S.first = null; f(); }
   };
   const ask = () => { if (S.on && !S.want && !stage.tick) S.want = requestAnimationFrame(draw); };
@@ -9786,6 +9807,7 @@ function strayPill() {
   const m = game.moment(); let key = '', text = null, tap = null;
   if (m && m.k === 'hen' && STRAY.bird && !STRAY.bird.stray.called) { key = 'hen' + m.b + LANG; text = game.t('mom_hen'); tap = () => { const gb = game.bird(m.b); if (gb) hint(game.t('mom_hen_hint', { name: gb.name })); }; }
   else if (m && m.k === 'rain' && RAIN.on) { key = 'rain' + LANG; text = game.t('mom_rain'); tap = () => hint(game.t('mom_rain_hint')); }
+  else if (m && m.k === 'snow' && SNOWF.on) { key = 'snow' + LANG; text = game.t('mom_snow'); tap = () => hint(game.t('mom_snow_hint')); }
   else if (m && m.k === 'chick' && STRAY.bird && !STRAY.bird.stray.called) { key = 'chick' + m.c + m.i + LANG; text = game.t('mom_chick'); tap = () => { const c = game.coop(m.c), mum = c && c.brood && game.bird(c.brood.hen); hint(game.t('mom_chick_hint', { name: mum ? mum.name : '' })); }; }
   else if (m && m.k === 'visit') { key = 'visit' + m.who + m.t + LANG; text = game.t('mom_visit', { e: game.villagerEmoji(m.who), name: game.villagerName(m.who) }); tap = () => { if (!visitCard()) hint(game.t('mom_visit_hint', { name: game.villagerName(m.who) })); }; }      // (a visitor: her card)
   if (STRAY.pillOn === key) return; STRAY.pillOn = key;
@@ -9837,15 +9859,19 @@ function tickStray(dt) {
   }
   strayPill();
   // a new one: as the farm opens or comes back after a while (a roll each time), by day, nothing else going on
-  if (STRAY.roll && !m0 && !STRAY.bird && !RAIN.on && !gameUI.isOpen && !inside.open && !MOVE.plot && !DMOVE.id && !SHOWDAY && !GUIDE_UI.on && !GUIDE_UI.intro && performance.now() > newsFrom + 2500 && farmLife && !farmLife.home && !farmLife.running) {
+  if (STRAY.roll && !m0 && !STRAY.bird && !RAIN.on && !SNOWF.on && !gameUI.isOpen && !inside.open && !MOVE.plot && !DMOVE.id && !SHOWDAY && !GUIDE_UI.on && !GUIDE_UI.intro && performance.now() > newsFrom + 2500 && farmLife && !farmLife.home && !farmLife.running) {
     STRAY.roll = false;
     const due = game.momentDue(h);
     // (which: the very first, a hen out; the first rainy day for sure the next time, once fishing's open; the first lost chick
     // for sure once there are chicks; else, one time in two, any of them there can be)
     // (21 Nov 2026: a visitor at the farm stall, once the village orders are open; her first visit straight after the first hen out)
-    const chicks = due && gamePlots().some(p => p.kind === 'coop' && game.chicksIn(p.gc.id)), visit = due && due.visit && !!stallSpot(), kinds = ['hen', ...(due && due.rain ? ['rain'] : []), ...(chicks ? ['chick'] : []), ...(visit ? ['visit'] : [])];
-    const kind = !due ? null : due.first ? 'hen' : due.firstVisit && visit ? 'visit' : due.firstRain ? 'rain' : due.firstChick && chicks ? 'chick' : Math.random() < MOMENTS.chance ? kinds[Math.floor(Math.random() * kinds.length)] : null;
-    if (kind === 'rain') rainStart(); else if (kind === 'chick') { if (!startChickOut()) startHenOut(); } else if (kind === 'visit') { if (!visitStart()) startHenOut(); } else if (kind === 'hen') startHenOut();
+    // (23 Nov 2026, a snowy day: from 1 December to 28 February, the winter's first for sure the next time; then in a rainy
+    // day's place three times in four in December and January, one in two in February)
+    const chicks = due && gamePlots().some(p => p.kind === 'coop' && game.chicksIn(p.gc.id)), visit = due && due.visit && !!stallSpot(), kinds = ['hen', ...(due && (due.rain || due.snow) ? ['rain'] : []), ...(chicks ? ['chick'] : []), ...(visit ? ['visit'] : [])];
+    let kind = !due ? null : due.first ? 'hen' : due.firstVisit && visit ? 'visit' : due.firstSnow ? 'snow' : due.firstRain ? 'rain' : due.firstChick && chicks ? 'chick' : Math.random() < MOMENTS.chance ? kinds[Math.floor(Math.random() * kinds.length)] : null;
+    if (kind === 'rain' && due.snow && (!due.rain || Math.random() < due.snowOdds)) kind = 'snow';
+    if (kind === 'snow') { if (!snowStart()) startHenOut(); }
+    else if (kind === 'rain') rainStart(); else if (kind === 'chick') { if (!startChickOut()) startHenOut(); } else if (kind === 'visit') { if (!visitStart()) startHenOut(); } else if (kind === 'hen') startHenOut();
   }
 }
 // ---- farm moments, the rainy day (20 Nov 2026, "Carry on"; the 17 Nov mock-up: "Worms come up in the rain. Tap them";
@@ -9978,6 +10004,54 @@ function wormEaten(W, b) {
 }
 // each frame: a saved shower back (or over, past its time), over when its time's up (a word), the rain fading in and out,
 // the drops, the puddles filling and drying, their rings, the worms coming and going
+// ---- farm moments, a snowy day (23 Nov 2026, Audrey: "Can we add snow in the game for winter. Please suggest from when to
+// when"; her choices "1 Dec – 28 Feb (Recommended)", "Snowy days now and then (Recommended)"; game.js MOMENTS.snow, snowOn,
+// snowOver, snowCover). Three minutes of snowfall round the view (the light veiled and whiter, the sky soft grey), the farm
+// turning white as it settles (SNOW_U: every face looking up, the grass frosted; nightGrade), the hens shaking it off now
+// and then and leaving their footprints in their yards; then white for three hours, melting away over the last forty
+// minutes. "❄️ It's snowing!" beside the coins while it falls; a word when it stops
+const FLAKES = 1400;
+function snowFlakes() {
+  if (SNOWF.pts) return SNOWF.pts;
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.BufferAttribute(new Float32Array(FLAKES * 3), 3));
+  const cv = document.createElement('canvas'); cv.width = cv.height = 32; { const c = cv.getContext('2d'), G = c.createRadialGradient(16, 16, 1, 16, 16, 15); G.addColorStop(0, 'rgba(255,255,255,1)'); G.addColorStop(0.45, 'rgba(255,255,255,0.85)'); G.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = G; c.fillRect(0, 0, 32, 32); }
+  const tex = new THREE.CanvasTexture(cv);
+  const m = new THREE.PointsMaterial({ size: 0.075, map: tex, transparent: true, opacity: 0, depthWrite: false, sizeAttenuation: true, color: 0xffffff }); m.userData.noGrade = true;
+  const P = new THREE.Points(g, m); P.frustumCulled = false; P.renderOrder = 8; P.visible = false; scene.add(P);
+  SNOWF.flakes = Array.from({ length: FLAKES }, () => [Math.random(), Math.random(), Math.random(), 0.55 + Math.random() * 0.45, Math.random() * 6.28]);
+  return (SNOWF.pts = P);
+}
+function snowStart() {
+  if (SNOWF.on || RAIN.on || game.moment()) return null;
+  const m = game.snowOn(); if (!m) return null;
+  SNOWF.on = true; snowFlakes(); hintNext(game.t('mom_snow_hint'));
+  return m;
+}
+function tickSnow(dt) {
+  if (!GAME_MODE || !game.data) return;
+  const m = game.moment(), snowing = !!(m && m.k === 'snow'), now = Date.now();
+  if (snowing && !SNOWF.on) { if (now >= m.until) game.snowOver(now, true); else { SNOWF.on = true; snowFlakes(); } }
+  else if (SNOWF.on && snowing && now >= m.until) { game.snowOver(now, true); SNOWF.on = false; if (!document.hidden) hintNext(game.t('mom_snow_end')); }
+  else if (SNOWF.on && !snowing) SNOWF.on = false;
+  const want = SNOWF.on ? 1 : 0; SNOWF.k += Math.sign(want - SNOWF.k) * Math.min(Math.abs(want - SNOWF.k), dt / 5);
+  SNOW_U.value = game.snowCover(now);      // (how white the farm is: settling, lying, melting; by the clock, so a reload finds it as it was)
+  // footprints in every coop's yard while the snow lies (a winter garden's own all winter)
+  const white = SNOW_U.value > 0.3;
+  for (const p of gamePlots()) if (p.kind === 'coop' && p.frame) { if (white !== !!p.snowP) snowPrints(p, white); if (p.snowP) tickSnowPrints(p, dt); }
+  // the flakes: round the view, drifting down and swaying a little, each in a new place every time round
+  if (!SNOWF.k) { if (SNOWF.pts) SNOWF.pts.visible = false; return; }
+  const P = snowFlakes(); P.visible = !inside.open; P.material.opacity = 0.95 * SNOWF.k; SNOWF.t += dt;
+  P.material.size = camera.isOrthographicCamera ? Math.max(2.5, Math.min(8, 24 / view.size)) * renderer.getPixelRatio() : 0.09;      // (the farm's lens is flat: a flake's size in dots, bigger as the view comes closer)
+  if (P.visible) {
+    const A = P.geometry.attributes.position.array, c = view.target, H = view.size * 2.4 + 2, top = 5;
+    for (let i = 0; i < FLAKES; i++) {
+      const f = SNOWF.flakes[i], h = f[2] * top + SNOWF.t * f[3], cyc = Math.floor(h / top), y = top - (h - cyc * top), sw = Math.sin(SNOWF.t * 0.9 + f[4]) * 0.18;
+      const rx = (f[0] + cyc * 0.618) % 1, rz = (f[1] + cyc * 0.382) % 1, j = i * 3;
+      A[j] = c.x + (rx - 0.5) * 2 * H + sw; A[j + 1] = y; A[j + 2] = c.z + (rz - 0.5) * 2 * H + Math.cos(SNOWF.t * 0.7 + f[4]) * 0.12;
+    }
+    P.geometry.attributes.position.needsUpdate = true;
+  }
+}
 function tickRain(dt) {
   if (!GAME_MODE || !game.data) return;
   const m = game.moment(), raining = !!(m && m.k === 'rain'), now = Date.now(), late = DAY.hour >= MOMENTS.home || DAY.hour < 6;
@@ -10940,7 +11014,7 @@ function frame(now) {
   if (poster) { tickPoster(dt); wake(100); }
   if (intro) { intro.update(dt); wake(100); }
   findFarmerBtn(); tickFocus(dt); tickViewTurn(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt); tickFarmerSay();
-  if (GAME_MODE) { gameTick(); tickBusy(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); tickRain(dt); tickVisit(dt); placeBubbles(); tickTurnTip(now); }
+  if (GAME_MODE) { gameTick(); tickBusy(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); tickRain(dt); tickSnow(dt); tickVisit(dt); placeBubbles(); tickTurnTip(now); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(GROOM_LIVE.on ? 12.5 : clockHour()); }      // the light follows the clock (held at midday while a bird is groomed: groomLive)
   if (GROOM_LIVE.on) { /* (the grooming game over the farm: her drawn live, the farm not) */ }
@@ -11038,6 +11112,7 @@ window.__farm = {
     return { phase: VISIT.phase, ok: VISIT.ok, at: p ? [+p.x.toFixed(2), +p.z.toFixed(2)] : null, spot: VISIT.spot, s: +VISIT.s.toFixed(2), len: VISIT.cum ? +VISIT.cum[VISIT.cum.length - 1].toFixed(2) : 0, visible: !!(f && f.root.visible), opacity: f ? f.opacity : 0, screen: sc,
       bub: VISIT.bub && !VISIT.bub.hidden ? VISIT.bub.textContent : null, say: VISIT.say && !VISIT.say.hidden ? VISIT.say.textContent : null, words: VISIT.sayT > 0 ? VISIT.sayText : null, handed: VISIT.handed, basket: !!(f && f.rig.B.basket && f.rig.B.basket.scale.x > 0.5), pose: f ? f.want.pose : null, moment: m && m.k === 'visit' ? { ...m } : null }; },
     way: () => VISIT.way, card: () => visitCard(), give: () => visitGive(), no: () => visitNo(), tap: () => { const f = VISIT.f; if (!f) return null; bubV.set(f.pos.x, f.pos.y + 0.7, f.pos.z).project(camera); return { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight }; } },
+  snow: { start: () => snowStart(), state: () => ({ on: SNOWF.on, k: +SNOWF.k.toFixed(2), cover: +SNOW_U.value.toFixed(2), flakes: !!(SNOWF.pts && SNOWF.pts.visible), prints: gamePlots().filter(p => p.snowP).length, steps: gamePlots().reduce((a, p) => a + (p.snowP ? p.snowP.live : 0), 0) }) },
   rain: { start: () => rainStart(), penWorm: () => { const pen = penWormSpot(); if (!pen) return null; const W = makeWorm(pen.at[0], pen.at[1], 0); W.pen = pen; W.turn = 0; W.still = true; W.henIn = 1.3; RAIN.worms.push(W); RAIN.spawned++; return pen.q; }, state: () => ({ on: RAIN.on, k: +RAIN.k.toFixed(2), wet: +RAIN.wet.toFixed(2), pud: RAIN.pud.length, worms: RAIN.worms.filter(W => !W.pop && !W.eaten && W.t < W.life).map(W => { W.g.updateMatrixWorld(true); const w = W.segs[5].getWorldPosition(new THREE.Vector3()), q = w.clone().project(camera); return { at: [w.x, w.z], x: (q.x + 1) / 2 * canvas.clientWidth, y: (1 - q.y) / 2 * canvas.clientHeight, t: W.t, pen: !!W.pen, hen: W.hen ? W.hen.gid || W.hen.name : null }; }), spawned: RAIN.spawned, eaten: RAIN.eaten || 0, lines: !!(RAIN.lines && RAIN.lines.visible) }), fieldOf: (x, z) => fieldAt(x, z) },
   moment: { seat: STRAY_SEAT, start: id => startHenOut(id), chick: coopId => startChickOut(coopId), roll: () => { STRAY.roll = true; }, why: () => ({ roll: STRAY.roll, open: gameUI.isOpen, kind: gameUI.kind, inside: inside.open, guide: GUIDE_UI.on, intro: GUIDE_UI.intro, hint: hintLeft, news: performance.now() - newsFrom, home: farmLife && farmLife.home, run: farmLife && farmLife.running, show: !!SHOWDAY }), bird: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); return { gid: b.gid, name: b.name, at: [w.x, w.z], y: w.y, called: b.stray.called, fade: b.stray.fade, carry: b.stray.carry ? b.stray.carry.k : 0, spot: b.stray.at, chick: !!b.stray.chick, kidI: b.kidI, peeps: b.stray.peeps || 0, mum: b.mum && b.mum.worry ? (() => { const q = b.mum.root.getWorldPosition(new THREE.Vector3()), c = b.mum.plot.frame.localToWorld(new THREE.Vector3((penOf(b.mum.plot).yard.min[0] + penOf(b.mum.plot).yard.max[0]) / 2, 0, (penOf(b.mum.plot).yard.min[2] + penOf(b.mum.plot).yard.max[2]) / 2)); return { calls: b.mum.worry.calls || 0, at: [q.x, q.z], mid: [c.x, c.z] }; })() : null }; },
     screen: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); bubV.set(w.x, w.y + b.hitY, w.z).project(camera); return { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight, z: bubV.z }; },
@@ -11069,7 +11144,7 @@ window.__farm = {
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); drawFarmerShadows(renderer); renderFarm(); },
-  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); tickRain(dt); tickVisit(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
+  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); tickRain(dt); tickSnow(dt); tickVisit(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   inkPass: () => INK,
   spotChar: (x, z) => { const f = fieldAt(x, z), v = new THREE.Vector3(); let bl = ''; for (const b of blockers()) { if (b.r) { if (Math.hypot(x - b.c[0], z - b.c[1]) < b.r) bl = 'o'; continue; } v.set(x, 0, z).applyMatrix4(b.inv); if (v.x > b.x0 && v.x < b.x1 && v.z > b.z0 && v.z < b.z1) bl = (b.p.model || '?')[0]; }

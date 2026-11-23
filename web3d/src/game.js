@@ -290,6 +290,7 @@ export const TEXT = {
     busy_stray: '{farmer} is bringing {name} home.', next_stray: 'bring {name} home',
     mom_chick: '🐣 A chick is lost!', mom_chick_hint: 'One of {name}’s chicks has wandered off. Follow the peeps and tap it!', mom_peep: 'peep!',
     mom_chick_found: '✨ You found the chick! {farmer} takes it back to {name}. +{c} coins, +{x} XP', mom_chick_back: 'The lost chick found its way back to {name} by itself.',
+    mom_snow: '❄️ It’s snowing!', mom_snow_hint: 'Snow is falling on the farm: the hens leave their footprints in it.', mom_snow_end: 'The snow has stopped. The farm stays white for a while.',
     mom_rain: '🌧️ It’s raining!', mom_rain_hint: 'Worms are coming up in the rain. Tap them before the hens do!',
     mom_rain_end: 'The rain has stopped. Worms caught: {n} 🪱', mom_rain_end0: 'The rain has stopped.', mom_rain_full: '🪱 Bag full · +{c} coins',
     mom_visit: '{e} {name} is here!', mom_visit_hint: '{name} is at your farm stall by the farmhouse with a quick order. Tap her!',
@@ -673,6 +674,7 @@ export const TEXT = {
     busy_stray: '{farmer} ramène {name} chez elle.', next_stray: 'ramener {name}',
     mom_chick: '🐣 Un poussin s’est perdu\u00a0!', mom_chick_hint: 'Un poussin de {name} s’est éloigné. Suivez les piou-piou et touchez-le\u00a0!', mom_peep: 'piou\u00a0!',
     mom_chick_found: '✨ Vous avez retrouvé le poussin\u00a0! {farmer} le ramène à {name}. +{c} pièces, +{x} XP', mom_chick_back: 'Le poussin perdu a retrouvé {name} tout seul.',
+    mom_snow: '❄️ Il neige\u00a0!', mom_snow_hint: 'La neige tombe sur la ferme\u00a0: les poules y laissent leurs empreintes.', mom_snow_end: 'Il ne neige plus. La ferme reste blanche un moment.',
     mom_rain: '🌧️ Il pleut\u00a0!', mom_rain_hint: 'Les vers sortent avec la pluie. Touchez-les avant les poules\u00a0!',
     mom_rain_end: 'La pluie s’est arrêtée. Vers attrapés\u00a0: {n} 🪱', mom_rain_end0: 'La pluie s’est arrêtée.', mom_rain_full: '🪱 Sac plein · +{c} pièces',
     mom_visit: '{e} {name} est là\u00a0!', mom_visit_hint: '{name} attend à votre étal, près de la ferme, avec une commande express. Touchez-la\u00a0!',
@@ -1210,7 +1212,13 @@ export const HUNT = { level: 2, coins: 20, coinsDay: 10, xp: 3, xpDay: 1, week: 
 // a little way, peeping; found and tapped, the farmer carries it back to its mum (her happy hop; a cuddle's worth of love
 // for her, a few coins); the first one for sure once there are chicks
 export const MOMENTS = { level: 2, from: 7.5, to: 20, home: 20.5, gap: 2 * 3600e3, chance: 0.5, hen: { coins: 15, coinsL: 2, xp: 3 }, rain: { secs: 150, worms: 12, full: 3 }, chick: { coins: 10, coinsL: 2, xp: 3 },
-  visit: { who: 'potts', mins: 10, pay: 2, part: 0.6 } };      // (a visitor, 21 Nov 2026: who comes, how long she waits, double pay, a little of what an order of it asks)
+  visit: { who: 'potts', mins: 10, pay: 2, part: 0.6 },
+  // a snowy day (23 Nov 2026, Audrey: "Can we add snow in the game for winter. Please suggest from when to when"; her choices
+  // "1 Dec – 28 Feb", "Snowy days now and then"): in place of a rainy day, more often in December and January; three minutes
+  // of snowfall, then the farm white for three hours, melting away over its last forty minutes
+  snow: { secs: 180, lie: 3 * 3600e3, melt: 40 * 60e3, odds: { 12: 0.75, 1: 0.75, 2: 0.5 } } };
+// the snow's season: 1 December to 28 February, by the phone's own calendar
+export function snowSeason(now = Date.now()) { const d = new Date(now), k = (d.getMonth() + 1) * 100 + d.getDate(); return k >= 1201 || k <= 228; }      // (a visitor, 21 Nov 2026: who comes, how long she waits, double pay, a little of what an order of it asks)
 // ---- the vegetable garden (7 Nov 2026, Audrey's choice: "Vegetable garden: grow carrots, strawberries and pumpkins, which
 // grow at different speeds; treats the hens love"): from level 4, three raised beds on your land by the farmhouse (moved
 // like a decoration). Sow a bed (its seeds a few coins): carrots are ripe in an hour, strawberries in 3, pumpkins in 8 (also
@@ -1783,6 +1791,7 @@ export function checkFarm(d, now = Date.now()) {
   // is (two numbers on the farm), since when (never ahead of now), only from the level they come; when the last one began
   // (never ahead of now), how many hens found (a whole number)
   const mo = d.moment && typeof d.moment === 'object' ? d.moment : null;
+  if (d.moment === null) out.moment = null;      // (one over, as each moment leaves it: kept so, not an edit; 23 Nov 2026, found by the snowy day's test: a reload after any moment had ended flagged the farm as changed outside the game)
   if (mo && mo.k === 'hen' && L >= MOMENTS.level && typeof mo.b === 'string' && out.birds.some(b => b.id === mo.b && b.sex === 'h' && !kindOf(b.breed)) &&
     Array.isArray(mo.at) && mo.at.length === 2 && mo.at.every(v => Number.isFinite(v) && Math.abs(v) < 150) && Number.isInteger(mo.t) && mo.t >= 0 && mo.t <= now + TZ_SLACK)
     out.moment = { k: 'hen', b: mo.b, at: mo.at.map(v => Math.round(v * 100) / 100), t: mo.t };
@@ -1797,12 +1806,20 @@ export function checkFarm(d, now = Date.now()) {
     mo.at.every(v => Number.isFinite(v) && Math.abs(v) < 150) && Number.isInteger(mo.t) && mo.t >= 0 && mo.t <= now + TZ_SLACK) out.moment = { k: 'chick', c: mc.id, i: mo.i, at: mo.at.map(v => Math.round(v * 100) / 100), t: mo.t };
   // a visitor at the farm stall: a villager who asks for that thing in her orders, from the level the orders open; how many
   // (a whole number, no more than an order of it asks at most); begun no later than now, waiting no longer than her time
+  // a snowy day: in its season (when it began), from the moments' level; begun no later than now, its snowfall no longer than
+  // its length; and the snow lying on the farm after (begun no later than now, gone no later than the fall and its time)
+  const SN = MOMENTS.snow;
+  if (mo && mo.k === 'snow' && L >= MOMENTS.level && Number.isInteger(mo.t) && mo.t >= 0 && mo.t <= now + TZ_SLACK && snowSeason(mo.t) && Number.isInteger(mo.until) && mo.until > mo.t && mo.until <= mo.t + SN.secs * 1000)
+    out.moment = { k: 'snow', t: mo.t, until: mo.until };
+  const sl = d.snow && typeof d.snow === 'object' ? d.snow : null;
+  if (sl && L >= MOMENTS.level && Number.isInteger(sl.t) && sl.t >= 0 && sl.t <= now + TZ_SLACK && snowSeason(sl.t) && Number.isInteger(sl.until) && sl.until > sl.t && sl.until <= sl.t + SN.secs * 1000 + SN.lie) out.snow = { t: sl.t, until: sl.until };
   const VS = MOMENTS.visit, vw = mo && mo.k === 'visit' && typeof mo.who === 'string' && Object.hasOwn(VILLAGERS, mo.who) ? VILLAGERS[mo.who] : null;
   if (vw && L >= ORDERS.level && typeof mo.item === 'string' && vw.wants.includes(mo.item) && Number.isInteger(mo.n) && mo.n >= 1 && mo.n <= (ORDERS.most[mo.item] || 0) &&
     Number.isInteger(mo.t) && mo.t >= 0 && mo.t <= now + TZ_SLACK && Number.isInteger(mo.until) && mo.until > mo.t && mo.until <= mo.t + VS.mins * 60e3)
     out.moment = { k: 'visit', who: mo.who, item: mo.item, n: mo.n, t: mo.t, until: mo.until };
   const ms = d.moments && typeof d.moments === 'object' ? d.moments : null;
   if (ms) { out.moments = { last: int(ms.last, 0, now + TZ_SLACK, 0), hen: int(ms.hen, 0, 1e6, 0) }; const rn = int(ms.rain, 0, 1e6, 0); if (rn) out.moments.rain = rn; const ck = int(ms.chick, 0, 1e6, 0); if (ck) out.moments.chick = ck; const vi = int(ms.visit, 0, 1e6, 0); if (vi) out.moments.visit = vi; }
+  if (ms && out.moments) { const sn = int(ms.snow, 0, 1e6, 0); if (sn) out.moments.snow = sn; const sa = int(ms.snowAt, 0, now + TZ_SLACK, 0); if (sa) out.moments.snowAt = sa; }      // (the snowy days: how many; when the last began)
   return out;
 }
 
@@ -2375,7 +2392,9 @@ export class Game {
   momentDue(hour, now = Date.now()) {
     if (!this.data || this.level < MOMENTS.level || this.data.moment || hour < MOMENTS.from || hour >= MOMENTS.to) return null;
     const M = this.data.moments; if (M && now - M.last < MOMENTS.gap) return null;
-    return { first: !M, rain: this.fishOpen('pond'), firstRain: !!M && !M.rain && this.fishOpen('pond'), firstChick: !!M && !M.chick, visit: this.ordersOpen(), firstVisit: !!M && !M.visit && this.ordersOpen() };
+    const sn = snowSeason(now), odds = MOMENTS.snow.odds[new Date(now).getMonth() + 1] || 0;
+    return { first: !M, rain: this.fishOpen('pond'), firstRain: !!M && !M.rain && this.fishOpen('pond'), firstChick: !!M && !M.chick, visit: this.ordersOpen(), firstVisit: !!M && !M.visit && this.ordersOpen(),
+      snow: sn, snowOdds: sn ? odds : 0, firstSnow: !!M && sn && !(M.snowAt && now - M.snowAt < 100 * 864e5) };      // (the winter's first snowy day for sure the next time; then, in a rainy day's place, three times in four in December and January, one in two in February)
   }
   // a visitor (21 Nov 2026, the 17 Nov mock-up: "a villager at the gate with a quick order, double pay, ten minutes"): Mrs
   // Potts at the farm stall, from the level the village orders open. What she'd like: one of the things she asks for in
@@ -2426,6 +2445,23 @@ export class Game {
   rainOver(now = Date.now(), force = false) {
     const m = this.moment(); if (!m || m.k !== 'rain' || (now < m.until && !force)) return null;
     this.data.moment = null; this.save(); return { got: m.got };
+  }
+  // a snowy day (23 Nov 2026): it begins (its snowfall; the snow lying after it; counted); its snowfall over; how white the
+  // farm is now (0 to 1: settling as it falls, lying, melting away over its last forty minutes)
+  snowOn(now = Date.now()) {
+    if (!this.data || this.data.moment || this.level < MOMENTS.level || !snowSeason(now)) return null;
+    const S = MOMENTS.snow; this.data.moment = { k: 'snow', t: now, until: now + S.secs * 1000 };
+    this.data.snow = { t: now, until: now + S.secs * 1000 + S.lie };
+    const M = this.data.moments || (this.data.moments = { last: 0, hen: 0 }); M.last = now; M.snow = (M.snow || 0) + 1; M.snowAt = now;
+    this.save(); return this.data.moment;
+  }
+  snowOver(now = Date.now(), force = false) {
+    const m = this.moment(); if (!m || m.k !== 'snow' || (now < m.until && !force)) return null;
+    this.data.moment = null; this.save(); return { t: m.t };
+  }
+  snowCover(now = Date.now()) {
+    const s = this.data && this.data.snow, S = MOMENTS.snow; if (!s || now >= s.until || now < s.t) return 0;
+    return Math.max(0, Math.min(1, (now - s.t) / (S.secs * 800), (s.until - now) / S.melt));
   }
   henOut(id, at, now = Date.now()) {
     const b = this.bird(id); if (!this.data || this.data.moment || !b || b.sex !== 'h' || kindOf(b.breed) || this.level < MOMENTS.level) return null;
