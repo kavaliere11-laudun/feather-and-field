@@ -46,6 +46,7 @@ ok('…the others in colour (not faded), "🔒" and their level, no button', res
 const rare = await p.evaluate(() => ({ tiles: [...document.querySelectorAll('.gsheet:not([hidden]) .grare-tiles .gshelf-t')].map(c => [c.dataset.rare, (c.querySelector('button') || {}).textContent || '']), all: (document.querySelector('.gsheet:not([hidden]) .giap-adopt-all') || {}).textContent || '' }));
 ok('the rare Silkie trios: each £6.99, all four £19.99', rare.tiles.length === 4 && rare.tiles.every(x => x[1] === '£6.99') && /19\.99/.test(rare.all), rare);
 await shot('1_chickens');
+await p.evaluate(() => { const e = document.querySelector('.gsheet:not([hidden]) .gcshelf'); if (e) e.scrollIntoView(); }); await shot('1b_shelf');
 await p.evaluate(() => { const e = document.querySelector('.gsheet:not([hidden]) .grare-tiles'); if (e) e.scrollIntoView(); }); await shot('2_rare');
 // bought with coins from here: its coop to place
 await openTab('hens');
