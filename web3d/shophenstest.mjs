@@ -74,6 +74,14 @@ const lay = await p.evaluate(() => { const S = document.querySelector('.gsheet:n
   const words = [...S.querySelectorAll('.gshop-main > .gpage .gdec-l')].filter(e => e.offsetParent !== null).length;
   return { left: rail.right <= main.left, tabsIn: tabs.every(t => t.bottom <= sh.bottom - 4 && t.left >= sh.left), row3: tiles.length === 3 && tiles.every(t => t === tiles[0]), pill: !!S.querySelector('.gshop-rail .gshop-c'), words }; });
 ok('sideways: the shelves down the left, all in sight, the coins at their top; the tiles beside them, three a row; no words yet', lay.left && lay.tabsIn && lay.row3 && lay.pill && lay.words === 0, lay);
+// the tiles scroll on their own (23 Nov 2026, Audrey: "I can't scroll down"): as tall as the card leaves them, more below, the
+// wheel (or a finger) takes them down, the shelves staying where they are
+await setLevel(30); await openTab('decor');
+const sc0 = await p.evaluate(() => { const S = document.querySelector('.gsheet:not([hidden])'), m = S.querySelector('.gshop-main'), r = m.getBoundingClientRect(), sh = S.getBoundingClientRect(); return { h: m.clientHeight, sh: m.scrollHeight, inCard: r.bottom <= sh.bottom + 1, x: r.left + r.width / 2, y: r.top + r.height / 2, rail: S.querySelector('.gshop-rail').getBoundingClientRect().top }; });
+await p.mouse.move(sc0.x, sc0.y); await p.mouse.wheel(0, 300); await p.waitForTimeout(500);
+const sc1 = await p.evaluate(() => { const S = document.querySelector('.gsheet:not([hidden])'); return { top: S.querySelector('.gshop-main').scrollTop, rail: S.querySelector('.gshop-rail').getBoundingClientRect().top }; });
+ok('the tiles: within the card, more below, scrolled down by the wheel, the shelves where they were', sc0.inCard && sc0.sh > sc0.h + 20 && sc1.top > 50 && Math.abs(sc1.rail - sc0.rail) < 1, { sc0, sc1 });
+await shot('3b_scrolled');
 // every thing with its 3D page (23 Nov 2026, Audrey: "Offer it for all items ... For the chickens if you can try to make them
 // alive in the 360 preview, moves needs to be subtle and natural please. We should have the same preview in big when you click
 // for all items"): a "360° view" pill on each tile of every shelf but the coins; each tile's picture whole (not cut)

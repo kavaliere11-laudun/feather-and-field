@@ -7927,11 +7927,16 @@ const SHOP_STAGES = {
   trio(G, line, t, r) {      // (a rooster at the back, his two hens in front, each in her own little patch)
     const base = baseBreed(line), col = base === 'sil' ? silColour(line) || 'white' : lineColour(line);
     const plot = { kind: 'lineup', frame: G, birds: [], centre: new THREE.Vector3() };
-    for (const [kind, x, z, h] of [['rooster', 0.12, -0.42, -0.1], ['hen', -0.5, 0.1, 0.25], ['hen', 0.42, 0.3, -0.7]]) {      // (spread so that, seen as the page opens, none hides another)
-      const B = new Bird(plot, base, kind, col, [x, 0, z], h, r); B.stay = true; plot.birds.push(B);
+    // (close together, a little group, as a trio stands in its yard: 23 Nov 2026, Audrey, "Chickens are too far from each
+    // others"; the room between them each one's own body wide, so a Silkie's trio stands as close as a Cochin's looks)
+    for (const [kind, h] of [['rooster', -0.1], ['hen', 0.25], ['hen', -0.7]]) {
+      const B = new Bird(plot, base, kind, col, [0, 0, 0], h, r); B.stay = true; plot.birds.push(B);
       for (const m of [B.rig.mesh, B.rig.lo]) if (m) { m.visible = m === B.rig.mesh; m.castShadow = true; }
       quietBird(B, r);
     }
+    G.updateMatrixWorld(true);
+    const u = 0.23 * Math.max(0.8, Math.min(1.4, Math.max(...plot.birds.map(B => (B.rig.scale || 0.5) / 0.5))));      // (a bird's body about this wide, as the breed's size goes)
+    plot.birds.forEach((B, i) => { const [x, z] = [[0.1, -1.05], [-1.1, 0.2], [1.05, 0.45]][i]; B.root.position.set(x * u, B.root.position.y, z * u); B.target && B.target.copy(B.root.position); });
     for (const B of plot.birds) B.update(1 / 30);
     return { tick: dt => { for (const B of plot.birds) { const p = B.root.position.clone(), y = B.root.rotation.y; B.update(dt); B.root.position.copy(p); B.root.rotation.y = y; } }, fur: true, yaw: -0.35, el: 0.34, zoom: 0.82,
       dispose: () => { for (const B of plot.birds) { try { B.rig.sleepy(false); } catch (e) { /* */ } B.root.removeFromParent(); if (B.rig && B.rig.dispose) B.rig.dispose(); } } };

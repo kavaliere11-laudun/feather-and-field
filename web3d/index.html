@@ -602,10 +602,14 @@
     /* (the card as tall as the screen allows, whatever the shelf: the shelves down the left and the tiles each scrolling on their
        own, so every shelf is always in reach: 23 Nov 2026, her picture with Seasons under the bottom edge) */
     .gsheet.gshop2 { height: auto; max-height: none; margin: 0 auto; }
-    .gsheet.gshop2 .gsheet-body { flex: 1 1 auto; min-height: 0; overflow: hidden; padding-bottom: 0; }
-    .gsheet.gshop2 .gshop-wrap { flex: 1 1 auto; min-height: 0; grid-template-rows: minmax(0, 1fr); }
-    .gsheet.gshop2 .gshop-rail { position: static; min-height: 0; overflow-y: auto; padding-bottom: 12px; scrollbar-width: none; }
-    .gsheet.gshop2 .gshop-main { min-height: 0; overflow-y: auto; align-content: start; padding: 0 2px 14px; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+    /* (the shelves and the tiles laid in the card's body by its four sides, each scrolling on its own: Safari doesn't always give
+       a grid in a flexed box a height of its own, so the tiles ran on under the card's edge and wouldn't scroll: 23 Nov 2026,
+       Audrey, "I can't scroll down") */
+    .gsheet.gshop2 .gsheet-body { flex: 1 1 auto; min-height: 0; overflow: hidden; padding-bottom: 0; position: relative; }
+    .gsheet.gshop2 .gshop-wrap { position: absolute; top: 4px; left: 16px; right: 16px; bottom: 0; display: flex; flex-direction: row; gap: 12px; }
+    .gsheet.gshop2 .gshop-rail { position: static; flex: 0 0 136px; width: 136px; height: 100%; box-sizing: border-box; overflow-y: auto; padding-bottom: 12px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+    .gsheet.gshop2 .gshop-rail::-webkit-scrollbar { display: none; }
+    .gsheet.gshop2 .gshop-main { flex: 1 1 auto; min-width: 0; height: 100%; box-sizing: border-box; overflow-y: auto; align-content: start; padding: 0 2px 14px; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
   }
   .gout .gpic { padding: 4px 10px 0; }
   .gout-on { box-shadow: inset 0 0 0 2px var(--meadow); }
