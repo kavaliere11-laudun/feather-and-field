@@ -64,10 +64,10 @@ const look = async () => {
   await close(); return o;
 };
 let L = await p.evaluate(() => window.__farm.game().level), o = await look();
-ok('level 1, in the app: no Coins shelf, no Adopt, no shelves, no money button on the coop\'s card; Restore in Settings', L === 1 && !o.tabs.some(t => /🪙/.test(t)) && o.adopt.length === 0 && o.shelves.length === 0 && !o.coop.some(g => g === 'pay' || g === 'all' || g === 'restore') && o.restore.length === 1, { L, o });
+ok('level 1, in the app: no Coins shelf, no Adopt, no shelves, no money button on the coop\'s card; Restore in Settings', L === 1 && !o.tabs.some(t => /^\s*(Coins|Pièces)$/.test(t)) && o.adopt.length === 0 && o.shelves.length === 0 && !o.coop.some(g => g === 'pay' || g === 'all' || g === 'restore') && o.restore.length === 1, { L, o });
 await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(3) + 1; g.data.lvSeen = g.level; g.save(); });
 await reload(); L = await p.evaluate(() => window.__farm.game().level); o = await look();
-ok('level 3: the Coins shelf, Adopt (the four and each), the shelves, "Or have it now" and the nine', L === 3 && o.tabs.some(t => /🪙/.test(t)) && o.adopt.length === 5 && o.shelves.length === 1 && o.coop.includes('pay') && o.coop.includes('all'), { L, o });
+ok('level 3: the Coins shelf, Adopt (the four and each), the shelves, "Or have it now" and the nine', L === 3 && o.tabs.some(t => /^\s*(Coins|Pièces)$/.test(t)) && o.adopt.length === 5 && o.shelves.length === 1 && o.coop.includes('pay') && o.coop.includes('all'), { L, o });
 // every money button blue
 const blue = async sel => p.evaluate(sel => [...document.querySelectorAll('.gsheet:not([hidden]) ' + sel)].map(b => { const c = getComputedStyle(b); return c.color + '|' + c.backgroundColor; }), sel);      // (23 Nov 2026, her choice: real money calm, blue on white with a blue outline)
 await p.evaluate(() => window.__farm.deco.shop()); await run(0.3); await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gchip')].find(c => c.dataset.tab === 'coins').click()); await run(0.3);

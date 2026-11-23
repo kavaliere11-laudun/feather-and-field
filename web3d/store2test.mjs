@@ -68,7 +68,7 @@ await close(); await p.evaluate(() => window.__farm.pantrySheet()); await run(0.
 let sh = await btns('[data-shelves]');
 await close(); await p.evaluate(() => window.__farm.gameUI().settings()); await run(0.2);
 let rs = await btns('.giap-restore button');
-ok('outside the app: no Coins shelf, no Adopt, no shelves to buy, no Restore', !tabs.some(t => /🪙/.test(t)) && adopt.length === 0 && sh.length === 0 && rs.length === 0, { tabs, adopt, sh, rs });
+ok('outside the app: no Coins shelf, no Adopt, no shelves to buy, no Restore', !tabs.some(t => /^\s*(Coins|Pièces)$/.test(t)) && adopt.length === 0 && sh.length === 0 && rs.length === 0, { tabs, adopt, sh, rs });
 await p.evaluate(() => { const g = window.__farm.game(); g.data.shelves = true; g.data.trios = ['sil_paint']; g.data.gift = ['sil_paint']; g.save(); });
 await reload(); s = await S();
 ok('…a save claiming the shelves and a trio: no bigger shelves, no birds, no free Pagoda', !s.shelves && s.eggsMax === eggs0 && s.basket.length === 0 && s.gift.length === 0 && s.trios.length === 0, s);
@@ -78,7 +78,7 @@ await p.evaluate(() => window.__farm.deco.shop()); await run(0.3);
 tabs = await btns('.gchip'); await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gchip')].find(c => c.dataset.tab === 'coins').click()); await run(0.3);
 let bags = await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .giap[data-bag]')].map(c => c.dataset.bag + '|' + c.querySelector('.gdec-p').textContent + '|' + c.querySelector('.giap-buy').textContent));
 let txt = await sheetT();
-ok('in the app: the Coins shelf, four bags at Apple\'s prices (3,000 / 10,000 / 20,000 / 50,000), no advert card, no "Most popular"', tabs.some(t => /🪙/.test(t)) && bags.length === 4 && /purse\|3[,.\s  ]?000.*£0\.99/.test(bags[0]) && /basket\|10[,.\s  ]?000.*£2\.99/.test(bags[1]) && /sack\|20[,.\s  ]?000.*£4\.99/.test(bags[2]) && /cart\|50[,.\s  ]?000.*£9\.99/.test(bags[3]) && !/🎬|Most popular|Le plus choisi|Best value/.test(txt), bags);
+ok('in the app: the Coins shelf, four bags at Apple\'s prices (3,000 / 10,000 / 20,000 / 50,000), no advert card, no "Most popular"', tabs.some(t => /^\s*(Coins|Pièces)$/.test(t)) && bags.length === 4 && /purse\|3[,.\s  ]?000.*£0\.99/.test(bags[0]) && /basket\|10[,.\s  ]?000.*£2\.99/.test(bags[1]) && /sack\|20[,.\s  ]?000.*£4\.99/.test(bags[2]) && /cart\|50[,.\s  ]?000.*£9\.99/.test(bags[3]) && !/🎬|Most popular|Le plus choisi|Best value/.test(txt), bags);
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden])').scrollTo(0, 0)); await p.waitForTimeout(400); await shoot('1_coins');
 s = await S(); const c0 = s.coins, t0 = s.tally;
 await tapSel('.giap[data-bag="cart"] .giap-buy'); await run(1.2); s = await S(); txt = await sheetT();

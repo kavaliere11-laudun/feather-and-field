@@ -3,7 +3,7 @@
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
 import { BAG_ART } from './bagart.js';
 import { READY, LANG_NAME } from './lang.js';
-import { BAGS, TRIO_LINES, SHELF, PERS_INFO, MAX_STARS, STAR_EGG, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS, MILES, MILE_IDS, JOBS_BONUS, PANTRY } from './game.js';
+import { BAGS, TRIO_LINES, SHELF, PERS_INFO, MAX_STARS, STAR_EGG, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, THEMES, themeInSeason, BREED_LEVEL, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS, MILES, MILE_IDS, JOBS_BONUS, PANTRY } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -147,8 +147,8 @@ export class GameUI {
     this.body = el('div', 'gsheet-body');
     this.sheet.append(head, this.body);
     // (more below to scroll to: a soft fade over the last words, gone once at the bottom)
-    const more = () => { const b = this.body; this.sheet.classList.toggle('gmore', !this.sheet.hidden && b.scrollHeight > b.clientHeight + 4 && b.scrollTop + b.clientHeight < b.scrollHeight - 4); };
-    this.body.addEventListener('scroll', more, { passive: true });
+    const more = () => { const m = this.body.querySelector(':scope > .gshop-wrap > .gshop-main'), b = m && m.scrollHeight > m.clientHeight + 4 && getComputedStyle(m).overflowY !== 'visible' ? m : this.body; this.sheet.classList.toggle('gmore', !this.sheet.hidden && b.scrollHeight > b.clientHeight + 4 && b.scrollTop + b.clientHeight < b.scrollHeight - 4); };
+    this.body.addEventListener('scroll', more, { passive: true, capture: true });      // (and the shop's tiles, scrolling on their own)
     for (const ev of ['load', 'animationend', 'transitionend']) this.body.addEventListener(ev, more, true);      // (a picture arriving, or something growing in, makes it longer)
     if (window.ResizeObserver) new ResizeObserver(more).observe(this.body);
     if (window.MutationObserver) new MutationObserver(() => { requestAnimationFrame(more); setTimeout(more, 450); }).observe(this.body, { childList: true, subtree: true });
@@ -202,6 +202,7 @@ export class GameUI {
   showBar() { this.refresh(); this.bar.hidden = false; }
   // ---- sheets
   open(kind, title, modal = false) {
+    this.dropPreview();
     if (this.twoResolve && kind !== 'twofarms') { const r = this.twoResolve; this.twoResolve = null; r(null); }      // (the two farms' choice not made: asked again later)
     this.kind = kind; this.title.textContent = title; this.body.replaceChildren();
     this.x.hidden = modal; this.dim.hidden = !modal; this.sheet.hidden = false; document.body.classList.add('gopen');
@@ -214,6 +215,7 @@ export class GameUI {
   }
   close() {
     if (this.sheet.hidden) return;
+    this.dropPreview();
     if (this.twoResolve) { const r = this.twoResolve; this.twoResolve = null; r(null); }
     if (this.kind === 'congrats' && this.news) { this.g.seenNews(this.news); this.news = null; this.refresh(); this.bumpCoins(); }      // (seen: it won't show again)
     if (this.kind === 'levelup' && this.levelShown) {
@@ -720,7 +722,7 @@ export class GameUI {
     if (n) {
       const side = tile('gup', 'looks/' + base + '_' + n.tier + '.webp', this.t('up_next_l'), this.t('look_' + n.look), this.t('up_' + base + '_' + n.look) + ' ' + this.t('upfx_' + n.look));
       side.append(el('p', 'gcoop-fx', this.t('upic_' + n.look)));
-      const broke = g.data.coins < n.price, b = btn('gbtn gsmallbtn' + (broke ? ' galt gshort' : ''), this.coinLabel(n.price)); this.short(b, n.price); b.disabled = broke; b.setAttribute('aria-label', broke ? this.t('up_broke', { c: fmt(n.price) }) : this.t('up_btn', { c: fmt(n.price) }));
+      const broke = g.data.coins < n.price, b = this.coinFill(btn('gbtn gsmallbtn' + (broke ? ' galt' : '')), n.price); b.disabled = broke; b.setAttribute('aria-label', broke ? this.t('up_broke', { c: fmt(n.price) }) : this.t('up_btn', { c: fmt(n.price) }));
       const why = el('div', 'gcoop-why gup-why'); why.hidden = true; why.append(el('p', 'gnote', this.t('up_room')));
       b.addEventListener('click', () => { if (b.disabled) return; const r = up.onUpgrade(); if (r === 'room') { why.hidden = false; why.scrollIntoView({ block: 'nearest' }); } });
       side.append(b); notes.append(why);
@@ -733,7 +735,7 @@ export class GameUI {
       const noRoom = () => { if (up.themeWhy && up.themeWhy() === 'room') { why.hidden = false; why.scrollIntoView({ block: 'nearest' }); } };
       for (const T of TH) { const name = g.themeName(T.id, base), side = tile('gtheme gtheme-r', 'themes/' + T.key + '.webp', this.t('theme_' + T.id + '_l'), (T.on ? '✓ ' : '') + name, this.t('themel_' + T.key)), btns = el('div', 'gtheme-b'); side.parentNode.dataset.theme = T.id; side.append(btns);
         if (T.owned) { const bt = btn('gbtn gsmallbtn' + (T.on ? ' galt' : ''), this.t(T.on ? 'theme_out' : 'theme_in')); bt.dataset.themego = T.on ? 'off' : 'on'; bt.setAttribute('aria-label', this.t(T.on ? 'theme_off' : 'theme_on', { name })); bt.addEventListener('click', () => up.onTheme(T.on ? null : T.id, false)); btns.append(bt); }
-        else if (T.season) { const broke = g.data.coins < T.price, bt = btn('gbtn gsmallbtn' + (broke ? ' galt gshort' : ''), this.coinLabel(T.price)); this.short(bt, T.price); bt.disabled = broke; bt.dataset.themego = 'buy'; bt.setAttribute('aria-label', this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmt(T.price) })); bt.addEventListener('click', () => { if (!bt.disabled) { up.onTheme(T.id, true); noRoom(); } }); btns.append(bt);
+        else if (T.season) { const broke = g.data.coins < T.price, bt = this.coinFill(btn('gbtn gsmallbtn' + (broke ? ' galt' : '')), T.price); bt.disabled = broke; bt.dataset.themego = 'buy'; bt.setAttribute('aria-label', this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmt(T.price) })); bt.addEventListener('click', () => { if (!bt.disabled) { up.onTheme(T.id, true); noRoom(); } }); btns.append(bt);
           const pr = up.pay && g.level >= PAY_LEVEL ? up.pay.price(T.key) : null;      // (in the app: for money too, at Apple's price in the player's own money)
           if (pr) { const pb = btn('gbtn gsmallbtn gpay', pr); pb.dataset.themego = 'pay'; pb.setAttribute('aria-label', this.t('pay_buy', { p: pr })); pb.addEventListener('click', () => { up.pay.onPay(T.id); noRoom(); }); btns.append(pb); } }
         else btns.append(el('p', 'gnote', this.t('theme_when_' + T.id))); }
@@ -931,8 +933,8 @@ export class GameUI {
       else if (S.had) { const go = el('button', 'gbtn gsmallbtn', this.t('place_btn')); go.type = 'button'; go.dataset.place = S.breed; go.addEventListener('click', () => h.place && h.place(S.breed)); side.append(go); }
       else if (!S.open) side.append(el('p', 'gnote gshelf-lv', '🔒 ' + this.t('shelf_lv', { n: S.level })));
       else {
-        const btns = el('div', 'gtheme-b'), broke = g.data.coins < S.price, bt = el('button', 'gbtn gsmallbtn' + (broke ? ' galt gshort' : ''), this.coinLabel(S.price));
-        this.short(bt, S.price); bt.type = 'button'; bt.disabled = broke; bt.dataset.shelfgo = 'coins'; bt.setAttribute('aria-label', this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmt(S.price) }));
+        const btns = el('div', 'gtheme-b gbuy-row'), broke = g.data.coins < S.price, bt = this.coinFill(el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : '')), S.price);
+        bt.type = 'button'; bt.disabled = broke; bt.dataset.shelfgo = 'coins'; bt.setAttribute('aria-label', this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmt(S.price) }));
         bt.addEventListener('click', () => { if (!bt.disabled && h.shelf) h.shelf(S.breed); }); btns.append(bt);
         const pr = IAP_DEMO ? this.money(SHELF[S.breed].money) : PAY ? PAY.price('shelf:' + S.breed) : null;      // (in the app: for money too, at Apple's price in the player's own money)
         if (pr) { const pb = el('button', 'gbtn gsmallbtn gpay', pr); pb.type = 'button'; pb.dataset.shelfgo = 'pay'; pb.setAttribute('aria-label', this.t('pay_buy', { p: pr }));
@@ -1031,8 +1033,11 @@ export class GameUI {
   // CSS filter, came out blank on Audrey's iPhone: 10 Nov "Why is there no image", 11 Nov the shop: "Missing images")
   // a coin price on its button: "🪙 3,000", or, not enough yet, how close: "🪙 1,203 / 3,000" (23 Nov 2026, Audrey's choice
   // "Both changes": the coins' way kept in sight and worth earning, the money button beside it calm)
-  short(btn, price) { const have = Math.max(0, this.g.data.coins); if (have < price) { btn.classList.add('gshort'); btn.style.setProperty('--p', Math.max(4, Math.min(100, Math.round(100 * have / price))) + '%'); } return btn; }      // (its fill: how close, a bar inside the button)
-  coinLabel(price) { const f = n => n.toLocaleString(this.g.locale()), have = Math.max(0, Math.floor(this.g.data.coins)); return '🪙 ' + (have < price ? f(have) + ' / ' : '') + f(price); }
+  short(btn, price) { if (Math.max(0, this.g.data.coins) < price) btn.classList.add('gshort'); return btn; }
+  coinLabel(price) { return price.toLocaleString(this.g.locale()); }
+  // a coin price on a button (23 Nov 2026, Audrey: "Review the CTA they do take a lot of space maybe we need to get rid of
+  // the progression bar CTA"): the game's own gold coin and the price, nothing else; short of coins, a quiet button
+  coinFill(btn, price) { btn.replaceChildren(el('span', 'gcoin gcoin-s'), document.createTextNode(this.coinLabel(price))); btn.classList.add('gcoinbtn'); return this.short(btn, price); }
   picOf(src, dark) {
     const pic = el('div', 'gpic');
     if (dark) { const sil = el('div', 'gsil'), u = 'url("' + src + '")'; sil.style.webkitMaskImage = u; sil.style.maskImage = u; sil.dataset.src = src; pic.append(sil); }
@@ -1230,6 +1235,7 @@ export class GameUI {
       const tabs = el('div', 'gchips gshop-tabs');
       for (const [k, label, icon] of [...(IAP_DEMO || this.payOn() ? [['coins', '', '🪙']] : []), ...(g.level >= PAY_LEVEL ? [['hens', 'shop_hens', '🐔']] : []), ...(h.coops ? [['coops', 'shop_coops', '🏠']] : []), ['decor', 'shop_decor', '🌷'], ['animals', 'shop_animals', '🐾'], ['outfits', 'shop_outfits', '👒'], ['seasons', 'shop_seasons', '🎄']]) {
         const c = el('button', 'gchip' + (tab === k ? ' on' : ''), icon + ' ' + (k === 'coins' ? this.dt('tab') : this.t(label))); c.type = 'button'; c.dataset.tab = k;
+        if (k === 'coins') c.replaceChildren(el('span', 'gcoin gcoin-s'), document.createTextNode(' ' + this.dt('tab')));      // (the game's own gold coin, not the phone's silver one)
         c.addEventListener('click', () => { if (this.shopTab !== k) this.shopSheet(h, k); });
         tabs.append(c);
       }
@@ -1237,7 +1243,7 @@ export class GameUI {
     }
     wrap.append(rail, b); body.append(wrap);
     // (a tile's words: shown when its picture is tapped, one at a time)
-    b.addEventListener('click', e => { const pic = e.target.closest('.gpage > .gpic'); if (!pic) return; const card = pic.parentNode, was = card.classList.contains('gsay'); for (const x of b.querySelectorAll('.gsay')) x.classList.remove('gsay'); card.classList.toggle('gsay', !was); });
+    b.addEventListener('click', e => { const pic = e.target.closest('.gpage > .gpic'); if (!pic || pic.classList.contains('gprev-open')) return; const card = pic.parentNode, was = card.classList.contains('gsay'); for (const x of b.querySelectorAll('.gsay')) x.classList.remove('gsay'); card.classList.toggle('gsay', !was); });
     if (tab === 'coins' && (IAP_DEMO || this.payOn())) { this.coinCards(b); return; }
     if (tab === 'hens' && g.level >= PAY_LEVEL) { this.shelfPages(b, h); this.rareTiles(b); return; }
     if (tab === 'coops' && h.coops) { this.coopTiles(b, h); return; }
@@ -1257,7 +1263,7 @@ export class GameUI {
       }
       if (own && !D.pond) { const mv = el('button', 'gbtn galt gsmallbtn gpage-go', this.t('dec_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move(id)); info.append(mv); }
       if (!own && !lock) {
-        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.coinLabel(D.price) : this.t(D.pond ? 'dec_buy_pond' : 'dec_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.short(go, D.price);
+        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), this.t(D.pond ? 'dec_buy_pond' : 'dec_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.coinFill(go, D.price);
         go.addEventListener('click', () => { if (!go.disabled) h.buy(id); });
         if (broke && IAP_DEMO) this.getCoins(go, h);
         info.append(go);
@@ -1265,34 +1271,76 @@ export class GameUI {
       card.append(pic, info); b.append(card);
     }
   }
-  // the shop's Coops shelf (23 Nov 2026, Audrey: "we need to add the coops"): each coop's next look (its picture, its name
-  // and the look's, its coins; h.upgrade: grown there and then, or why not), and this season's buildings for it not yet
-  // had (coins, or Apple's price in the app; h.theme). Their words when the picture is tapped
-  coopTiles(b, h) {
-    const g = this.g, fmt = n => n.toLocaleString(g.locale()), PAY = this.payOn(); let n0 = 0;
-    for (const coop of g.data.coops) {
-      const base = g.baseOf(coop.breed), cn = g.coopName(coop), nx = g.coopNext(coop);
-      const tile = (cls, src, name, more) => { const card = el('div', 'gcard gpage gdec gshopcoop ' + cls), pic = this.picOf(src + (this.o.bust || ''), false), info = el('div', 'gpage-i');
-        card.dataset.coop = coop.id; info.append(el('span', 'glabel', cn), el('span', 'gcard-t', name), el('p', 'gnote gdec-l', more)); card.append(pic, info); b.append(card); n0++; return info; };
-      if (nx) {
-        const info = tile('gshop-up', 'looks/' + base + '_' + nx.tier + '.webp', '→ ' + this.t('look_' + nx.look), this.t('up_' + base + '_' + nx.look) + ' ' + this.t('upfx_' + nx.look));
-        const broke = g.data.coins < nx.price, go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' galt' : ''), this.coinLabel(nx.price)); go.type = 'button'; go.disabled = broke; go.dataset.up = coop.id;
-        if (broke) this.short(go, nx.price);
-        go.addEventListener('click', () => { if (!go.disabled) h.upgrade(coop.id); }); info.append(go);
-      }
-      for (const T of g.themesFor(coop)) {
-        if (T.owned || !T.season) continue;
-        const name = g.themeName(T.id, base), info = tile('gshop-theme', 'themes/' + T.key + '.webp', name, this.t('themel_' + T.key)), row = el('div', 'gtheme-b');
-        const broke = g.data.coins < T.price, go = el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : ''), this.coinLabel(T.price)); go.type = 'button'; go.disabled = broke; go.dataset.themego = 'buy';
-        if (broke) this.short(go, T.price);
-        go.addEventListener('click', () => { if (!go.disabled) h.theme(coop.id, T.id, true); }); row.append(go);
-        const pr = PAY && PAY.price ? PAY.price('theme:' + T.key) : null;
-        if (pr) { const pb = el('button', 'gbtn gsmallbtn gpay', pr); pb.type = 'button'; pb.dataset.themego = 'pay'; pb.addEventListener('click', () => h.theme(coop.id, T.id, 'pay')); row.append(pb); }
-        info.append(row);
-      }
+  // the shop's Coops shelf (23 Nov 2026, Audrey: "we need to add the coops", then, of it: "Only the seasonal coops should be in
+  // there and when you click on it you should have a bigger picture ideally 3D/ 360 and some copy"): the season's collection,
+  // a building for each breed's coop: hers to buy (its coins, and Apple's price in the app), hers already, for a breed still
+  // to come (its level), or out of season (when it's back). A tile's picture: the building in 3D, its words, its buttons
+  seasonDay(md) { const now = new Date(Date.now()); return new Date(now.getFullYear(), md[0] - 1, md[1]).toLocaleDateString(this.g.locale(), { day: 'numeric', month: 'long' }); }
+  seasonCoops() {
+    const g = this.g, out = [];
+    for (const t of Object.keys(THEMES)) {
+      const TH = THEMES[t], season = themeInSeason(t), coops = id => g.data.coops.filter(c => g.baseOf(c.breed) === id);
+      const list = TH.breeds.map(b => ({ t, b, key: t + '_' + b, price: TH.price, season, owned: g.themeOwned(t, b), coops: coops(b), level: BREED_LEVEL[b] || 1 }));
+      list.sort((x, y) => (y.coops.length > 0) - (x.coops.length > 0) || x.level - y.level);      // (her own breeds' first, then the rest as they come)
+      out.push(...list);
     }
-    if (!n0) b.append(el('p', 'gnote', this.t('shop_coops_none')));
+    return out;
   }
+  coopTiles(b, h) {
+    const g = this.g, PAY = this.payOn(), list = this.seasonCoops();
+    if (!list.length) return;
+    const T0 = THEMES[list[0].t];
+    b.append(el('p', 'gnote gshop-note', this.t('theme_' + list[0].t + '_l') + ' · ' + this.t(list[0].season ? 'coops_until' : 'coops_back', { d: this.seasonDay(list[0].season ? T0.to : T0.from) })));
+    for (const S of list) {
+      const name = g.themeName(S.t, S.b), card = el('div', 'gcard gpage gdec gshopcoop' + (!S.coops.length || !S.season ? ' glock' : '') + (S.owned ? ' gdec-own' : '')), info = el('div', 'gpage-i');
+      card.dataset.coop = S.key;
+      const pic = this.picOf('themes/' + S.key + '.webp' + (this.o.bust || ''), false); pic.classList.add('gprev-open'); pic.setAttribute('role', 'button'); pic.setAttribute('aria-label', name);
+      pic.addEventListener('click', () => this.coopView(h, S));
+      info.append(el('span', 'glabel', g.bookName(S.b)), el('span', 'gcard-t', name));
+      this.coopState(info, h, S, PAY, true);
+      card.append(pic, info); b.append(card);
+    }
+  }
+  // what a seasonal building's tile (or its own page) says or offers: yours (and Move in, none of its coops living there);
+  // the breed to come; out of season; or its coins and Apple's price
+  coopState(box, h, S, PAY, tile) {
+    const g = this.g, name = g.themeName(S.t, S.b), target = S.coops.find(c => !c.theme) || S.coops[0];
+    if (S.owned) {
+      box.append(el('p', 'gpage-s gfound', '✓ ' + this.t('shop_yours')));
+      if (target && !S.coops.some(c => c.theme === S.t)) { const go = el('button', 'gbtn galt gsmallbtn', this.t('theme_in')); go.type = 'button'; go.dataset.themego = 'on'; go.addEventListener('click', () => h.theme(target.id, S.t, false)); box.append(go); }
+      return;
+    }
+    if (!S.coops.length) { box.append(el('p', 'gpage-s glock-lv', '🔒 ' + (g.level < S.level ? this.t('dec_level', { n: S.level }) : this.t('coops_place')))); return; }
+    if (!S.season) { box.append(el('p', 'gpage-s glock-lv', '📅 ' + this.t('coops_back', { d: this.seasonDay(THEMES[S.t].from) }))); return; }
+    const row = el('div', 'gtheme-b gbuy-row'), broke = g.data.coins < S.price, go = this.coinFill(el('button', 'gbtn gsmallbtn' + (broke ? ' galt' : '')), S.price);
+    go.type = 'button'; go.disabled = broke; go.dataset.themego = 'buy'; go.setAttribute('aria-label', this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: this.coinLabel(S.price) }));
+    go.addEventListener('click', () => { if (!go.disabled) h.theme(target.id, S.t, true); }); row.append(go);
+    const pr = PAY && PAY.price ? PAY.price('theme:' + S.key) : null;
+    if (pr) { const pb = el('button', 'gbtn gsmallbtn gpay', pr); pb.type = 'button'; pb.dataset.themego = 'pay'; pb.setAttribute('aria-label', this.t('pay_buy', { p: pr })); pb.addEventListener('click', () => h.theme(target.id, S.t, 'pay')); row.append(pb); }
+    box.append(row);
+  }
+  // a seasonal building's own page in the shop: the building in 3D to turn all the way round (main.js coopPreview; its picture
+  // until it's drawn, or where it can't be), its words, what comes with it, its buttons; back to the shelf
+  coopView(h, S) {
+    const g = this.g, main = this.body.querySelector('.gshop-main'); if (!main) return;
+    this.dropPreview(); main.scrollTop = 0; main.replaceChildren(); main.classList.add('gprev-on');
+    const back = el('button', 'gshop-back', '‹ ' + this.t('shop_coops')); back.type = 'button'; back.addEventListener('click', () => this.shopSheet(h, 'coops'));
+    const page = el('div', 'gprev'), stage = el('div', 'gprev-stage'), img = el('img'), info = el('div', 'gprev-i'), name = g.themeName(S.t, S.b);
+    img.alt = name; img.decoding = 'async'; img.src = 'themes/' + S.key + '.webp' + (this.o.bust || ''); stage.append(img);
+    const tip = el('span', 'gprev-tip', '↻ ' + this.t('prev_turn')); stage.append(tip);
+    const acts = el('div', 'gprev-b'); this.coopState(acts, h, S, this.payOn(), false);      // (its buttons right under its name: in sight on a phone on its side)
+    info.append(el('span', 'glabel', this.t('theme_' + S.t + '_l') + ' · ' + g.bookName(S.b)), el('h3', 'gprev-n', name), acts, el('p', 'gprev-l', this.t('themel_' + S.key)));
+    const facts = el('ul', 'gprev-f'); for (const k of ['prev_garden', 'prev_keep']) facts.append(el('li', null, this.t(k)));
+    if (S.season && !S.owned) facts.append(el('li', null, '📅 ' + this.t('coops_until', { d: this.seasonDay(THEMES[S.t].to) })));
+    info.append(facts);
+    page.append(stage, info); main.append(back, page);
+    const pv = h.preview ? h.preview(S.b, S.t) : null;
+    if (pv) {
+      this.preview = pv; pv.el.classList.add('gprev-cv'); stage.append(pv.el);
+      pv.start(() => { stage.classList.add('gprev-live'); }, () => { tip.classList.add('gone'); });
+    } else tip.hidden = true;
+  }
+  dropPreview() { const p = this.preview; this.preview = null; if (p) try { p.dispose(); } catch (e) { /* */ } const m = this.body && this.body.querySelector('.gprev-on'); if (m) m.classList.remove('gprev-on'); }
   // ---- the real-money preview (IAP_DEMO): its words, a price in the phone's money (the stores give the real one), a pile of
   // coins for a bag's picture, the Coins shelf, the iPhone's payment (shown as a stand-in), and the thank-you
   getCoins(go, h) { const gc = el('button', 'gbtn gsmallbtn giap-get', '🪙 ' + this.dt('get')); gc.type = 'button'; gc.addEventListener('click', () => this.shopSheet(h, 'coins')); queueMicrotask(() => go.after(gc)); }      // (beside its button, once that's on the card)
@@ -1381,7 +1429,7 @@ export class GameUI {
         info.append(row);
       }
       if (!own && !lock) {
-        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.coinLabel(A.price) : this.t(A.kennel ? 'dec_buy' : 'ani_buy', { c: fmt(A.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.short(go, A.price);
+        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), this.t(A.kennel ? 'dec_buy' : 'ani_buy', { c: fmt(A.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.coinFill(go, A.price);
         go.addEventListener('click', () => { if (!go.disabled) h.buyAnimal(id); });
         if (broke && IAP_DEMO) this.getCoins(go, h);
         info.append(go);
@@ -1405,7 +1453,7 @@ export class GameUI {
       else if (!own) { const pr = el('p', 'gpage-s gdec-p'); pr.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(O.price) + ' · ' + this.t('dec_xp', { xp: outfitXp(id) }))); info.append(pr); }
       if (own && !on) { const w = el('button', 'gbtn galt gsmallbtn gpage-go', this.t('out_wear')); w.type = 'button'; w.addEventListener('click', () => h.wear(id)); info.append(w); }
       if (!own && !lock) {
-        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.coinLabel(O.price) : this.t('out_buy', { c: fmt(O.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.short(go, O.price);
+        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), this.t('out_buy', { c: fmt(O.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.coinFill(go, O.price);
         go.addEventListener('click', () => { if (!go.disabled) h.buyOutfit(id); });
         if (broke && IAP_DEMO) this.getCoins(go, h);
         info.append(go);
@@ -1428,7 +1476,7 @@ export class GameUI {
       else if (!on) info.append(el('p', 'gpage-s glock-lv', '📅 ' + this.t('dress_when_' + id)));
       else {
         const pr = el('p', 'gpage-s gdec-p'); pr.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(D.price) + ' · ' + this.t('dec_xp', { xp: dressXp(id) }))); info.append(pr);
-        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.coinLabel(D.price) : this.t('dress_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.short(go, D.price);
+        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), this.t('dress_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.coinFill(go, D.price);
         go.addEventListener('click', () => { if (!go.disabled) h.buyDress(id); });
         info.append(go);
       }

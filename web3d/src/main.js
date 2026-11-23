@@ -7841,6 +7841,95 @@ function groomLive(gb, img) {
     // (tests and films: her clock stepped by hand)
     manual: on => { L.manual = !!on; }, step: dt => { step(dt); draw(); }, state: () => ({ on: L.on, frames: L.frames, yaw: +D.yaw.toFixed(3), tilt: +D.tilt.toFixed(3), blink: D.blink > 0, ruffle: D.rfT > 0, wag: D.wagT > 0, proud: +D.proud.toFixed(2), hop: D.hopT >= 0, hopped: !!D.hopped, tool: D.tool }) };
 }
+// ---- a seasonal building in the shop, in 3D (23 Nov 2026, Audrey of the shop's Coops shelf: "when you click on it you should
+// have a bigger picture ideally 3D/ 360 and some copy"): the building as a coop of that breed wears it, with its Deluxe
+// garden, its snow and its toys, made from the farm's own models and drawn in a little canvas of its own (its own drawing
+// context, as the groomed hen), at midday whatever the farm's hour (the farm's own light left as it is), on a round of
+// lawn. Dragged sideways it turns all the way round, up and down it tilts, pinched (or scrolled) it comes closer; it never
+// moves by itself, and is drawn only when it's moved. No second drawing context to be had: null (its picture instead)
+const DRAG_TURN = 0.011, DRAG_TILT = 0.007;
+function coopPreview(breed, theme = 'winter') {
+  const base = baseBreed(breed);
+  if (!parts['theme_' + theme + '_' + base] || !hasLooks(base)) return null;
+  let R2 = null;
+  try { R2 = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance', stencil: false }); if (!R2.getContext()) throw new Error('no context'); }
+  catch (e) { if (R2) R2.dispose(); return null; }
+  R2.outputColorSpace = renderer.outputColorSpace; R2.toneMapping = renderer.toneMapping; R2.toneMappingExposure = renderer.toneMappingExposure;
+  R2.shadowMap.enabled = true; R2.shadowMap.type = THREE.PCFSoftShadowMap;
+  const cv = R2.domElement, sc = new THREE.Scene(), G = new THREE.Group(); sc.add(G);
+  cv.style.touchAction = 'none';
+  // the building, its garden and its toys (a coop of that breed at Deluxe wearing it; nothing of it on the farm)
+  const plot = { kind: 'preview', index: 0, breed: base, line: base, col: null, tier: 4, deluxe: true, rustic: false, theme, dress: null, frame: G, group: G, birds: [], centre: new THREE.Vector3() };
+  plot.pen = tierPen(base, 4);
+  for (const [name, M] of coopParts(plot)) for (const m of meshesOf(parts[name])) {
+    const k = new THREE.Mesh(m.geometry, m.material); k.matrixAutoUpdate = false; k.matrix.copy(M).multiply(m.matrixWorld); k.castShadow = k.receiveShadow = true; G.add(k);
+  }
+  const L = coopLook(plot);
+  try { if (penOf(plot).play && parts.swing_seat) { const tr = winterGarden(L.garden).treat; addToys(plot, penOf(plot).play, part, tr && parts[tr] ? tr : 'cabbage'); if (theme === 'winter') addWinter(plot, L.garden, part); } } catch (e) { /* (the building alone) */ }
+  G.updateMatrixWorld(true);
+  const box = new THREE.Box3().setFromObject(G), mid = box.getCenter(new THREE.Vector3()), size = box.getSize(new THREE.Vector3()), R = Math.max(1, Math.hypot(size.x, size.z) / 2);
+  // a round of lawn under it, fading into the page's cream; the page's own soft background behind
+  const lawnCv = document.createElement('canvas'); lawnCv.width = lawnCv.height = 256;
+  { const g = lawnCv.getContext('2d'), gr = g.createRadialGradient(128, 128, 10, 128, 128, 127); gr.addColorStop(0, '#9cc35a'); gr.addColorStop(0.62, '#8fb851'); gr.addColorStop(0.86, 'rgba(143,184,81,0.55)'); gr.addColorStop(1, 'rgba(143,184,81,0)'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); }
+  const lawnTex = new THREE.CanvasTexture(lawnCv); lawnTex.colorSpace = THREE.SRGBColorSpace;
+  const lawn = new THREE.Mesh(new THREE.CircleGeometry(R * 1.45, 64), new THREE.MeshLambertMaterial({ map: lawnTex, transparent: true, depthWrite: false }));
+  lawn.rotation.x = -Math.PI / 2; lawn.position.set(mid.x, -0.004, mid.z); lawn.receiveShadow = true; lawn.renderOrder = -1; sc.add(lawn);
+  const bgCv = document.createElement('canvas'); bgCv.width = bgCv.height = 256;
+  { const g = bgCv.getContext('2d'), gr = g.createRadialGradient(128, 205, 8, 128, 205, 300); gr.addColorStop(0, '#fffbea'); gr.addColorStop(0.4, '#f6f1dc'); gr.addColorStop(1, '#dbe7c6'); g.fillStyle = gr; g.fillRect(0, 0, 256, 256); }
+  const bgTex = new THREE.CanvasTexture(bgCv); bgTex.colorSpace = THREE.SRGBColorSpace; sc.background = bgTex;
+  // the light: the farm's at midday (its sun and sky taken, the farm's own hour put back at once)
+  const h0 = DAY.hour; applyDaylight(12.5);
+  const sunL = new THREE.DirectionalLight(sun.color.clone(), sun.intensity), sky = new THREE.HemisphereLight(hemi.color.clone(), hemi.groundColor.clone(), hemi.intensity), sunDir = SUN_DIR.clone();
+  applyDaylight(h0);
+  sunL.position.copy(mid).addScaledVector(sunDir, -R * 4); sunL.target.position.copy(mid);
+  sunL.castShadow = true; sunL.shadow.mapSize.set(2048, 2048); sunL.shadow.bias = sun.shadow.bias; sunL.shadow.normalBias = sun.shadow.normalBias;
+  { const c = sunL.shadow.camera; c.left = c.bottom = -R * 1.4; c.right = c.top = R * 1.4; c.near = 0.1; c.far = R * 9; c.updateProjectionMatrix(); }
+  sc.add(sunL, sunL.target, sky);
+  // the lens: round the building's middle, a little low; from the front, a little to the side, as on the farm
+  const cam = new THREE.PerspectiveCamera(30, 1, 0.05, 200), at = new THREE.Vector3(mid.x, box.min.y + size.y * 0.36, mid.z);
+  const fit = Math.hypot(R, size.y * 0.6) / Math.sin(15 * DEG);
+  const V = { yaw: -0.62, el: 0.5, zoom: 0.74, frames: 0, turned: 0 };
+  const aim = () => { const d = fit * V.zoom, c = Math.cos(V.el); cam.position.set(at.x + Math.sin(V.yaw) * c * d, at.y + Math.sin(V.el) * d, at.z + Math.cos(V.yaw) * c * d); cam.lookAt(at); cam.updateMatrixWorld(); };
+  const S = { on: true, w: 0, h: 0, dpr: 0, want: 0, first: null, touched: null };
+  const size2 = () => {
+    const w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return false;
+    const dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    if (w !== S.w || h !== S.h || dpr !== S.dpr) { S.w = w; S.h = h; S.dpr = dpr; R2.setPixelRatio(dpr); R2.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); }
+    return true;
+  };
+  // (drawn at midday: the farm's evening glow, its night grade and its metals' dimming held off while it's drawn, put back after)
+  const draw = () => {
+    S.want = 0; if (!S.on || !size2()) return;
+    const g0 = DAY.glow.value, gr0 = GRADE.value, w0 = WATER_DAY.value, mk = METALS.map(m => m.envMapIntensity);
+    DAY.glow.value = 0; GRADE.value = 0; WATER_DAY.value = 1; for (const m of METALS) m.envMapIntensity = 0.75;
+    try { aim(); R2.render(sc, cam); V.frames++; }
+    finally { DAY.glow.value = g0; GRADE.value = gr0; WATER_DAY.value = w0; METALS.forEach((m, i) => { m.envMapIntensity = mk[i]; }); }
+    if (V.frames === 1 && S.first) { const f = S.first; S.first = null; f(); }
+  };
+  const ask = () => { if (S.on && !S.want) S.want = requestAnimationFrame(draw); };
+  // turning it: a finger (or the mouse) dragged; two fingers pinched; the wheel
+  const P = new Map(); let pinch0 = 0, zoom0 = 1;
+  const clamp = (x, a, b) => Math.max(a, Math.min(b, x)), dist = () => { const [a, b] = [...P.values()]; return Math.hypot(a[0] - b[0], a[1] - b[1]); };
+  const touched = () => { if (S.touched) { const f = S.touched; S.touched = null; f(); } };
+  const turn = (dx, dy) => { V.yaw -= dx * DRAG_TURN; V.el = clamp(V.el + dy * DRAG_TILT, 0.16, 1.15); V.turned += Math.abs(dx); touched(); ask(); };
+  cv.addEventListener('pointerdown', e => { try { cv.setPointerCapture(e.pointerId); } catch (x) { /* */ } P.set(e.pointerId, [e.clientX, e.clientY]); if (P.size === 2) { pinch0 = dist(); zoom0 = V.zoom; } e.preventDefault(); });
+  cv.addEventListener('pointermove', e => {
+    const q = P.get(e.pointerId); if (!q) return; const dx = e.clientX - q[0], dy = e.clientY - q[1]; P.set(e.pointerId, [e.clientX, e.clientY]);
+    if (P.size === 1) turn(dx, dy); else if (P.size === 2 && pinch0 > 0) { V.zoom = clamp(zoom0 * pinch0 / Math.max(1, dist()), 0.42, 1.2); touched(); ask(); }
+  });
+  for (const ev of ['pointerup', 'pointercancel', 'lostpointercapture']) cv.addEventListener(ev, e => { P.delete(e.pointerId); if (P.size < 2) pinch0 = 0; });
+  cv.addEventListener('wheel', e => { e.preventDefault(); V.zoom = clamp(V.zoom * Math.exp(e.deltaY * 0.0015), 0.42, 1.2); touched(); ask(); }, { passive: false });
+  const ro = window.ResizeObserver ? new ResizeObserver(() => ask()) : null; if (ro) ro.observe(cv);
+  const dispose = () => {
+    if (!S.on) return; S.on = false; if (S.want) cancelAnimationFrame(S.want); if (ro) ro.disconnect();
+    try { removeWinter(plot); } catch (e) { /* */ }
+    G.removeFromParent(); lawn.geometry.dispose(); lawn.material.dispose(); lawnTex.dispose(); bgTex.dispose(); sunL.shadow.dispose();
+    R2.dispose(); try { R2.forceContextLoss(); } catch (e) { /* */ } cv.remove();
+  };
+  return { el: cv, dispose, start: (onFirst, onTouch) => { S.first = onFirst || null; S.touched = onTouch || null; ask(); },
+    // (tests: turned by hand, drawn at once; where it's seen from)
+    turn: (dx, dy = 0) => { turn(dx, dy); draw(); }, draw, state: () => ({ on: S.on, frames: V.frames, yaw: +V.yaw.toFixed(3), el: +V.el.toFixed(3), zoom: +V.zoom.toFixed(3), w: S.w, h: S.h, parts: G.children.length, R: +R.toFixed(2) }) };
+}
 // ---- the show day (release 1 step 9b; showday.js): the results in and the farm free, by day: "🎀 Show day!" with "Watch
 // the judging" (the view goes to the show tent on the green: the player's tap) or "Just the results". The scene, then the
 // results card; the tent goes once it's closed. Meanwhile the farm's own farmer and her bird are away at the show (hidden)
@@ -8409,21 +8498,14 @@ function shopSheet(tab = 'decor') {
   holdBird(null); henOff(); guideDid('shop');
   gameUI.shopSheet(shopHands(), tab);
 }
-// (the shop's Coops shelf, 23 Nov 2026: a coop's next look or a building for it bought from there, as from its card; the view to it)
+// (the shop's Coops shelf, 23 Nov 2026: a seasonal building bought, or moved into, from there, as from its coop's card; the view to it)
 function shopCoop(id) { const p = gamePlots().find(x => x.gc && x.gc.id === id); return p || null; }
-function shopUpgrade(id) {
-  const p = shopCoop(id); if (!p) return;
-  const r = tryUpgrade(p);
-  if (r === 'ok') { const w = p.frame.localToWorld(new THREE.Vector3()); focusOn(w.x, w.z, Math.min(view.size, sideways() ? 2.6 : 3.4)); }
-  else if (r === 'room') { gameUI.close(); hint(game.t('up_room')); coopCard(p); }      // (no room for its bigger pen here: its card, with its Move)
-  else if (r === 'coins') hint(game.t('dec_broke'));
-}
 function shopTheme(id, t, how) {
   const p = shopCoop(id); if (!p) return;
   if (themeCoop(p, t, how) && how !== 'pay') { gameUI.close(); const w = p.frame.localToWorld(new THREE.Vector3()); focusOn(w.x, w.z, Math.min(view.size, sideways() ? 2.6 : 3.4)); }
   else if (themeWhy === 'room') { gameUI.close(); coopCard(p); }
 }
-function shopHands() { return { coops: true, upgrade: id => shopUpgrade(id), theme: (id, t, how) => shopTheme(id, t, how), buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, shelf: b => shelfBuy(b), got: b => shelfGot(b, null), place: b => { gameUI.close(); startPlace(b); }, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id), buyAnimal: id => buyAnimal(id), see: id => seeAnimal(id), buyDress: id => buyDress(id),
+function shopHands() { return { coops: true, theme: (id, t, how) => shopTheme(id, t, how), preview: (b, t) => coopPreview(b, t), buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, shelf: b => shelfBuy(b), got: b => shelfGot(b, null), place: b => { gameUI.close(); startPlace(b); }, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id), buyAnimal: id => buyAnimal(id), see: id => seeAnimal(id), buyDress: id => buyDress(id),
   moveKennel: () => { gameUI.close(); startDecor('kennel'); }, rename: () => { gameUI.close(); if (farmDog) openDogName(); } }; }
 // ---- the animals (the shop's Animals shelf, release 3: the guardians). The geese: bought, they come swimming over the pond
 // to their side of it, come ashore with a shake and a honk, and live there (the view to where they come ashore: the
