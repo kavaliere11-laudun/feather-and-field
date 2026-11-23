@@ -559,6 +559,15 @@
   .gshop-main > .gpage > .gpic { display: block; } .gshop-main > .gpage > .gpic > img { position: absolute; top: 4px; left: 4px; width: calc(100% - 8px); height: calc(100% - 8px); object-fit: contain; }
   .gshop-main > .gpage.gshopcoop > .gpic > img { top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; } .gshop-main > .gpage.gout > .gpic > img { top: 4px; height: calc(100% - 4px); }
   .gshop-main > .gpage > .gpic > .gsil { position: absolute; inset: 4px; width: auto; height: auto; }
+  /* the seasonal coops (23 Nov 2026, Audrey: "make it more obvious that's the seasonal one"): their shelf's tab frosty, the
+     collection's banner, its season on each building's picture */
+  .gshop-tabs .gchip[data-tab="coops"]:not(.on) { background: linear-gradient(135deg, #e6f1fc, #fbfdff 75%); box-shadow: inset 0 0 0 1.5px #cfe2f3, 0 1px 3px rgba(30, 52, 38, 0.13); }
+  .gshop-tabs .gchip[data-tab="coops"].on { border-color: #5b9bd1; background: #e2effb; }
+  .gcoops-ban { grid-column: 1 / -1; position: relative; border-radius: 16px; padding: 11px 16px 12px; background: linear-gradient(135deg, #dcebfa 0%, #f6faff 58%, #e4effa 100%); box-shadow: inset 0 0 0 1.5px #cbdff2; color: #24527f; }
+  .gcoops-ban::after { content: "❄ ❅ ❆"; position: absolute; right: 12px; top: 2px; font-size: 30px; letter-spacing: 6px; color: rgba(91, 155, 209, 0.28); pointer-events: none; }
+  .gcoops-ban-t { font: 600 20px/1.15 var(--display); } .gcoops-ban-l { margin: 4px 0 0; font-size: 13.5px; font-weight: 600; line-height: 1.35; color: #2e4a63; max-width: 92%; } .gcoops-ban-d { margin: 4px 0 0; font-size: 13px; font-weight: 800; }
+  .gcoop-ribbon { position: absolute; top: 6px; left: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(226, 239, 251, 0.95); color: #24527f; font: 800 11.5px/16px Nunito, system-ui, sans-serif; box-shadow: 0 1px 2px rgba(30, 52, 38, 0.2); pointer-events: none; }
+  .gdress-h { margin: 8px 0 0; }
   .gviewable { cursor: pointer; } .gviewable .gtheme-pic { position: relative; }
   .gcshelf .gprev-badge { bottom: 4px; padding: 2px 6px 2px 4px; font-size: 10.5px; line-height: 14px; max-width: 94%; overflow: hidden; text-overflow: ellipsis; } .gcshelf .gprev-badge svg { width: 14px; height: 14px; }
   .gshop-main > .gpage.gshopcoop { cursor: pointer; }
@@ -597,7 +606,7 @@
     .gshop-rail { flex-direction: column; align-items: stretch; gap: 8px; padding: 0; }
     .gshop-rail .gshop-c { align-self: flex-start; }
     .gchips.gshop-tabs { flex-direction: column; overflow: visible; gap: 4px; }
-    .gshop-tabs .gchip { text-align: left; padding: 7px 10px; border-radius: 12px; overflow: hidden; text-overflow: ellipsis; }
+    .gshop-tabs .gchip { text-align: left; padding: 7px 10px; border-radius: 12px; overflow: hidden; white-space: normal; line-height: 1.15; }      /* (a long shelf name on two lines, not cut: "Seasonal coops", "Poulaillers de saison") */
     .gshop-main .gcshelf .gcoop-tile.gcard { flex: 1 1 calc(33.3% - 6px); }
     /* (the card as tall as the screen allows, whatever the shelf: the shelves down the left and the tiles each scrolling on their
        own, so every shelf is always in reach: 23 Nov 2026, her picture with Seasons under the bottom edge) */
@@ -609,7 +618,7 @@
     .gsheet.gshop2 .gshop-wrap { position: absolute; top: 4px; left: 16px; right: 16px; bottom: 0; display: flex; flex-direction: row; gap: 12px; }
     .gsheet.gshop2 .gshop-rail { position: static; flex: 0 0 136px; width: 136px; height: 100%; box-sizing: border-box; overflow-y: auto; padding-bottom: 12px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
     .gsheet.gshop2 .gshop-rail::-webkit-scrollbar { display: none; }
-    .gsheet.gshop2 .gshop-main { flex: 1 1 auto; min-width: 0; height: 100%; box-sizing: border-box; overflow-y: auto; align-content: start; padding: 0 2px 14px; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
+    .gsheet.gshop2 .gshop-main { flex: 1 1 auto; min-width: 0; height: 100%; box-sizing: border-box; overflow-y: auto; align-content: start; grid-auto-rows: max-content; padding: 0 2px 14px; overscroll-behavior: contain; -webkit-overflow-scrolling: touch; }
   }
   .gout .gpic { padding: 4px 10px 0; }
   .gout-on { box-shadow: inset 0 0 0 2px var(--meadow); }
@@ -967,6 +976,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1795473475"></script>
+<script src="app.js?v=1795475597"></script>
 </body>
 </html>
