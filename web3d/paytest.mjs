@@ -69,7 +69,7 @@ await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = f.xp
 await reload(); L = await p.evaluate(() => window.__farm.game().level); o = await look();
 ok('level 3: the Coins shelf, Adopt (the four and each), the shelves, "Or have it now" and the nine', L === 3 && o.tabs.some(t => /🪙/.test(t)) && o.adopt.length === 5 && o.shelves.length === 1 && o.coop.includes('pay') && o.coop.includes('all'), { L, o });
 // every money button blue
-const blue = async sel => p.evaluate(sel => [...document.querySelectorAll('.gsheet:not([hidden]) ' + sel)].map(b => getComputedStyle(b).backgroundColor), sel);
+const blue = async sel => p.evaluate(sel => [...document.querySelectorAll('.gsheet:not([hidden]) ' + sel)].map(b => { const c = getComputedStyle(b); return c.color + '|' + c.backgroundColor; }), sel);      // (23 Nov 2026, her choice: real money calm, blue on white with a blue outline)
 await p.evaluate(() => window.__farm.deco.shop()); await run(0.3); await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gchip')].find(c => c.dataset.tab === 'coins').click()); await run(0.3);
 const cb = await blue('.giap-buy');
 const pile = await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .giap[data-bag]')].map(c => { const v = c.querySelector('.giap-bag svg'); if (!v) return false; const r = v.getBoundingClientRect(); return r.width > 50 && Math.abs(r.width - r.height) < 2 && v.querySelectorAll('circle, ellipse').length > 3; }));
@@ -80,8 +80,8 @@ await close(); await p.evaluate(() => window.__farm.book()); await run(0.3); con
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .giap-adopt-all').scrollIntoView({ block: 'start' })); await shoot('2_book');
 await close(); await p.evaluate(() => window.__farm.pantrySheet()); await run(0.2); const sb = await blue('[data-shelves]');
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) [data-shelves]').scrollIntoView({ block: 'center' })); await shoot('3_pantry');
-const isBlue = c => c === 'rgb(47, 111, 181)';
-ok('every money button blue: the four bags, the five Adopt, the shelves', cb.length === 4 && ab.length === 5 && sb.length === 1 && [...cb, ...ab, ...sb].every(isBlue), { cb, ab, sb });
+const isBlue = c => c === 'rgb(47, 111, 181)|rgb(255, 255, 255)';
+ok('every money button blue on white (calm): the four bags, the five Adopt, the shelves', cb.length === 4 && ab.length === 5 && sb.length === 1 && [...cb, ...ab, ...sb].every(isBlue), { cb, ab, sb });
 // a winter building where its Deluxe garden doesn't fit
 await close();
 const fits = await p.evaluate(() => {      // (the coop moved where it fits as it is, but its Deluxe garden wouldn't)
