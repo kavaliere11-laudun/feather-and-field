@@ -1226,6 +1226,9 @@ export class GameUI {
   // it brings, and Buy and place (h.buy: placed on the farm, paid for once put down), or its level to come, or not enough
   // coins yet; one on the farm: Move (h.move). The duck house goes straight onto the pond
   shopSheet(h, tab = 'decor') {
+    // (23 Nov 2026, Audrey: "I think seasons should go into decorations": the season's dresses on the Decorations shelf, after
+    // the decorations; asked for the Seasons shelf: that shelf, at the dresses)
+    const toDress = tab === 'seasons'; if (toDress) tab = 'decor';
     const g = this.g, body = this.open('shop', this.t('shop_title'));
     this.bird = null; body.scrollTop = 0; this.shopTab = tab;
     const fmt = n => n.toLocaleString(g.locale());
@@ -1237,7 +1240,7 @@ export class GameUI {
     const pill = el('span', 'gshop-c'); pill.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(g.data.coins))); rail.append(pill);
     if (h.outfits) {
       const tabs = el('div', 'gchips gshop-tabs');
-      for (const [k, label, icon] of [...(IAP_DEMO || this.payOn() ? [['coins', '', '🪙']] : []), ...(g.level >= PAY_LEVEL ? [['hens', 'shop_hens', '🐔']] : []), ...(h.coops ? [['coops', 'shop_coops', '🏠']] : []), ['decor', 'shop_decor', '🌷'], ['animals', 'shop_animals', '🐾'], ['outfits', 'shop_outfits', '👒'], ['seasons', 'shop_seasons', '🎄']]) {
+      for (const [k, label, icon] of [...(IAP_DEMO || this.payOn() ? [['coins', '', '🪙']] : []), ...(g.level >= PAY_LEVEL ? [['hens', 'shop_hens', '🐔']] : []), ...(h.coops ? [['coops', 'shop_coops', themeInSeason('winter') ? '❄️' : '🏠']] : []), ['decor', 'shop_decor', '🌷'], ['animals', 'shop_animals', '🐾'], ['outfits', 'shop_outfits', '👒']]) {
         const c = el('button', 'gchip' + (tab === k ? ' on' : ''), icon + ' ' + (k === 'coins' ? this.dt('tab') : this.t(label))); c.type = 'button'; c.dataset.tab = k;
         if (k === 'coins') c.replaceChildren(el('span', 'gcoin gcoin-s'), document.createTextNode(' ' + this.dt('tab')));      // (the game's own gold coin, not the phone's silver one)
         c.addEventListener('click', () => { if (this.shopTab !== k) this.shopSheet(h, k); });
@@ -1252,7 +1255,6 @@ export class GameUI {
     if (tab === 'hens' && g.level >= PAY_LEVEL) { this.shelfPages(b, h); this.rareTiles(b, h); return; }
     if (tab === 'coops' && h.coops) { this.coopTiles(b, h); return; }
     if (tab === 'outfits') { this.outfitCards(b, h, fmt); return; }
-    if (tab === 'seasons') { this.dressCards(b, h, fmt); return; }
     if (tab === 'animals') { this.animalCards(b, h, fmt); return; }
     for (const id of Object.keys(DECOR)) {
       const D = DECOR[id], own = g.decorOwned(id), lock = g.level < D.level, broke = !own && !lock && g.data.coins < D.price;
@@ -1275,6 +1277,8 @@ export class GameUI {
       card.append(pic, info); b.append(card);
       this.viewable(card, h, { pv: ['decor', id], pic: 'decor/' + id + '.webp', name: g.decorName(id), words: this.t('decl_' + id), facts: own ? [] : ['⭐ ' + this.t('dec_xp', { xp: decorXp(id) })] });
     }
+    this.dressCards(b, h, fmt);
+    if (toDress) requestAnimationFrame(() => { const d = b.querySelector('.gdress-h'); if (d) b.scrollTop = Math.max(0, d.offsetTop - 4); });
   }
   // the shop's Coops shelf (23 Nov 2026, Audrey: "we need to add the coops", then, of it: "Only the seasonal coops should be in
   // there and when you click on it you should have a bigger picture ideally 3D/ 360 and some copy"): the season's collection,
@@ -1295,11 +1299,15 @@ export class GameUI {
     const g = this.g, PAY = this.payOn(), list = this.seasonCoops();
     if (!list.length) return;
     const T0 = THEMES[list[0].t];
-    b.append(el('p', 'gnote gshop-note', this.t('theme_' + list[0].t + '_l') + ' · ' + this.t(list[0].season ? 'coops_until' : 'coops_back', { d: this.seasonDay(list[0].season ? T0.to : T0.from) })));
+    // (23 Nov 2026, Audrey: "the coops should have a special coops mention somehow and make it more obvious that's the seasonal
+    // one": the collection's own banner, frosty, and its season on each building's picture)
+    const ban = el('div', 'gcoops-ban'); ban.dataset.theme = list[0].t;
+    ban.append(el('div', 'gcoops-ban-t', this.t('coops_coll_' + list[0].t)), el('p', 'gcoops-ban-l', this.t('coops_sub')), el('p', 'gcoops-ban-d', '📅 ' + this.t(list[0].season ? 'coops_until' : 'coops_back', { d: this.seasonDay(list[0].season ? T0.to : T0.from) })));
+    b.append(ban);
     for (const S of list) {
       const name = g.themeName(S.t, S.b), card = el('div', 'gcard gpage gdec gshopcoop' + (!S.coops.length || !S.season ? ' glock' : '') + (S.owned ? ' gdec-own' : '')), info = el('div', 'gpage-i');
       card.dataset.coop = S.key;
-      const pic = this.picOf('themes/' + S.key + '.webp' + (this.o.bust || ''), false); pic.setAttribute('aria-label', name + ' · ' + this.t('prev_360'));
+      const pic = this.picOf('themes/' + S.key + '.webp' + (this.o.bust || ''), false); pic.setAttribute('aria-label', name + ' · ' + this.t('prev_360')); pic.append(el('span', 'gcoop-ribbon', this.t('theme_' + S.t + '_l')));
       info.append(el('span', 'glabel', g.bookName(S.b)), el('span', 'gcard-t', name));
       this.coopState(info, h, S, PAY, true);
       card.append(pic, info); b.append(card);
@@ -1497,7 +1505,7 @@ export class GameUI {
   // (h.buyDress) in its season, or when it's on sale; one owned: yours for good (dressed from a coop's card)
   dressCards(b, h, fmt) {
     const g = this.g, cap = x => x.charAt(0).toUpperCase() + x.slice(1);
-    b.append(el('p', 'gnote', this.t('seasons_note')));
+    b.append(el('p', 'gsub gdress-h', '🎄 ' + this.t('shop_seasons')), el('p', 'gnote', this.t('seasons_note')));
     for (const id of Object.keys(DRESSES)) {
       const D = DRESSES[id], own = g.dressOwned(id), on = inSeason(id), broke = !own && on && g.data.coins < D.price;
       const card = el('div', 'gcard gpage gdec gdress' + (!own && !on ? ' glock' : '') + (own ? ' gdec-own' : '')); card.dataset.dress = id;

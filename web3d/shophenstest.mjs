@@ -64,7 +64,7 @@ await p.evaluate(() => { const f = window.__farm; if (f.move.state().on) f.move.
 for (const [k, sel] of [['decor', '.gdec'], ['animals', '.gani'], ['outfits', '.gout']]) {
   await setLevel(9); await openTab(k);
   const cards = await p.evaluate(sel => [...document.querySelectorAll('.gsheet:not([hidden]) ' + sel)].filter(c => c.classList.contains('glock')).map(c => ({ img: !!c.querySelector('.gpic img'), sil: !!c.querySelector('.gsil'), lv: (c.querySelector('.glock-lv') || {}).textContent || '', btn: !!c.querySelector('button.gbtn') })), sel);
-  ok(`${k}: what's to come in colour (its picture, no dark shape), "🔒" and its level, no button`, cards.length > 0 && cards.every(c => c.img && !c.sil && /🔒/.test(c.lv) && /\d/.test(c.lv) && !c.btn), cards);
+  ok(`${k}: what's to come in colour (its picture, no dark shape), "🔒" and its level, no button`, cards.length > 0 && cards.every(c => c.img && !c.sil && /🔒|📅/.test(c.lv) && /\d/.test(c.lv) && !c.btn), cards);
   if (k === 'decor') await shot('3_decor');
 }
 // the shop rethought: the shelves down the left, the tiles beside them, three a row
@@ -82,16 +82,27 @@ await p.mouse.move(sc0.x, sc0.y); await p.mouse.wheel(0, 300); await p.waitForTi
 const sc1 = await p.evaluate(() => { const S = document.querySelector('.gsheet:not([hidden])'); return { top: S.querySelector('.gshop-main').scrollTop, rail: S.querySelector('.gshop-rail').getBoundingClientRect().top }; });
 ok('the tiles: within the card, more below, scrolled down by the wheel, the shelves where they were', sc0.inCard && sc0.sh > sc0.h + 20 && sc1.top > 50 && Math.abs(sc1.rail - sc0.rail) < 1, { sc0, sc1 });
 await shot('3b_scrolled');
+// (23 Nov 2026, Audrey: "I think seasons should go into decorations. And the coops should have a special coops mention somehow
+// and make it more obvious that's the seasonal one"): no Seasons shelf, the Christmas dress after the decorations; the
+// Seasonal coops shelf with its collection's banner and its season on each building's picture
+await setLevel(30); await openTab('decor');
+const sd = await p.evaluate(() => { const S = document.querySelector('.gsheet:not([hidden])'), cards = [...S.querySelectorAll('.gshop-main > .gpage')];
+  return { tabs: [...S.querySelectorAll('.gshop-tabs .gchip')].map(c => c.dataset.tab), dress: cards.findIndex(c => c.dataset.dress === 'xmas'), lastDecor: cards.map(c => !!c.dataset.decor).lastIndexOf(true), coops: (S.querySelector('.gchip[data-tab="coops"]') || {}).textContent || '' }; });
+ok('no Seasons shelf: the Christmas dress on the Decorations shelf, after the decorations; the coops\' shelf "Seasonal coops"', !sd.tabs.includes('seasons') && sd.dress > sd.lastDecor && sd.lastDecor >= 0 && (fr ? /Poulaillers de saison/ : /Seasonal coops/).test(sd.coops), sd);
+await openTab('coops');
+const ban = await p.evaluate(() => { const S = document.querySelector('.gsheet:not([hidden])'), b = S.querySelector('.gcoops-ban'); return { t: b ? b.innerText : '', ribbons: [...S.querySelectorAll('.gshopcoop .gcoop-ribbon')].map(r => r.textContent) }; });
+ok('…its banner: the winter collection, what seasonal coops are, until when; each building\'s picture says "❄️ Winter"', (fr ? /collection d’hiver/ : /winter collection/).test(ban.t) && (fr ? /Poulaillers de saison/ : /Seasonal coops/).test(ban.t) && /📅/.test(ban.t) && ban.ribbons.length === 9 && ban.ribbons.every(r => (fr ? /Hiver/ : /Winter/).test(r)), ban);
+await shot('3c_seasonal');
 // every thing with its 3D page (23 Nov 2026, Audrey: "Offer it for all items ... For the chickens if you can try to make them
 // alive in the 360 preview, moves needs to be subtle and natural please. We should have the same preview in big when you click
 // for all items"): a "360° view" pill on each tile of every shelf but the coins; each tile's picture whole (not cut)
 const all = {};
-for (const k of ['hens', 'decor', 'animals', 'outfits', 'seasons']) {
+for (const k of ['hens', 'decor', 'animals', 'outfits']) {
   await setLevel(30); await openTab(k);
   all[k] = await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gshop-main .gviewable')].map(c => { const pic = c.querySelector('.gprev-open'), im = pic.querySelector('img'), a = pic.getBoundingClientRect(), b = im ? im.getBoundingClientRect() : a;
     return { badge: /360°/.test((pic.querySelector('.gprev-badge') || {}).textContent || ''), whole: b.left >= a.left - 1 && b.right <= a.right + 1 && b.top >= a.top - 1 && b.bottom <= a.bottom + 1 }; }));
 }
-ok('every shelf\'s things (the chickens, decorations, animals, outfits, seasons): a "360° view" pill, their pictures whole', Object.values(all).every(l => l.length > 0 && l.every(x => x.badge && x.whole)), Object.fromEntries(Object.entries(all).map(([k, l]) => [k, l.length + ' ' + l.filter(x => x.badge && x.whole).length])));
+ok('every shelf\'s things (the chickens, decorations and the season\'s dresses, animals, outfits): a "360° view" pill, their pictures whole', Object.values(all).every(l => l.length > 0 && l.every(x => x.badge && x.whole)), Object.fromEntries(Object.entries(all).map(([k, l]) => [k, l.length + ' ' + l.filter(x => x.badge && x.whole).length])));
 // a decoration's page: the bird bath in 3D, its words, its buy button moved there; back: the shelf as it was
 await setLevel(9); await openTab('decor');
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gpage[data-decor="birdbath"] .gcard-t').click());
@@ -112,7 +123,7 @@ const tr1 = await p.evaluate(() => window.__farm.gameUI().preview.state());
 ok('a breed\'s tile: its trio alive (drawn on by itself), the view still', tr0.live && tr1.frames > tr0.frames && tr1.yaw === tr0.yaw && tr1.zoom === tr0.zoom && tr1.el === tr0.el, { tr0, tr1 });
 await shot('4b_trio');
 // the geese, Biscuit, the farmer in an outfit, the Christmas dress: each its page in 3D
-for (const [k, sel, live] of [['animals', '[data-animal="geese"]', true], ['animals', '[data-animal="dog"]', true], ['outfits', '[data-outfit="rodeo"]', true], ['seasons', '[data-dress="xmas"]', false]]) {
+for (const [k, sel, live] of [['animals', '[data-animal="geese"]', true], ['animals', '[data-animal="dog"]', true], ['outfits', '[data-outfit="rodeo"]', true], ['decor', '[data-dress="xmas"]', false]]) {
   await setLevel(30); await openTab(k);
   await p.evaluate(sel => document.querySelector('.gsheet:not([hidden]) ' + sel + ' .gprev-open').click(), sel);
   const ok3 = await p.waitForFunction(() => { const v = window.__farm.gameUI().preview; return v && v.state().frames > 0; }, null, { timeout: 60000 }).then(() => true, () => false);
@@ -126,7 +137,7 @@ const cp = await p.evaluate(() => { const g = window.__farm.game(), S = document
   const tiles = [...S.querySelectorAll('.gshopcoop')].map(c => ({ key: c.dataset.coop, img: !!c.querySelector('.gpic img'), badge: (c.querySelector('.gpic .gprev-badge') || {}).textContent || '', lock: (c.querySelector('.glock-lv') || {}).textContent || '', btns: [...c.querySelectorAll('button.gbtn')].map(b => ({ go: b.dataset.themego, t: b.textContent, coin: !!b.querySelector('.gcoin'), off: b.disabled, quiet: b.classList.contains('gshort') })) }));
   return { tiles, season: g.themesFor(rir)[0].season, ups: S.querySelectorAll('[data-up]').length, tab: (S.querySelector('.gchip[data-tab="coops"]') || {}).textContent || '', bar: [...S.querySelectorAll('.gshop-main .gbtn')].some(b => /\//.test(b.textContent)) }; });
 const mine = cp.tiles[0] || {}, others = cp.tiles.slice(1);
-ok('a Coops shelf (🏠): only the season\'s buildings, all nine, her own breed\'s first; no next looks there', /🏠/.test(cp.tab) && cp.tiles.length === 9 && mine.key === 'winter_rir' && cp.tiles.every(t => t.img && /^winter_/.test(t.key)) && cp.ups === 0, cp.tiles.map(t => t.key));
+ok('a Coops shelf (❄️ in winter): only the season\'s buildings, all nine, her own breed\'s first; no next looks there', /🏠|❄️/.test(cp.tab) && cp.tiles.length === 9 && mine.key === 'winter_rir' && cp.tiles.every(t => t.img && /^winter_/.test(t.key)) && cp.ups === 0, cp.tiles.map(t => t.key));
 if (cp.season) ok('…hers: its price with the game\'s gold coin and Apple\'s price side by side; not enough coins: quiet, its price alone (no "have / price")', mine.btns.length === 2 && mine.btns[0].go === 'buy' && mine.btns[0].coin && /^15\D?000$/.test(mine.btns[0].t) && mine.btns[0].off && mine.btns[0].quiet && mine.btns[1].go === 'pay' && mine.btns[1].t === '£0.99' && !cp.bar, mine);
 else ok('…out of season: when it\'s back, no button', mine.btns.length === 0 && /📅/.test(mine.lock), mine);
 ok('each says its 360° view is there: "360° view" on its picture', cp.tiles.every(t => /360°/.test(t.badge) && (fr ? /Vue/ : /view/).test(t.badge)), cp.tiles.map(t => t.badge));
