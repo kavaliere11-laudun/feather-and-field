@@ -7787,10 +7787,10 @@ function groomLive(gb, img) {
     proud: hen ? 0.12 : 0.45, gProud: hen ? 0.12 : 0.45, hopT: -1, content: 0 };
   B.posterPose = (A, dt) => {
     if (D.tool) { D.gYaw = clamp(0.22 + (D.tool.u - H.u) * 1.5, -0.25, 1.05); D.gTilt = clamp((D.tool.v - H.v) * 0.55, -0.15, 0.4); }      // (looking at the tool, her head cocked when it's low on her)
-    else if ((D.lookIn -= dt) <= 0) { D.lookIn = 0.9 + R() * 2.6; const r = R(); D.gYaw = r < 0.3 ? 0.32 + (R() - 0.5) * 0.1 : r < 0.6 ? -0.3 + R() * 0.35 : 0.5 + R() * 0.45; D.gTilt = (R() - 0.45) * 0.4; }      // (at you, ahead, or round at her back; her head cocked one way or the other)
+    else if ((D.lookIn -= dt) <= 0) { D.lookIn = 1.6 + R() * 3.2; const r = R(); D.gYaw = r < 0.3 ? 0.32 + (R() - 0.5) * 0.1 : r < 0.6 ? -0.3 + R() * 0.35 : 0.5 + R() * 0.45; D.gTilt = (R() - 0.45) * 0.4; }      // (at you, ahead, or round at her back; her head cocked one way or the other)
     const k = Math.min(1, dt * (D.tool ? 7 : 11)); D.yaw += (D.gYaw - D.yaw) * k; D.tilt += (D.gTilt - D.tilt) * k;      // (a chicken's head: quick little darts, then held still)
-    if ((D.cluckIn -= dt) <= 0) { D.cluckIn = 3.5 + R() * 5; const n = 1 + Math.floor(R() * 3); D.ck = Array.from({ length: n }, (_, i) => D.t + i * 0.24); }
-    let ck = 0; for (const t0 of D.ck) { const u = (D.t - t0) / 0.18; if (u > 0 && u < 1) ck = Math.max(ck, Math.sin(u * Math.PI)); }
+    if ((D.cluckIn -= dt) <= 0) { D.cluckIn = 6 + R() * 7; const n = 1 + Math.floor(R() * 2); D.ck = Array.from({ length: n }, (_, i) => D.t + i * 0.34); }
+    let ck = 0; for (const t0 of D.ck) { const u = (D.t - t0) / 0.28; if (u > 0 && u < 1) ck = Math.max(ck, 0.35 * Math.sin(u * Math.PI)); }      // (23 Nov 2026, Audrey: "it looks like it's wiggling": a cluck a little nod, not a bob of the whole neck)
     if (D.blink > 0) { if ((D.blink -= dt) <= 0) B.rig.sleepy(false); }
     else if ((D.blinkIn -= dt) <= 0) { D.blinkIn = 1.8 + R() * 3.4; D.blink = D.content > 0.5 ? 0.5 : 0.12; B.rig.sleepy(true); }
     D.content = Math.max(0, D.content - dt * 0.25);
@@ -7800,17 +7800,15 @@ function groomLive(gb, img) {
     Object.assign(A, { walk: 0, peck: 0, sit: 0, kick: 0, flap: 0, crow: 0, turn: 0, sing: 0, kawk: 0, brood: 0, duck: 0, stretch: 0, sleep: 0, up: 0,
       hopT: D.hopT, lookYaw: D.yaw, lookTilt: D.tilt, cluck: ck, ruffle: rf, wag: D.wagT > 0 ? 1 : 0, proud: D.proud });
   };
-  const body = B.rig.bones && B.rig.bones.body;
   const step = dt => {
     D.t += dt; if (D.hopT >= 0 && (D.hopT += dt / 0.8) >= 1) D.hopT = -1;
     B.update(dt); B.root.position.set(0, 0.015, 0); B.root.rotation.y = -1.0;      // (her body where it is: the marks stay on her)
-    if (body) { const b = Math.sin(D.t * 2.3); body.scale.set(1 + 0.01 * b, 1 + 0.016 * b, 1 + 0.01 * b); }      // (breathing)
     G.updateMatrixWorld(true);
   };
   const L = { on: true, raf: 0, last: performance.now(), drawn: 0, frames: 0, manual: false, w: 0, h: 0, dpr: 0, first: null };
   const fit = () => {
     const w = cv.clientWidth, h = cv.clientHeight; if (!w || !h) return false;
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);      // (23 Nov 2026, Audrey: "improve a bit the quality of the chicken": the phone's full sharpness, 3x; it was kept to 2x and stretched)
     if (w !== L.w || h !== L.h || dpr !== L.dpr) { L.w = w; L.h = h; L.dpr = dpr; R2.setPixelRatio(dpr); R2.setSize(w, h, false); paintBg(); }
     setFar(false); setFurDetail(h * dpr * V.N / (V.crop[2] * V.span), 1);      // (her finest feathers, for her size here)
     return true;
@@ -7828,9 +7826,9 @@ function groomLive(gb, img) {
     if (type === 'tool') D.tool = d || null;
     else if (type === 'rub') D.content = Math.min(1, D.content + 0.06);
     else if (type === 'against') { D.rf = Math.max(D.rfT > 0 ? D.rf : 0, 0.45); D.rfT = D.rfDur = 0.38; D.ck = [D.t]; }      // (ruffled: a cross little cluck)
-    else if (type === 'spot') { D.wagT = 0.8; D.ck = [D.t + 0.05, D.t + 0.27]; }
+    else if (type === 'spot') { D.wagT = 0.8; D.ck = [D.t + 0.05, D.t + 0.39]; }
     else if (type === 'step') { if (d === 'wash') { D.rf = 1; D.rfT = D.rfDur = 0.9; D.tool = null; } else { D.wagT = 1.2; D.gProud = Math.min(1, D.gProud + 0.1); } }      // (washed: she shakes the water off)
-    else if (type === 'done') { D.tool = null; D.gProud = hen ? 0.6 : 1; D.hopT = 0; D.hopped = true; D.wagT = 1.6; D.ck = [D.t + 0.6, D.t + 0.82, D.t + 1.04]; D.gYaw = 0.5; D.lookIn = 2.5; }      // (all ready: a little hop, and proud)
+    else if (type === 'done') { D.tool = null; D.gProud = hen ? 0.6 : 1; D.hopT = 0; D.hopped = true; D.wagT = 1.6; D.ck = [D.t + 0.6, D.t + 0.94]; D.gYaw = 0.5; D.lookIn = 2.5; }      // (all ready: a little hop, and proud)
   };
   const dispose = () => {
     if (!L.on) return; L.on = false; cancelAnimationFrame(L.raf);
@@ -8411,7 +8409,7 @@ function shopSheet(tab = 'decor') {
   holdBird(null); henOff(); guideDid('shop');
   gameUI.shopSheet(shopHands(), tab);
 }
-function shopHands() { return { buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id), buyAnimal: id => buyAnimal(id), see: id => seeAnimal(id), buyDress: id => buyDress(id),
+function shopHands() { return { buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, shelf: b => shelfBuy(b), got: b => shelfGot(b, null), place: b => { gameUI.close(); startPlace(b); }, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id), buyAnimal: id => buyAnimal(id), see: id => seeAnimal(id), buyDress: id => buyDress(id),
   moveKennel: () => { gameUI.close(); startDecor('kennel'); }, rename: () => { gameUI.close(); if (farmDog) openDogName(); } }; }
 // ---- the animals (the shop's Animals shelf, release 3: the guardians). The geese: bought, they come swimming over the pond
 // to their side of it, come ashore with a shake and a honk, and live there (the view to where they come ashore: the
