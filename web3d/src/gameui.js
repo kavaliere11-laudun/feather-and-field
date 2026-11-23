@@ -15,6 +15,8 @@ const FIRST_SAVE = 'feather-field-save-v1';
 // looks: the elements themselves, the journey to buy them"): only with ?shopdemo, for her to see; it never charges anything
 // and never adds a coin or a bird (the real one comes with the stores' purchases, checked by a server). Its words here,
 // English and French, until it's chosen.
+// a turning-round sign (the 360° view of a seasonal building in the shop): an orbit with its arrow round a little house
+const PREV_360_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8.5 12.5V9.6L12 7l3.5 2.6v2.9"/><path d="M20 13.2c-.9 1.9-4.2 3.3-8 3.3-4.4 0-8-1.6-8-3.5 0-1.2 1.4-2.3 3.6-2.9"/><path d="M17.2 9.9c1.7.6 2.8 1.5 2.8 2.6"/><path d="M6 17.8l-2-.9 1-1.9"/></svg>';
 const PAY_LEVEL = 3;      // (15 Nov 2026, the test players: the things for real money are offered from this level, once the first day's guide is behind; what's owned, and "Restore purchases" in Settings, always)
 const IAP_DEMO = typeof location !== 'undefined' && new URLSearchParams(location.search).has('shopdemo');
 const COIN_BAGS = [{ id: 'purse', coins: BAGS.purse, price: 0.99, pile: 2 }, { id: 'basket', coins: BAGS.basket, price: 2.99, pile: 5, tag: 'popular' }, { id: 'sack', coins: BAGS.sack, price: 4.99, pile: 8 }, { id: 'cart', coins: BAGS.cart, price: 9.99, pile: 12, tag: 'value' }];      // (the bags' sizes: game.js BAGS, 14 Nov 2026)
@@ -1294,8 +1296,11 @@ export class GameUI {
     for (const S of list) {
       const name = g.themeName(S.t, S.b), card = el('div', 'gcard gpage gdec gshopcoop' + (!S.coops.length || !S.season ? ' glock' : '') + (S.owned ? ' gdec-own' : '')), info = el('div', 'gpage-i');
       card.dataset.coop = S.key;
-      const pic = this.picOf('themes/' + S.key + '.webp' + (this.o.bust || ''), false); pic.classList.add('gprev-open'); pic.setAttribute('role', 'button'); pic.setAttribute('aria-label', name);
-      pic.addEventListener('click', () => this.coopView(h, S));
+      const pic = this.picOf('themes/' + S.key + '.webp' + (this.o.bust || ''), false); pic.classList.add('gprev-open'); pic.setAttribute('role', 'button'); pic.setAttribute('aria-label', name + ' · ' + this.t('prev_360'));
+      // (23 Nov 2026, Audrey: "add something to let the user know the 360 view is available": a "360° view" pill on its picture,
+      // and the whole tile opens it, its buttons apart)
+      const badge = el('span', 'gprev-badge'); badge.innerHTML = PREV_360_SVG; badge.append(document.createTextNode(this.t('prev_360'))); pic.append(badge);
+      card.addEventListener('click', e => { if (!e.target.closest('button')) this.coopView(h, S); });
       info.append(el('span', 'glabel', g.bookName(S.b)), el('span', 'gcard-t', name));
       this.coopState(info, h, S, PAY, true);
       card.append(pic, info); b.append(card);
@@ -1327,7 +1332,7 @@ export class GameUI {
     const back = el('button', 'gshop-back', '‹ ' + this.t('shop_coops')); back.type = 'button'; back.addEventListener('click', () => this.shopSheet(h, 'coops'));
     const page = el('div', 'gprev'), stage = el('div', 'gprev-stage'), img = el('img'), info = el('div', 'gprev-i'), name = g.themeName(S.t, S.b);
     img.alt = name; img.decoding = 'async'; img.src = 'themes/' + S.key + '.webp' + (this.o.bust || ''); stage.append(img);
-    const tip = el('span', 'gprev-tip', '↻ ' + this.t('prev_turn')); stage.append(tip);
+    const tip = el('span', 'gprev-tip', '↻ ' + this.t('prev_turn')), hand = el('span', 'gprev-hand', '👆'); hand.setAttribute('aria-hidden', 'true'); stage.append(tip, hand);      // (a finger swiping over it until it's turned once: it can be turned)
     const acts = el('div', 'gprev-b'); this.coopState(acts, h, S, this.payOn(), false);      // (its buttons right under its name: in sight on a phone on its side)
     info.append(el('span', 'glabel', this.t('theme_' + S.t + '_l') + ' · ' + g.bookName(S.b)), el('h3', 'gprev-n', name), acts, el('p', 'gprev-l', this.t('themel_' + S.key)));
     const facts = el('ul', 'gprev-f'); for (const k of ['prev_garden', 'prev_keep']) facts.append(el('li', null, this.t(k)));
@@ -1337,8 +1342,8 @@ export class GameUI {
     const pv = h.preview ? h.preview(S.b, S.t) : null;
     if (pv) {
       this.preview = pv; pv.el.classList.add('gprev-cv'); stage.append(pv.el);
-      pv.start(() => { stage.classList.add('gprev-live'); }, () => { tip.classList.add('gone'); });
-    } else tip.hidden = true;
+      pv.start(() => { stage.classList.add('gprev-live'); }, () => { tip.classList.add('gone'); stage.classList.add('gprev-touched'); });
+    } else { tip.hidden = true; hand.hidden = true; }
   }
   dropPreview() { const p = this.preview; this.preview = null; if (p) try { p.dispose(); } catch (e) { /* */ } const m = this.body && this.body.querySelector('.gprev-on'); if (m) m.classList.remove('gprev-on'); }
   // ---- the real-money preview (IAP_DEMO): its words, a price in the phone's money (the stores give the real one), a pile of

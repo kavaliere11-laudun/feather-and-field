@@ -82,29 +82,30 @@ await shot('4_words');
 // click on it you should have a bigger picture ideally 3D/ 360 and some copy. Review the CTA ... get rid of the progression bar")
 await setLevel(9); await openTab('coops');
 const cp = await p.evaluate(() => { const g = window.__farm.game(), S = document.querySelector('.gsheet:not([hidden])'), rir = g.data.coops.find(c => g.baseOf(c.breed) === 'rir');
-  const tiles = [...S.querySelectorAll('.gshopcoop')].map(c => ({ key: c.dataset.coop, img: !!c.querySelector('.gpic img'), lock: (c.querySelector('.glock-lv') || {}).textContent || '', btns: [...c.querySelectorAll('button.gbtn')].map(b => ({ go: b.dataset.themego, t: b.textContent, coin: !!b.querySelector('.gcoin'), off: b.disabled, quiet: b.classList.contains('gshort') })) }));
+  const tiles = [...S.querySelectorAll('.gshopcoop')].map(c => ({ key: c.dataset.coop, img: !!c.querySelector('.gpic img'), badge: (c.querySelector('.gpic .gprev-badge') || {}).textContent || '', lock: (c.querySelector('.glock-lv') || {}).textContent || '', btns: [...c.querySelectorAll('button.gbtn')].map(b => ({ go: b.dataset.themego, t: b.textContent, coin: !!b.querySelector('.gcoin'), off: b.disabled, quiet: b.classList.contains('gshort') })) }));
   return { tiles, season: g.themesFor(rir)[0].season, ups: S.querySelectorAll('[data-up]').length, tab: (S.querySelector('.gchip[data-tab="coops"]') || {}).textContent || '', bar: [...S.querySelectorAll('.gshop-main .gbtn')].some(b => /\//.test(b.textContent)) }; });
 const mine = cp.tiles[0] || {}, others = cp.tiles.slice(1);
 ok('a Coops shelf (🏠): only the season\'s buildings, all nine, her own breed\'s first; no next looks there', /🏠/.test(cp.tab) && cp.tiles.length === 9 && mine.key === 'winter_rir' && cp.tiles.every(t => t.img && /^winter_/.test(t.key)) && cp.ups === 0, cp.tiles.map(t => t.key));
 if (cp.season) ok('…hers: its price with the game\'s gold coin and Apple\'s price side by side; not enough coins: quiet, its price alone (no "have / price")', mine.btns.length === 2 && mine.btns[0].go === 'buy' && mine.btns[0].coin && /^15\D?000$/.test(mine.btns[0].t) && mine.btns[0].off && mine.btns[0].quiet && mine.btns[1].go === 'pay' && mine.btns[1].t === '£0.99' && !cp.bar, mine);
 else ok('…out of season: when it\'s back, no button', mine.btns.length === 0 && /📅/.test(mine.lock), mine);
+ok('each says its 360° view is there: "360° view" on its picture', cp.tiles.every(t => /360°/.test(t.badge) && (fr ? /Vue/ : /view/).test(t.badge)), cp.tiles.map(t => t.badge));
 ok('…the breeds still to come: in colour, "🔒" and why, no button', others.length === 8 && others.every(t => /🔒/.test(t.lock) && !t.btns.length), others.map(t => [t.key, t.lock]));
 await shot('5_coops');
 // its own page: the building in 3D, turned round by a finger; its words; its buttons
-await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gshopcoop[data-coop="winter_rir"] .gprev-open').click());
+await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gshopcoop[data-coop="winter_rir"] .gcard-t').click());      // (the whole tile opens it, its name too)
 await p.waitForFunction(() => { const v = window.__farm.gameUI().preview; return v && v.state().frames > 0; }, null, { timeout: 60000 }).catch(() => {});
 await p.waitForTimeout(600);
 const pg = await p.evaluate(() => { const S = document.querySelector('.gsheet:not([hidden])'), v = window.__farm.gameUI().preview, st = S.querySelector('.gprev-stage');
-  return { pv: v ? v.state() : null, live: !!(st && st.classList.contains('gprev-live')), name: (S.querySelector('.gprev-n') || {}).textContent || '', words: ((S.querySelector('.gprev-l') || {}).textContent || '').length, facts: S.querySelectorAll('.gprev-f li').length, btns: [...S.querySelectorAll('.gprev-b button.gbtn')].map(b => b.dataset.themego), back: !!S.querySelector('.gshop-back'), tip: (S.querySelector('.gprev-tip') || {}).textContent || '' }; });
-ok('its picture tapped: its own page, the building drawn in 3D, its name, its words, what comes with it, its buttons, "Drag to turn"', pg.pv && pg.pv.frames > 0 && pg.pv.parts > 5 && pg.live && (fr ? /Chalet des neiges/ : /Snow Chalet/).test(pg.name) && pg.words > 80 && pg.facts >= 2 && pg.back && (fr ? /Glissez/ : /Drag/).test(pg.tip) && (!cp.season || pg.btns.join() === 'buy,pay'), pg);
+  return { pv: v ? v.state() : null, live: !!(st && st.classList.contains('gprev-live')), name: (S.querySelector('.gprev-n') || {}).textContent || '', words: ((S.querySelector('.gprev-l') || {}).textContent || '').length, facts: S.querySelectorAll('.gprev-f li').length, btns: [...S.querySelectorAll('.gprev-b button.gbtn')].map(b => b.dataset.themego), back: !!S.querySelector('.gshop-back'), tip: (S.querySelector('.gprev-tip') || {}).textContent || '', hand: +getComputedStyle(S.querySelector('.gprev-hand')).opacity }; });
+ok('its tile tapped: its own page, the building drawn in 3D, its name, its words, what comes with it, its buttons, "Drag to turn" and a finger swiping over it', pg.pv && pg.pv.frames > 0 && pg.pv.parts > 5 && pg.live && (fr ? /Chalet des neiges/ : /Snow Chalet/).test(pg.name) && pg.words > 80 && pg.facts >= 2 && pg.back && (fr ? /Glissez/ : /Drag/).test(pg.tip) && pg.hand > 0.9 && (!cp.season || pg.btns.join() === 'buy,pay'), pg);
 await shot('6_page');
 // a finger dragged across it: it turns all the way round (by a finger only: never by itself)
 const box = await p.evaluate(() => { const r = document.querySelector('.gsheet:not([hidden]) .gprev-cv').getBoundingClientRect(); return [r.left + r.width / 2, r.top + r.height / 2]; });
 const y0 = (await p.evaluate(() => window.__farm.gameUI().preview.state())).yaw;
 await p.waitForTimeout(1200); const still = (await p.evaluate(() => window.__farm.gameUI().preview.state())).yaw;
 await p.mouse.move(box[0], box[1]); await p.mouse.down(); for (let k = 1; k <= 10; k++) await p.mouse.move(box[0] - 14 * k, box[1] + 2 * k); await p.mouse.up(); await p.waitForTimeout(400);
-const t1 = await p.evaluate(() => ({ ...window.__farm.gameUI().preview.state(), tip: document.querySelector('.gsheet:not([hidden]) .gprev-tip').classList.contains('gone') }));
-ok('dragged: it turns (and the "Drag to turn" goes); left alone, it stays still', still === y0 && Math.abs(t1.yaw - y0) > 1 && t1.frames > pg.pv.frames && t1.tip, { y0, still, t1 });
+await p.waitForTimeout(500); const t1 = await p.evaluate(() => ({ ...window.__farm.gameUI().preview.state(), tip: document.querySelector('.gsheet:not([hidden]) .gprev-tip').classList.contains('gone'), hand: +getComputedStyle(document.querySelector('.gsheet:not([hidden]) .gprev-hand')).opacity }));
+ok('dragged: it turns (and the "Drag to turn" and the finger go); left alone, it stays still', still === y0 && Math.abs(t1.yaw - y0) > 1 && t1.frames > pg.pv.frames && t1.tip && t1.hand < 0.05, { y0, still, t1 });
 await p.evaluate(() => window.__farm.gameUI().preview.turn(400)); await shot('7_turned');
 // back to the shelf: the 3D let go
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gshop-back').click()); await p.waitForTimeout(400);
