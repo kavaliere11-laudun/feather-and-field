@@ -88,7 +88,7 @@ function paidTrios(list) {
 }
 // the shop's other things for real money (store.js; gameui.js o.pay): a bag of coins ('bag:purse'), a rare trio
 // ('trio:sil_paint'), the four ('trios'), the Pantry's bigger shelves ('shelves'), a collector's shelf breed ('shelf:sil_buff')
-const payId = k => k === 'trios' ? TRIO_ALL : k === 'shelves' ? SHELVES : k.startsWith('bag:') ? bagOf(k.slice(4)) : k.startsWith('trio:') ? trioOf(k.slice(5)) : k.startsWith('shelf:') ? shelfOf(k.slice(6)) : null;
+const payId = k => k === 'trios' ? TRIO_ALL : k === 'shelves' ? SHELVES : k.startsWith('bag:') ? bagOf(k.slice(4)) : k.startsWith('trio:') ? trioOf(k.slice(5)) : k.startsWith('shelf:') ? shelfOf(k.slice(6)) : k.startsWith('theme:') ? productOf(k.slice(6)) : null;
 const payUI = store && store.on ? {
   price: k => store.priceOf(payId(k)),
   buy: (k, done) => { if (store.busy) return; hint(game.t('pay_busy')); store.buy(payId(k)).then(st => { payEnd(); if (st === 'bought') { if (done) done(); gameUI.refresh(); } else if (st === 'pending') hint(game.t('pay_wait')); else if (st === 'failed') hint(game.t('pay_fail')); }); },
@@ -8409,7 +8409,21 @@ function shopSheet(tab = 'decor') {
   holdBird(null); henOff(); guideDid('shop');
   gameUI.shopSheet(shopHands(), tab);
 }
-function shopHands() { return { buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, shelf: b => shelfBuy(b), got: b => shelfGot(b, null), place: b => { gameUI.close(); startPlace(b); }, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id), buyAnimal: id => buyAnimal(id), see: id => seeAnimal(id), buyDress: id => buyDress(id),
+// (the shop's Coops shelf, 23 Nov 2026: a coop's next look or a building for it bought from there, as from its card; the view to it)
+function shopCoop(id) { const p = gamePlots().find(x => x.gc && x.gc.id === id); return p || null; }
+function shopUpgrade(id) {
+  const p = shopCoop(id); if (!p) return;
+  const r = tryUpgrade(p);
+  if (r === 'ok') { const w = p.frame.localToWorld(new THREE.Vector3()); focusOn(w.x, w.z, Math.min(view.size, sideways() ? 2.6 : 3.4)); }
+  else if (r === 'room') { gameUI.close(); hint(game.t('up_room')); coopCard(p); }      // (no room for its bigger pen here: its card, with its Move)
+  else if (r === 'coins') hint(game.t('dec_broke'));
+}
+function shopTheme(id, t, how) {
+  const p = shopCoop(id); if (!p) return;
+  if (themeCoop(p, t, how) && how !== 'pay') { gameUI.close(); const w = p.frame.localToWorld(new THREE.Vector3()); focusOn(w.x, w.z, Math.min(view.size, sideways() ? 2.6 : 3.4)); }
+  else if (themeWhy === 'room') { gameUI.close(); coopCard(p); }
+}
+function shopHands() { return { coops: true, upgrade: id => shopUpgrade(id), theme: (id, t, how) => shopTheme(id, t, how), buy: id => buyDecor(id), move: id => { gameUI.close(); startDecor(id); }, outfits: true, shelf: b => shelfBuy(b), got: b => shelfGot(b, null), place: b => { gameUI.close(); startPlace(b); }, buyOutfit: id => buyOutfit(id), wear: id => wearOutfit(id), buyAnimal: id => buyAnimal(id), see: id => seeAnimal(id), buyDress: id => buyDress(id),
   moveKennel: () => { gameUI.close(); startDecor('kennel'); }, rename: () => { gameUI.close(); if (farmDog) openDogName(); } }; }
 // ---- the animals (the shop's Animals shelf, release 3: the guardians). The geese: bought, they come swimming over the pond
 // to their side of it, come ashore with a shake and a honk, and live there (the view to where they come ashore: the

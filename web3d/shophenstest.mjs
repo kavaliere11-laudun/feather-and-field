@@ -5,7 +5,11 @@
 // shelf (the Buff Silkie for 🪙 5,000 or £2.99, the others in colour with "🔒 Level N", no button) and the rare Silkie trios
 // (each £6.99, all four £19.99); the Buff Silkies bought there with coins: their coop to place. The Decorations, Animals and
 // Outfits tabs: what's to come in colour (its picture, no dark shape), "🔒" and its level, no button. Below level 3: no
-// Chickens tab. No page errors. Pictures in OUT.
+// Chickens tab. The shop rethought (23 Nov 2026, Audrey: "Everything is a bit bulky in this popup can you rethink it for
+// better navigation. Also we need to add the coops"): sideways, the shelves down the left (all in sight, the coins at their
+// top) and the things beside them as tiles, three a row; a tile's words only when its picture is tapped. A Coops shelf:
+// each coop's next look (its coins), bought there: the coop in its new look, the shop closed; this season's buildings not
+// yet had (their coins, and Apple's price). No page errors. Pictures in OUT.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const OUT = process.argv[2] || '/tmp/claude-0/farmer/shophenstest', fr = process.env.LANG === 'fr', W = +(process.env.W || 874), H = +(process.env.H || 402);
@@ -61,6 +65,32 @@ for (const [k, sel] of [['decor', '.gdec'], ['animals', '.gani'], ['outfits', '.
   ok(`${k}: what's to come in colour (its picture, no dark shape), "🔒" and its level, no button`, cards.length > 0 && cards.every(c => c.img && !c.sil && /🔒/.test(c.lv) && /\d/.test(c.lv) && !c.btn), cards);
   if (k === 'decor') await shot('3_decor');
 }
+// the shop rethought: the shelves down the left, the tiles beside them, three a row; their words when the picture is tapped
+await setLevel(9); await openTab('decor');
+const lay = await p.evaluate(() => { const S = document.querySelector('.gsheet:not([hidden])'), r = e => e.getBoundingClientRect(), rail = r(S.querySelector('.gshop-rail')), main = r(S.querySelector('.gshop-main')), sh = r(S);
+  const tiles = [...S.querySelectorAll('.gshop-main > .gpage')].slice(0, 3).map(t => Math.round(r(t).top)), tabs = [...S.querySelectorAll('.gshop-tabs .gchip')].map(c => r(c));
+  const words = [...S.querySelectorAll('.gshop-main > .gpage .gdec-l')].filter(e => e.offsetParent !== null).length;
+  return { left: rail.right <= main.left, tabsIn: tabs.every(t => t.bottom <= sh.bottom - 4 && t.left >= sh.left), row3: tiles.length === 3 && tiles.every(t => t === tiles[0]), pill: !!S.querySelector('.gshop-rail .gshop-c'), words }; });
+ok('sideways: the shelves down the left, all in sight, the coins at their top; the tiles beside them, three a row; no words yet', lay.left && lay.tabsIn && lay.row3 && lay.pill && lay.words === 0, lay);
+await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gshop-main > .gpage > .gpic').click()); await p.waitForTimeout(300);
+let say = await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gshop-main > .gpage')].map(c => c.classList.contains('gsay') && c.querySelector('.gdec-l').offsetParent !== null));
+ok('a picture tapped: its words, that tile only', say[0] === true && say.slice(1).every(x => !x), say);
+await shot('4_words');
+// the Coops shelf
+await setLevel(9); await openTab('coops');
+const cp = await p.evaluate(() => { const g = window.__farm.game(), S = document.querySelector('.gsheet:not([hidden])');
+  const want = g.data.coops.filter(c => g.coopNext(c)).map(c => c.id), season = g.data.coops.flatMap(c => g.themesFor(c).filter(T => T.season && !T.owned).map(() => c.id));
+  const up = [...S.querySelectorAll('.gshopcoop.gshop-up')].map(c => ({ id: c.dataset.coop, btn: (c.querySelector('button[data-up]') || {}).textContent || '', img: !!c.querySelector('.gpic img') }));
+  const th = [...S.querySelectorAll('.gshopcoop.gshop-theme')].map(c => ({ id: c.dataset.coop, coins: (c.querySelector('button[data-themego="buy"]') || {}).textContent || '', pay: (c.querySelector('button[data-themego="pay"]') || {}).textContent || '' }));
+  return { want, season, up, th, price: want.length ? g.coopNext(g.coop(want[0])).price : 0, tab: (S.querySelector('.gchip[data-tab="coops"]') || {}).textContent || '' }; });
+ok('a Coops shelf (🏠): each coop\'s next look, its picture and its coins', /🏠/.test(cp.tab) && cp.want.length > 0 && cp.up.length === cp.want.length && cp.up.every(u => u.img && /🪙/.test(u.btn) && /\d/.test(u.btn)), cp);
+ok('…this season\'s buildings not yet had: their coins and Apple\'s price', cp.th.length === cp.season.length && cp.th.every(t => /🪙/.test(t.coins) && t.pay === '£0.99'), cp.th);
+await shot('5_coops');
+const before = await p.evaluate(id => { const g = window.__farm.game(); return { coins: g.data.coins, tier: g.coop(id).tier }; }, cp.want[0]);
+await p.evaluate(id => document.querySelector(`.gsheet:not([hidden]) .gshop-up[data-coop="${id}"] button[data-up]`).click(), cp.want[0]); await p.waitForTimeout(1200);
+const after = await p.evaluate(id => { const g = window.__farm.game(); return { coins: g.data.coins, tier: g.coop(id).tier, open: window.__farm.gameUI().kind || null, hint: (document.getElementById('hint') || {}).textContent || '' }; }, cp.want[0]);
+ok('its next look bought from the shop: the coop in its new look, its coins paid, the shop closed', after.tier === before.tier + 1 && after.coins === before.coins - cp.price && !after.open, { before, after });
+await shot('6_upgraded');
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();
