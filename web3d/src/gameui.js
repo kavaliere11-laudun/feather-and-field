@@ -720,7 +720,7 @@ export class GameUI {
     if (n) {
       const side = tile('gup', 'looks/' + base + '_' + n.tier + '.webp', this.t('up_next_l'), this.t('look_' + n.look), this.t('up_' + base + '_' + n.look) + ' ' + this.t('upfx_' + n.look));
       side.append(el('p', 'gcoop-fx', this.t('upic_' + n.look)));
-      const broke = g.data.coins < n.price, b = btn('gbtn gsmallbtn' + (broke ? ' galt gshort' : ''), this.coinLabel(n.price)); b.disabled = broke; b.setAttribute('aria-label', broke ? this.t('up_broke', { c: fmt(n.price) }) : this.t('up_btn', { c: fmt(n.price) }));
+      const broke = g.data.coins < n.price, b = btn('gbtn gsmallbtn' + (broke ? ' galt gshort' : ''), this.coinLabel(n.price)); this.short(b, n.price); b.disabled = broke; b.setAttribute('aria-label', broke ? this.t('up_broke', { c: fmt(n.price) }) : this.t('up_btn', { c: fmt(n.price) }));
       const why = el('div', 'gcoop-why gup-why'); why.hidden = true; why.append(el('p', 'gnote', this.t('up_room')));
       b.addEventListener('click', () => { if (b.disabled) return; const r = up.onUpgrade(); if (r === 'room') { why.hidden = false; why.scrollIntoView({ block: 'nearest' }); } });
       side.append(b); notes.append(why);
@@ -733,7 +733,7 @@ export class GameUI {
       const noRoom = () => { if (up.themeWhy && up.themeWhy() === 'room') { why.hidden = false; why.scrollIntoView({ block: 'nearest' }); } };
       for (const T of TH) { const name = g.themeName(T.id, base), side = tile('gtheme gtheme-r', 'themes/' + T.key + '.webp', this.t('theme_' + T.id + '_l'), (T.on ? '✓ ' : '') + name, this.t('themel_' + T.key)), btns = el('div', 'gtheme-b'); side.parentNode.dataset.theme = T.id; side.append(btns);
         if (T.owned) { const bt = btn('gbtn gsmallbtn' + (T.on ? ' galt' : ''), this.t(T.on ? 'theme_out' : 'theme_in')); bt.dataset.themego = T.on ? 'off' : 'on'; bt.setAttribute('aria-label', this.t(T.on ? 'theme_off' : 'theme_on', { name })); bt.addEventListener('click', () => up.onTheme(T.on ? null : T.id, false)); btns.append(bt); }
-        else if (T.season) { const broke = g.data.coins < T.price, bt = btn('gbtn gsmallbtn' + (broke ? ' galt gshort' : ''), this.coinLabel(T.price)); bt.disabled = broke; bt.dataset.themego = 'buy'; bt.setAttribute('aria-label', this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmt(T.price) })); bt.addEventListener('click', () => { if (!bt.disabled) { up.onTheme(T.id, true); noRoom(); } }); btns.append(bt);
+        else if (T.season) { const broke = g.data.coins < T.price, bt = btn('gbtn gsmallbtn' + (broke ? ' galt gshort' : ''), this.coinLabel(T.price)); this.short(bt, T.price); bt.disabled = broke; bt.dataset.themego = 'buy'; bt.setAttribute('aria-label', this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmt(T.price) })); bt.addEventListener('click', () => { if (!bt.disabled) { up.onTheme(T.id, true); noRoom(); } }); btns.append(bt);
           const pr = up.pay && g.level >= PAY_LEVEL ? up.pay.price(T.key) : null;      // (in the app: for money too, at Apple's price in the player's own money)
           if (pr) { const pb = btn('gbtn gsmallbtn gpay', pr); pb.dataset.themego = 'pay'; pb.setAttribute('aria-label', this.t('pay_buy', { p: pr })); pb.addEventListener('click', () => { up.pay.onPay(T.id); noRoom(); }); btns.append(pb); } }
         else btns.append(el('p', 'gnote', this.t('theme_when_' + T.id))); }
@@ -932,7 +932,7 @@ export class GameUI {
       else if (!S.open) side.append(el('p', 'gnote gshelf-lv', '🔒 ' + this.t('shelf_lv', { n: S.level })));
       else {
         const btns = el('div', 'gtheme-b'), broke = g.data.coins < S.price, bt = el('button', 'gbtn gsmallbtn' + (broke ? ' galt gshort' : ''), this.coinLabel(S.price));
-        bt.type = 'button'; bt.disabled = broke; bt.dataset.shelfgo = 'coins'; bt.setAttribute('aria-label', this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmt(S.price) }));
+        this.short(bt, S.price); bt.type = 'button'; bt.disabled = broke; bt.dataset.shelfgo = 'coins'; bt.setAttribute('aria-label', this.t(broke ? 'theme_broke' : 'theme_buy', { name, c: fmt(S.price) }));
         bt.addEventListener('click', () => { if (!bt.disabled && h.shelf) h.shelf(S.breed); }); btns.append(bt);
         const pr = IAP_DEMO ? this.money(SHELF[S.breed].money) : PAY ? PAY.price('shelf:' + S.breed) : null;      // (in the app: for money too, at Apple's price in the player's own money)
         if (pr) { const pb = el('button', 'gbtn gsmallbtn gpay', pr); pb.type = 'button'; pb.dataset.shelfgo = 'pay'; pb.setAttribute('aria-label', this.t('pay_buy', { p: pr }));
@@ -1031,6 +1031,7 @@ export class GameUI {
   // CSS filter, came out blank on Audrey's iPhone: 10 Nov "Why is there no image", 11 Nov the shop: "Missing images")
   // a coin price on its button: "🪙 3,000", or, not enough yet, how close: "🪙 1,203 / 3,000" (23 Nov 2026, Audrey's choice
   // "Both changes": the coins' way kept in sight and worth earning, the money button beside it calm)
+  short(btn, price) { const have = Math.max(0, this.g.data.coins); if (have < price) { btn.classList.add('gshort'); btn.style.setProperty('--p', Math.max(4, Math.min(100, Math.round(100 * have / price))) + '%'); } return btn; }      // (its fill: how close, a bar inside the button)
   coinLabel(price) { const f = n => n.toLocaleString(this.g.locale()), have = Math.max(0, Math.floor(this.g.data.coins)); return '🪙 ' + (have < price ? f(have) + ' / ' : '') + f(price); }
   picOf(src, dark) {
     const pic = el('div', 'gpic');
@@ -1248,7 +1249,7 @@ export class GameUI {
       }
       if (own && !D.pond) { const mv = el('button', 'gbtn galt gsmallbtn gpage-go', this.t('dec_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move(id)); info.append(mv); }
       if (!own && !lock) {
-        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.coinLabel(D.price) : this.t(D.pond ? 'dec_buy_pond' : 'dec_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke;
+        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.coinLabel(D.price) : this.t(D.pond ? 'dec_buy_pond' : 'dec_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.short(go, D.price);
         go.addEventListener('click', () => { if (!go.disabled) h.buy(id); });
         if (broke && IAP_DEMO) this.getCoins(go, h);
         info.append(go);
@@ -1344,7 +1345,7 @@ export class GameUI {
         info.append(row);
       }
       if (!own && !lock) {
-        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.coinLabel(A.price) : this.t(A.kennel ? 'dec_buy' : 'ani_buy', { c: fmt(A.price) })); go.type = 'button'; go.disabled = broke;
+        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.coinLabel(A.price) : this.t(A.kennel ? 'dec_buy' : 'ani_buy', { c: fmt(A.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.short(go, A.price);
         go.addEventListener('click', () => { if (!go.disabled) h.buyAnimal(id); });
         if (broke && IAP_DEMO) this.getCoins(go, h);
         info.append(go);
@@ -1368,7 +1369,7 @@ export class GameUI {
       else if (!own) { const pr = el('p', 'gpage-s gdec-p'); pr.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(O.price) + ' · ' + this.t('dec_xp', { xp: outfitXp(id) }))); info.append(pr); }
       if (own && !on) { const w = el('button', 'gbtn galt gsmallbtn gpage-go', this.t('out_wear')); w.type = 'button'; w.addEventListener('click', () => h.wear(id)); info.append(w); }
       if (!own && !lock) {
-        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.coinLabel(O.price) : this.t('out_buy', { c: fmt(O.price) })); go.type = 'button'; go.disabled = broke;
+        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.coinLabel(O.price) : this.t('out_buy', { c: fmt(O.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.short(go, O.price);
         go.addEventListener('click', () => { if (!go.disabled) h.buyOutfit(id); });
         if (broke && IAP_DEMO) this.getCoins(go, h);
         info.append(go);
@@ -1391,7 +1392,7 @@ export class GameUI {
       else if (!on) info.append(el('p', 'gpage-s glock-lv', '📅 ' + this.t('dress_when_' + id)));
       else {
         const pr = el('p', 'gpage-s gdec-p'); pr.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(D.price) + ' · ' + this.t('dec_xp', { xp: dressXp(id) }))); info.append(pr);
-        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.coinLabel(D.price) : this.t('dress_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke;
+        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), broke ? this.coinLabel(D.price) : this.t('dress_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.short(go, D.price);
         go.addEventListener('click', () => { if (!go.disabled) h.buyDress(id); });
         info.append(go);
       }
