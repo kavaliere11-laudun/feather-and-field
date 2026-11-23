@@ -5,5 +5,6 @@ import Capacitor
 class GameViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(FFStorePlugin())
+        NSLog("FFStore: ready")      // (the simulator check looks for this line: the shop's plugin is in the app)
     }
 }

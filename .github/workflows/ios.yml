@@ -107,6 +107,9 @@ jobs:
           xcrun simctl io "$UDID" screenshot ../shots/en-3-farm-later.png
           xcrun simctl spawn "$UDID" log show --last 10m --style compact --predicate 'process == "App"' > ../shots/app-log.txt || true
           tail -n 60 ../shots/app-log.txt || true
+          # (23 Nov 2026: the shop's plugin had never been added to the app's screen, so the shop never reached Apple: its line
+          # must be in the app's log)
+          if grep -q "FFStore: ready" ../shots/app-log.txt; then echo "The shop's plugin is in the app."; else echo "::error::The shop's plugin (FFStore) is not in the app"; exit 1; fi
       - name: Keep the pictures
         if: always()
         uses: actions/upload-artifact@v4
