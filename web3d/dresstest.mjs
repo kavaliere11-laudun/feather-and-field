@@ -48,7 +48,7 @@ await p.evaluate(() => { window.__T = Math.round(window.__T); const f = window._
 // the shop's Seasons shelf
 await p.evaluate(() => window.__farm.shopSheet('seasons')); await run(0.2);
 let sh = await sheet();
-ok('the shop: a Seasons shelf with the Christmas dress, 1,500 coins; not enough coins: says so, the button off', sh && sh.kind === 'shop' && (fr ? /Saisons/ : /Seasons/).test(sh.text) && (fr ? /Parure de Noël/ : /Christmas dress/).test(sh.dress) && /1\D?500/.test(sh.dress) && sh.dis === true && (fr ? /assez de pièces/ : /Not enough/).test(sh.btn), sh);
+ok('the shop: a Seasons shelf with the Christmas dress, 1,500 coins; not enough coins: how close (🪙 1,000 / 1,500), the button off', sh && sh.kind === 'shop' && (fr ? /Saisons/ : /Seasons/).test(sh.text) && (fr ? /Parure de Noël/ : /Christmas dress/).test(sh.dress) && /1\D?500/.test(sh.dress) && sh.dis === true && /🪙 1\D?000 \/ 1\D?500/.test(sh.btn), sh);      // (23 Nov 2026: a coin button short of coins says how close)
 await p.evaluate(() => { const g = window.__farm.game(); g.data.coins = 5000; g.save(); window.__farm.shopSheet('seasons'); }); await run(0.2);
 sh = await sheet();
 ok('coins enough: Buy · 1,500', sh && sh.dis === false && (fr ? /Acheter/ : /Buy/).test(sh.btn), sh);
