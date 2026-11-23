@@ -74,8 +74,8 @@
      wide sideways, placed just as the iPhone app's launch screen shows it (app/icons.py crops the same part), so the app
      opens on the picture and the name, the words and the bar come on over it; the farm fades in from it */
   body.game #loading { justify-content: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 34px); box-sizing: border-box;
-                       background: #5d8fb6 url("welcome-tall.jpg?v=1795425981") 34% 50% / cover no-repeat; }
-  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1795425981") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
+                       background: #5d8fb6 url("welcome-tall.jpg?v=1795457248") 34% 50% / cover no-repeat; }
+  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1795457248") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
   body.game #loading::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                                font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
   body.game #loading::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 34%; z-index: 0;
@@ -126,7 +126,7 @@
   #sideways { display: none; }
   @media (orientation: portrait) and (pointer: coarse) {
     body.game:not(.gsideways-off) #sideways { position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 18px;
-      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1795425981") 34% 50% / cover no-repeat; }
+      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1795457248") 34% 50% / cover no-repeat; }
   }
   #sideways::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                       font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
@@ -522,7 +522,48 @@
   .gfox-row { display: flex; gap: 10px; margin-top: 14px; } .gfox-row .gbtn { flex: 1; margin: 0; }
   .gbtn.gdec-broke, .gbtn.gdec-broke:disabled { background: #e9ecdf; color: var(--ink-2); box-shadow: none; opacity: 1; }
   .gdecnew .gdec-i { width: 40px; height: 40px; object-fit: contain; flex: none; }
-  .gchips.gshop-tabs { margin: 2px 0 0; gap: 6px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); } .gshop-tabs .gchip { padding: 9px 4px; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }      /* (23 Nov 2026: six shelves with the Chickens: two rows of three) */
+  /* the shop, rethought (23 Nov 2026, Audrey: "Everything is a bit bulky in this popup can you rethink it for better
+     navigation. Also we need to add the coops"): the shelves down the left, always in sight, your coins at their top; the
+     things beside them as small tiles, three a row, each its picture, its name and its button; a tile's words when its
+     picture is tapped (the little "i"). Upright: the shelves along the top, two tiles a row */
+  .gsheet.gshop2 { max-height: 90%; }
+  .gshop-wrap { display: flex; flex-direction: column; gap: 8px; }
+  .gshop-rail { position: sticky; top: -4px; z-index: 2; display: flex; align-items: center; gap: 8px; background: var(--meringue); padding: 2px 0 6px; }
+  .gshop-rail .gshop-c { flex: none; }
+  .gchips.gshop-tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; margin: 0; min-width: 0; scrollbar-width: none; }
+  .gshop-tabs::-webkit-scrollbar { display: none; }
+  .gshop-tabs .gchip { flex: none; padding: 7px 12px; font-size: 14.5px; white-space: nowrap; }
+  .gshop-tabs .gchip:not(.on) { border-color: transparent; box-shadow: 0 1px 3px rgba(30, 52, 38, 0.13); }      /* (only the shelf you're on outlined: lighter)*/
+  .gshop-main { display: grid; grid-template-columns: repeat(auto-fill, minmax(146px, 1fr)); gap: 8px; }
+  .gshop-main > :not(.gpage) { grid-column: 1 / -1; margin: 0; }
+  .gshop-main > .gpage { flex-direction: column; align-items: stretch; gap: 6px; padding: 7px 7px 8px; margin: 0; min-width: 0; }
+  .gshop-main > .gpage > .gpic { width: 100%; height: 96px; padding: 4px; box-sizing: border-box; position: relative; cursor: pointer; }
+  .gshop-main > .gpage.gout > .gpic { padding: 4px 4px 0; }
+  .gshop-main > .gpage:has(.gdec-l) > .gpic::after { content: "i"; position: absolute; top: 5px; right: 5px; width: 19px; height: 19px; border-radius: 50%; background: rgba(255, 255, 255, 0.92);
+    font: 800 12.5px/19px Nunito, system-ui, sans-serif; font-style: italic; color: var(--ink-2); text-align: center; box-shadow: 0 1px 2px rgba(30, 52, 38, 0.22); }
+  .gshop-main > .gpage.gsay > .gpic::after { content: "×"; font-style: normal; }
+  .gshop-main .gpage-i { flex: 1; align-items: center; text-align: center; gap: 4px; padding: 0; }
+  .gshop-main .gpage .gcard-t { font-size: 15.5px; line-height: 1.15; }
+  .gshop-main .gpage .glabel { font-size: 11.5px; line-height: 1.1; }
+  .gshop-main .gpage-s { font-size: 13px; line-height: 1.25; margin: 0; }
+  .gshop-main .gpage:not(.gsay) .gdec-l, .gshop-main .gpage:not(.gsay):not(.giap) .gdec-p { display: none; }
+  .gshop-main .gsay .gdec-l { font-size: 13px; line-height: 1.3; }
+  .gshop-main .gpage .gbtn { margin: 0; width: 100%; padding: 8px 8px; font-size: 14.5px; line-height: 1.15; white-space: normal; }
+  .gshop-main .gpage .gpage-i > .gbtn:last-child, .gshop-main .gpage .gpage-i > :last-child:is(.gtheme-b, .gani-btns) { margin-top: auto; }
+  .gshop-main .gtheme-b, .gshop-main .gani-btns { flex-direction: column; flex-wrap: nowrap; gap: 5px; width: 100%; margin: 0; }
+  .gshop-main .giap-off { align-items: center; text-align: center; }
+  .gshop-main .giap-bag svg { width: auto; height: 100%; aspect-ratio: 1 / 1; }      /* (a coin bag's picture kept square and whole in its tile) */
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
+    .gsheet.gshop2 { width: min(780px, calc(100vw - 2 * max(12px, env(safe-area-inset-left), env(safe-area-inset-right)))); top: max(10px, env(safe-area-inset-top)); bottom: max(10px, env(safe-area-inset-bottom)); max-height: calc(100% - 20px); }
+    .gsheet.gshop2 .gsheet-head { padding: 12px 16px 4px 18px; } .gsheet.gshop2 .gsheet-head h2 { font-size: 21px; }
+    .gsheet.gshop2 .gsheet-body { padding-bottom: 12px; }
+    .gshop-wrap { display: grid; grid-template-columns: 136px minmax(0, 1fr); gap: 12px; align-items: start; }
+    .gshop-rail { flex-direction: column; align-items: stretch; gap: 8px; padding: 0; }
+    .gshop-rail .gshop-c { align-self: flex-start; }
+    .gchips.gshop-tabs { flex-direction: column; overflow: visible; gap: 4px; }
+    .gshop-tabs .gchip { text-align: left; padding: 7px 10px; border-radius: 12px; overflow: hidden; text-overflow: ellipsis; }
+    .gshop-main .gcshelf .gcoop-tile.gcard { flex: 1 1 calc(33.3% - 6px); }
+  }
   .gout .gpic { padding: 4px 10px 0; }
   .gout-on { box-shadow: inset 0 0 0 2px var(--meadow); }
   /* the wheat field and the honey (release 1 step 9e): the field's sign, the honey pot over the hives, a jar flying to the coins */
@@ -879,6 +920,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1795425981"></script>
+<script src="app.js?v=1795457248"></script>
 </body>
 </html>
