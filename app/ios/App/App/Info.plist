@@ -60,6 +60,21 @@
 		<string>it</string>
 		<string>pt-BR</string>
 	</array>
+	<!-- free coins for a short video (FFAdsPlugin.swift): Google's AdMob. Google's test App ID and test video until Audrey's own
+	     AdMob account gives the game's (public identifiers, as in any app). No tracking: no NSUserTrackingUsageDescription. -->
+	<key>GADApplicationIdentifier</key>
+	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<key>FFRewardedUnit</key>
+	<string>ca-app-pub-3940256099942544/1712485313</string>
+	<key>GADDelayAppMeasurementInit</key>
+	<true/>
+	<key>SKAdNetworkItems</key>
+	<array>
+		<dict>
+			<key>SKAdNetworkIdentifier</key>
+			<string>cstr6suwn9.skadnetwork</string>
+		</dict>
+	</array>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UISupportedInterfaceOrientations</key>
