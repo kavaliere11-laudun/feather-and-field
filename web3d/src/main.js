@@ -1069,6 +1069,86 @@ vec3 ripples(vec2 p) {
   mat.needsUpdate = true;
   return mat;
 }
+// the Golden Egg Fountain's water (24 Nov 2026, Audrey: "Yes, put it in (Recommended)": "with the water moving"), two parts of
+// decor.glb (grand.py fountain_dec): 'pool', the still water in the basin and the two bowls, rings running out from where
+// the water falls in (a pale lacy line there), the light on them, the pond's little sparkles by day; 'fall', the bowls'
+// curtains and the frogs' arcs, see-through, brighter streaks running down them. In the fountain's own frame (its glTF
+// axes, y up), so it turns with it; its own clock (FOUNTAIN_T on the farm, moved on with the farm's frames; FOUNTAIN_PV_T on
+// its 3D page in the shop, with the page's)
+const FOUNTAIN_T = { value: 0 }, FOUNTAIN_PV_T = { value: 0 }, FOUNTAIN_MATS = {};
+const FOUNTAIN_POOLS = 'vec3(0.28, 0.69, 0.94), vec3(1.07, 0.36, 0.55), vec3(1.47, 0.0, 0.29)';      // (each pool: its height, where water falls in, its edge)
+function fountainMat(kind, clock = FOUNTAIN_T) {
+  const key = kind + (clock === FOUNTAIN_T ? '' : '-pv');
+  if (FOUNTAIN_MATS[key]) return FOUNTAIN_MATS[key];
+  const fall = kind === 'fall';
+  const mat = new THREE.MeshStandardMaterial(fall ? { color: 0xd6eefa, roughness: 0.12, metalness: 0, transparent: true, depthWrite: false, side: THREE.DoubleSide }
+    : { color: 0x5fa9d0, roughness: 0.14, metalness: 0 });
+  mat.name = 'fountain_' + kind; mat.userData.noSnow = true;
+  mat.onBeforeCompile = sh => {
+    sh.uniforms.fTime = clock; sh.uniforms.wDay = WATER_DAY;
+    sh.vertexShader = sh.vertexShader
+      .replace('#include <common>', '#include <common>\nvarying vec3 vLoc; varying vec3 vAx; varying vec3 vAy; varying vec3 vAz;')
+      .replace('#include <begin_vertex>', '#include <begin_vertex>\nvLoc = position; vAx = normalize((modelViewMatrix * vec4(1.0, 0.0, 0.0, 0.0)).xyz); vAy = normalize((modelViewMatrix * vec4(0.0, 1.0, 0.0, 0.0)).xyz); vAz = normalize((modelViewMatrix * vec4(0.0, 0.0, 1.0, 0.0)).xyz);');
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <common>', '#include <common>\nuniform float fTime; uniform float wDay;\nvarying vec3 vLoc; varying vec3 vAx; varying vec3 vAy; varying vec3 vAz;\nvec2 fg; float fFoam;')
+      .replace('#include <normal_fragment_maps>', fall ? '#include <normal_fragment_maps>' : `#include <normal_fragment_maps>
+{
+  // which pool: its height, the ring where the water falls in (the top bowl's: the egg's cup in the middle), its edge
+  vec3 P[3] = vec3[3](${FOUNTAIN_POOLS});
+  vec3 pl = P[0]; for (int i = 1; i < 3; i++) if (abs(vLoc.y - P[i].x) < abs(vLoc.y - pl.x)) pl = P[i];
+  float r = length(vLoc.xz), d = abs(r - pl.y), sg = r > pl.y ? 1.0 : -1.0;
+  vec2 dir = r > 1e-4 ? vLoc.xz / r : vec2(0.0);
+  float amp = 0.05 * exp(-d * 6.0);
+  fg = dir * sg * amp * cos(d * 46.0 - fTime * 3.4);                    // (the rings, running out from where it falls in)
+  fg += 0.012 * vec2(sin(vLoc.x * 21.0 + vLoc.z * 7.0 + fTime * 2.3), cos(vLoc.z * 19.0 - vLoc.x * 5.0 - fTime * 1.9));
+  fg *= 1.0 - smoothstep(pl.z - 0.06, pl.z, r) * 0.6;                    // (calmer at the edge)
+  fFoam = (1.0 - smoothstep(0.0, 0.05, d)) * (0.55 + 0.45 * sin(atan(vLoc.z, vLoc.x) * 26.0 + fTime * 5.0 + sin(r * 30.0)));
+  vec3 nL = normalize(vec3(-fg.x, 1.0, -fg.y));
+  normal = normalize(vAx * nL.x + vAy * nL.y + vAz * nL.z);
+}`)
+      .replace('#include <emissivemap_fragment>', (fall ? `
+{
+  // the falling water: streaks running down, in strands round the curtain (and along each frog's arc), brighter where they run
+  float r = length(vLoc.xz), a = atan(vLoc.z, vLoc.x);
+  float strand = 0.5 + 0.5 * sin(a * 37.0 + sin(a * 9.0) * 2.0);
+  float h = fract(sin(floor(a * 37.0 / 6.2832 * 2.0) * 12.9898) * 43758.55);
+  float run = smoothstep(0.45, 1.0, sin((vLoc.y + r) * 9.0 + fTime * (5.5 + h * 2.0) + h * 20.0));
+  float s = run * (0.45 + 0.55 * strand);
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0), s * 0.55);
+  diffuseColor.a = 0.3 + 0.42 * s + 0.1 * strand;
+}` : `
+{
+  vec3 P[3] = vec3[3](${FOUNTAIN_POOLS});
+  vec3 pl = P[0]; for (int i = 1; i < 3; i++) if (abs(vLoc.y - P[i].x) < abs(vLoc.y - pl.x)) pl = P[i];
+  float r = length(vLoc.xz);
+  diffuseColor.rgb = mix(vec3(0.022, 0.19, 0.39), vec3(0.12, 0.45, 0.63), smoothstep(0.2, 1.0, r / pl.z));      // (a little deeper than the pond's: deeper in the middle)
+  // the light on the rings: the side of each facing the player lighter (towards the camera, in the fountain's frame)
+  vec3 vd = isOrthographic ? vec3(0.0, 0.0, 1.0) : normalize(vViewPosition), toCam = normalize(vec3(dot(vd, vAx), 0.0, dot(vd, vAz)) + vec3(1e-4, 0.0, 0.0));
+  float face = dot(fg, toCam.xz);
+  diffuseColor.rgb *= 1.0 + 4.0 * face;
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.86, 0.94, 0.97), fFoam * 0.55);
+  // little sparkles here and there, twinkling, by day
+  vec2 sp = vLoc.xz * 14.0, cell = floor(sp), fr = fract(sp) - 0.5;
+  float rnd = fract(sin(dot(cell, vec2(127.1, 311.7))) * 43758.55);
+  float tw = smoothstep(0.65, 1.0, sin(fTime * (1.8 + rnd * 3.0) + rnd * 60.0));
+  float spark = (1.0 - smoothstep(0.06, 0.13, length(fr - (vec2(fract(rnd * 17.3), fract(rnd * 31.7)) - 0.5) * 0.5))) * tw * step(0.55, rnd);
+  diffuseColor.rgb = mix(diffuseColor.rgb, vec3(0.97, 0.99, 1.0), spark * 0.85 * wDay * (1.0 - smoothstep(pl.z - 0.05, pl.z, r)));
+}`) + '\n#include <emissivemap_fragment>');
+  };
+  mat.customProgramCacheKey = () => 'fountain-' + kind;
+  nightGrade(mat);
+  return (FOUNTAIN_MATS[key] = mat);
+}
+// the water put in a fountain's group (on the farm, or on its 3D page in the shop)
+function fountainWater(g, clock = FOUNTAIN_T) {
+  for (const kind of ['pool', 'fall']) {
+    const p = parts['fountain_' + kind]; if (!p) continue;
+    for (const m of meshesOf(p)) {
+      const k = new THREE.Mesh(m.geometry, fountainMat(kind, clock)); k.matrixAutoUpdate = false; k.matrix.copy(m.matrixWorld);
+      k.receiveShadow = kind === 'pool'; k.castShadow = false; k.renderOrder = kind === 'fall' ? 2 : 0; g.add(k);
+    }
+  }
+}
 
 function buildPaths() {
   if (!(STORY_LOOK && GAME_MODE)) {          // (the story look: the ground itself draws the lanes, laneMap)
@@ -1371,7 +1451,7 @@ register('ui', { compass: ['Back to the usual view', 'Revenir à la vue habituel
 const DECOR_NAMES = register('decor', {
   flowers: ['Cottage flower bed', 'Massif de fleurs'], birdbath: ['Bird bath', 'Bain d’oiseaux'], beehives: ['Beehives', 'Ruches'],
   duckhouse: ['Duck house', 'Maison des canards'], greenhouse: ['Greenhouse', 'Serre'], windmill: ['Windmill', 'Moulin à vent'],
-  bandstand: ['Bandstand', 'Kiosque à musique'], statue: ['Golden cockerel', 'Coq d’or'],
+  bandstand: ['Bandstand', 'Kiosque à musique'], statue: ['Golden cockerel', 'Coq d’or'], fountain: ['Golden Egg Fountain', 'Fontaine à l’œuf d’or'],
 });
 const DECOR_ROUND = { bandstand: 1.45, windmill: 1.45, flowers: 0.95, birdbath: 0.7 };     // (round ones: their circle)
 let DECOR_INFO = null, decorFree = null, decorSpots = null;
@@ -1467,6 +1547,7 @@ function buildDecor() {
 function tickDecor(dt) {
   if (sails) sails.children[0].rotation.z -= dt * (Math.PI * 2 / 14) * (0.8 + 0.4 * Math.sin(WIND.time.value * 0.31));
   if (decorLife) decorLife.update(dt);
+  if (DEC.items.fountain) FOUNTAIN_T.value = (FOUNTAIN_T.value + dt) % 3600;      // (its water: fountainMat)
   if (GAME_MODE) { tickBits(dt); tickHoneyFrame(); }
   if (GAME_MODE && STORY_LOOK) tickMeadowLife(dt);
 }
@@ -7911,6 +7992,7 @@ const SHOP_STAGES = {
       const w = new THREE.Group(), s = part('sails'); w.add(s); w.position.fromArray(DECOR_INFO.hub); s.traverse(o => { if (o.isMesh) o.castShadow = o.receiveShadow = true; }); G.add(w);
       return { tick: dt => { w.rotation.z += dt * 0.45; } };
     }
+    if (id === 'fountain') { fountainWater(G, FOUNTAIN_PV_T); return { tick: dt => { FOUNTAIN_PV_T.value = (FOUNTAIN_PV_T.value + dt) % 3600; } }; }      // (its water moving, as on the farm)
     return {};
   },
   animal(G, id, t, r) {
@@ -8557,6 +8639,7 @@ function decorModel(id) {
     s.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; nightGrade(o.material); } });
     g.add(w); g.userData.sails = w;
   }
+  if (id === 'fountain') fountainWater(g);                  // (its water, moving: fountainMat)
   return g;
 }
 // one on the farm: drawn, in everyone's way (V.props), and tappable (decorList); its life is made again with the rest's
@@ -11085,6 +11168,7 @@ document.addEventListener('visibilitychange', () => {
 
 window.__separate = (dt) => { for (const p of plots) if (p.birds.length) separate(p.birds, dt); };
 window.__farm = {
+  decorModel: id => decorModel(id),      // (decorpics.mjs: a decoration the test village hasn't, made for its picture)
   // (the card audit: the label's longest words, and the label placed as the game places it, over a spot on the screen)
   labelWords: () => { const lots = [{ name: 'Marguerite' }, { name: 'Clementine' }, { name: 'Bartholomew' }, { name: 'Wilhelmina' }];
     return [vt('door_notyet', { who: doorWho(lots) }), vt('door_notyet', { who: doorWho(lots.slice(0, 2)) }), vt('door_shut'), game.t('land_wild', { n: 30 }), game.t('laying', { name: 'Wilhelmina' }), game.t('no_eggs'),
@@ -11187,7 +11271,7 @@ window.__farm = {
   deco: { shop: () => shopSheet(), buy: id => buyDecor(id), start: id => startDecor(id), to: (x, z) => decMoveTo(x, z), place: () => putDecor(), cancel: () => endDecor(false), card: id => decorCard(id),
     spot: (id, x, z, deg) => { const S = decorSpot(id, x, z, deg ?? (id === 'kennel' ? KENNEL_DEG : 45)); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true, id === 'kennel' ? [KENNEL_DEG] : [45], true), way: (id, x, z) => decorWayOk(id, x, z),
     state: () => ({ on: DMOVE.id, at: DMOVE.at, ok: !!(DMOVE.spot && DMOVE.spot.ok), why: DMOVE.spot && DMOVE.spot.why, clear: DMOVE.spot ? DMOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent }),
-    items: () => Object.entries(DEC.items).filter(([id]) => id !== 'wheat' && id !== 'wheat2' && id !== 'garden').map(([id, it]) => ({ id, at: it.d.pos, shown: !!it.group.parent, prop: V.props.includes(it.prop), tap: decorList.includes(it.d) })), life: () => decorLife && decorLife.state(), duckHouse: () => !!(duckFlock && duckFlock.house),
+    items: () => Object.entries(DEC.items).filter(([id]) => id !== 'wheat' && id !== 'wheat2' && id !== 'garden').map(([id, it]) => ({ id, at: it.d.pos, shown: !!it.group.parent, prop: V.props.includes(it.prop), tap: decorList.includes(it.d) })), life: () => decorLife && decorLife.state(), fountainT: () => FOUNTAIN_T.value, fountainWater: () => { const it = DEC.items.fountain; const n = []; if (it) it.group.traverse(o => { if (o.isMesh && /^fountain_/.test(o.material.name)) n.push(o.material.name); }); return n; }, duckHouse: () => !!(duckFlock && duckFlock.house),
     blocked: (x, z) => !navGrid().freeAt(x, z), sails: () => sails && sails.children[0].rotation.z,
     wheat: { wild: () => gameUI.wheat2Sheet({ buy: () => buyWheat() }), tap: (k = 0) => wheatTap(k), sow: (k = 0) => sowWheat(k), harvest: (k = 0) => harvestWheat(k), move: (k = 0) => startDecor(WID[k]), buy: () => buyWheat(),
       state: (k = 0) => { const it = DEC.items[WID[k]], F = FIELD.f[k]; return { stage: game.wheatStage(undefined, k), shown: F.shown, hold: F.hold, work: FIELD.work && FIELD.work.kind, at: it && it.d.pos, deg: it && it.d.deg, grain: game.data.grain, bub: F.bub && !F.bub.hidden ? F.bub.textContent : null, under: it ? underCoop(it.d.pos[0], it.d.pos[1]) : null, owned: it ? owned(fieldAt(it.d.pos[0], it.d.pos[1])) : null }; } },

@@ -58,12 +58,14 @@ def streams(objs, r, z0, z1, n, m):
 
 
 # ------------------------------------------------------------------ level 41: the Golden Egg Fountain
-def fountain_dec(seed=81, name='fountain'):
-    """A grand fountain for the farm: a round stone basin (a ring of dressed stones under a moulded rim) full of water, a
+def fountain_dec(seed=81, name='fountain', part=None):
+    """(part: None all of it, as in the pictures; for the game 'stone' all but the water, 'pool' the still water in the
+    basin and the bowls, 'fall' the water falling and the frogs' arcs: the browser moves the water, main.js fountainWater)
+    A grand fountain for the farm: a round stone basin (a ring of dressed stones under a moulded rim) full of water, a
     fluted pedestal with two scalloped bowls, the water falling from each in a thin curtain, and on top a golden egg;
     round the basin four little bronze frogs spouting arcs of water into it. It stands on a square of pale gravel in a
     stone kerb, a clipped box ball at each corner and lavender between them."""
-    random.seed(seed); objs = []
+    random.seed(seed); objs = []; pool = []; falls = []
     stone = [C('fstone%d' % i, h, rough=0.85, var=0.05) for i, h in enumerate(('#cfc7b5', '#c4bba8', '#d8d1c1'))]
     pale = C('fpale', '#e2dbcb', rough=0.8, var=0.03); gravel = C('fgravel', '#d9cfb7', rough=0.95, var=0.06)
     gold = C('fgold', '#f2c14e', rough=0.2, metal=1.0); bronze = C('fbronze', '#6f7f4a', rough=0.45, metal=0.6)
@@ -82,7 +84,7 @@ def fountain_dec(seed=81, name='fountain'):
         L = 2 * R * math.sin(math.pi / n) * 1.02
         objs.append(box('fwall', (L, 0.16, H - 0.06), (math.cos(am) * R, math.sin(am) * R, (H - 0.06) / 2), (0, 0, am + math.pi / 2), m=random.choice(stone), bevel=0.012, segs=1, jitter=0.003))
     objs.append(ring('frim', R - 0.08, R + 0.12, H - 0.02, 0.07, pale))
-    objs.append(cyl('fwater', R - 0.06, 0.02, (0, 0, H - 0.09), m=water, verts=48, bevel=0.0))
+    pool.append(cyl('fwater', R - 0.06, 0.02, (0, 0, H - 0.09), m=water, verts=48, bevel=0.0))
     objs.append(cyl('fplinth', R + 0.18, 0.06, (0, 0, 0.03), m=stone[1], verts=48, bevel=0.012))
     # the pedestal: a round foot, a fluted shaft, the lower bowl (scalloped), a shorter shaft, the upper bowl, the golden egg
     objs.append(cyl('ffoot', 0.26, 0.16, (0, 0, H + 0.0), m=pale, verts=24, r2=0.2, bevel=0.01))
@@ -92,19 +94,19 @@ def fountain_dec(seed=81, name='fountain'):
         objs.append(cyl('fflute', 0.018, 0.44, (math.cos(a) * 0.13, math.sin(a) * 0.13, H + 0.33), m=pale, verts=6, bevel=0.0))
     B1 = H + 0.64
     objs.append(cyl('fbowl1', 0.2, 0.14, (0, 0, B1 - 0.01), m=stone[0], verts=32, r2=0.6, bevel=0.01))
-    objs.append(cyl('fbowl1w', 0.55, 0.02, (0, 0, B1 + 0.065), m=water, verts=32, bevel=0.0))
+    pool.append(cyl('fbowl1w', 0.55, 0.02, (0, 0, B1 + 0.065), m=water, verts=32, bevel=0.0))
     for k in range(16):                                          # (its scalloped lip)
         a = 2 * math.pi * k / 16
         objs.append(sphere('fscallop', 0.06, (math.cos(a) * 0.6, math.sin(a) * 0.6, B1 + 0.04), (1, 1, 0.55), m=pale, seg=10, rings=6))
-    objs.append(tube('fsheet1', 0.62, 0.7, B1 + 0.05, H - 0.08, fall))      # (the water falling from its lip into the basin: a thin sheet)
+    falls.append(tube('fsheet1', 0.62, 0.7, B1 + 0.05, H - 0.08, fall))      # (the water falling from its lip into the basin: a thin sheet)
     objs.append(cyl('fshaft2', 0.08, 0.36, (0, 0, B1 + 0.22), m=stone[2], verts=12, bevel=0.004))
     B2 = B1 + 0.42
     objs.append(cyl('fbowl2', 0.11, 0.1, (0, 0, B2 - 0.01), m=stone[0], verts=24, r2=0.32, bevel=0.008))
-    objs.append(cyl('fbowl2w', 0.29, 0.02, (0, 0, B2 + 0.045), m=water, verts=24, bevel=0.0))
+    pool.append(cyl('fbowl2w', 0.29, 0.02, (0, 0, B2 + 0.045), m=water, verts=24, bevel=0.0))
     for k in range(10):
         a = 2 * math.pi * k / 10
         objs.append(sphere('fscallop', 0.04, (math.cos(a) * 0.32, math.sin(a) * 0.32, B2 + 0.03), (1, 1, 0.55), m=pale, seg=10, rings=6))
-    objs.append(tube('fsheet2', 0.335, 0.39, B2 + 0.035, B1 + 0.07, fall))
+    falls.append(tube('fsheet2', 0.335, 0.39, B2 + 0.035, B1 + 0.07, fall))
     objs.append(cyl('fegg_cup', 0.07, 0.06, (0, 0, B2 + 0.08), m=gold, verts=16, r2=0.05, bevel=0.004))
     objs.append(sphere('fegg', 0.13, (0, 0, B2 + 0.25), (0.8, 0.8, 1.04), m=gold, seg=24, rings=14))      # the golden egg
     # four little bronze frogs on the rim, each spouting an arc of water into the basin
@@ -119,7 +121,7 @@ def fountain_dec(seed=81, name='fountain'):
             u = i / 8; d = 0.08 + u * 0.55; z = H + 0.1 + 0.22 * math.sin(u * math.pi * 0.9) - u * 0.12
             pts.append((cx + math.cos(to) * d, cy + math.sin(to) * d, z))
         for i in range(8):
-            objs.append(plank('fjet', pts[i], pts[i + 1], 0.03, 0.03, (0, 0, 1), fall, jitter=0.0, bevel=0.0))
+            falls.append(plank('fjet', pts[i], pts[i + 1], 0.03, 0.03, (0, 0, 1), fall, jitter=0.0, bevel=0.0))
     # the corners: a clipped box ball on a little square of soil, lavender along the sides
     for sx in (-1, 1):
         for sy in (-1, 1):
@@ -135,7 +137,10 @@ def fountain_dec(seed=81, name='fountain'):
                 px, py = x + random.uniform(-0.05, 0.05), y + random.uniform(-0.05, 0.05); h = random.uniform(0.22, 0.3)
                 objs.append(cyl('flavstem', 0.006, h, (px, py, h / 2), m=lav_s, verts=4, bevel=0.0))
                 objs.append(sphere('flavflower', 0.018, (px, py, h + 0.02), (1, 1, 2.6), m=lav, seg=6, rings=4))
-    return finish(objs, name)
+    keep = {None: objs + pool + falls, 'stone': objs, 'pool': pool, 'fall': falls}[part]
+    for o in objs + pool + falls:
+        if not any(o is k for k in keep): bpy.data.objects.remove(o, do_unlink=True)
+    return finish(keep, name)
 
 
 GRAND = {'fountain': fountain_dec}

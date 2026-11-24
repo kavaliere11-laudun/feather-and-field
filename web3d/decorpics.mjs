@@ -7,9 +7,9 @@
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import { writeFileSync, mkdirSync } from 'fs';
 const OUT = process.argv[2] || 'decor', H = +(process.env.H || 300);
-const ALL = ['flowers', 'birdbath', 'beehives', 'duckhouse', 'greenhouse', 'windmill', 'bandstand', 'statue'];
+const ALL = ['flowers', 'birdbath', 'beehives', 'duckhouse', 'greenhouse', 'windmill', 'bandstand', 'statue', 'fountain'];
 const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : ALL;
-const CAM = { windmill: { el: 16, fov: 22 }, statue: { el: 22, fov: 22 }, bandstand: { el: 24, fov: 22 } };
+const CAM = { windmill: { el: 16, fov: 22 }, statue: { el: 22, fov: 22 }, bandstand: { el: 24, fov: 22 }, fountain: { el: 26, fov: 22 } };
 mkdirSync(OUT, { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 900, height: 900 }, deviceScaleFactor: 2 });
@@ -19,7 +19,12 @@ await p.waitForFunction(() => window.__farm && document.getElementById('loading'
 await p.evaluate(() => { const f = window.__farm; f.pause(true); f.step(1 / 30, 20); f.setHour(11); f.draw(); });
 for (const id of ONLY) {
   const res = await p.evaluate(([id, C, H]) => {
-    const f = window.__farm, T = f.THREE, d = f.props().find(o => o.model === id); if (!d) return null;
+    const f = window.__farm, T = f.THREE; let d = f.props().find(o => o.model === id);
+    if (!d && f.decorModel) {      // (a grand decoration, 24 Nov 2026: not in the test village; made here, its water and all, out of everyone's way)
+      const g = f.decorModel(id); g.userData.model = id; g.matrix.makeRotationY(Math.PI / 4).setPosition(80, 0, 80); g.matrixWorldNeedsUpdate = true; f.scene.add(g); g.updateMatrixWorld(true);
+      const bx = new T.Box3().setFromObject(g); d = { model: id, pos: [80, 0, 80], h: bx.max.y - bx.min.y, w: Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) / Math.SQRT2 };
+    }
+    if (!d) return null;
     const keep = new Set(); f.scene.traverse(o => { if (o.userData && o.userData.model === id) o.traverse(c => keep.add(c)); });
     if (id === 'windmill') f.scene.traverse(o => { if (o.isGroup && o.children[0] && o.children[0].name === 'sails') o.traverse(c => keep.add(c)); });
     const hidden = []; f.scene.traverse(o => { if ((o.isMesh || o.isPoints || o.isLine || o.isSprite) && o.visible && !keep.has(o)) { o.visible = false; hidden.push(o); } });

@@ -52,6 +52,12 @@
    -1.178,
    1.018,
    1.001
+  ],
+  "fountain": [
+   -1.433,
+   -1.433,
+   1.433,
+   1.433
   ]
  },
  "stats": {
@@ -99,6 +105,21 @@
    "tris": 11998,
    "verts": 6555,
    "prims": 3
+  },
+  "fountain": {
+   "tris": 15676,
+   "verts": 8974,
+   "prims": 2
+  },
+  "fountain_pool": {
+   "tris": 404,
+   "verts": 208,
+   "prims": 1
+  },
+  "fountain_fall": {
+   "tris": 544,
+   "verts": 576,
+   "prims": 1
   }
  }
 }

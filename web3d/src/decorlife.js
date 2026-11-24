@@ -147,7 +147,10 @@ export class Butterflies {
 // ------------------------------------------------------------------ the bird bath's visitors (its own blue tit sits on the
 // rim already): a robin and a chaffinch drop in, a look round and a sip, a hop into the water for a splashy bath, back on
 // the rim for a shake of the feathers, and off
-const BATH = { rim: 0.705, R: 0.47, water: 0.671, tit: Math.atan2(0.3, 0.36) };
+const BATH = { rim: 0.705, R: 0.47, water: 0.671, tit: Math.atan2(0.3, 0.36), bath: true, kinds: ['robin', 'chaffinch'] };
+// (the Golden Egg Fountain, 24 Nov 2026: three little birds come to drink from its basin's rim, 0.375 up and 1.02 out, between
+// the four bronze frogs, mostly at its sides; no bath, the basin's deep; grand.py fountain_dec)
+const FOUNT = { rim: 0.375, R: 1.02, water: 0.28, frogs: [1, 3, 5, 7].map(k => k * Math.PI / 4), bath: false, kinds: ['chaffinch', 'robin', 'chaffinch'] };
 function smallBird(kind, grade) {
   const C = kind === 'robin' ? { back: '#7d6248', belly: '#ea6a32', head: '#7d6248', cap: '#7d6248', face: '#ea6a32', wing: '#6e5540' }
     : { back: '#8a7a6a', belly: '#d9907a', head: '#7f93a8', cap: '#6b84a3', face: '#d9907a', wing: '#4a4f4a' };
@@ -169,11 +172,19 @@ function smallBird(kind, grade) {
   return g;
 }
 class BathBirds {
-  constructor(parent, grade, r, splash) {
-    this.r = r; this.splash = splash; this.list = [];
-    for (const [i, kind] of ['robin', 'chaffinch'].entries()) { const g = smallBird(kind, grade); g.visible = false; parent.add(g); this.list.push({ kind, g, st: 'away', t: 3 + i * 7 + r() * 6, a: 0 }); }
+  constructor(parent, grade, r, splash, spot = BATH) {
+    this.r = r; this.splash = splash; this.list = []; this.S = spot;
+    for (const [i, kind] of spot.kinds.entries()) { const g = smallBird(kind, grade); g.visible = false; parent.add(g); this.list.push({ kind, g, st: 'away', t: 3 + i * 7 + r() * 6, a: 0 }); }
   }
-  angle(b) {                                                               // (a spot on the rim clear of the tit and the other bird; mostly at the back,
+  angle(b) {
+    if (this.S.frogs) {                                                    // (the fountain: between the frogs, mostly at its sides, seen side on (the back's hidden by the bowls))
+      const d = (p, q) => Math.abs(Math.atan2(Math.sin(p - q), Math.cos(p - q)));
+      for (let k = 0; k < 20; k++) {
+        const x = this.r(), a = (x < 0.4 ? 0 : x < 0.8 ? 1 : x < 0.95 ? 0.5 : 1.5) * Math.PI + (this.r() - 0.5) * 0.5;
+        if (this.S.frogs.every(f => d(f, a) > 0.4) && this.list.every(o => o === b || o.st === 'away' || d(o.a, a) > 0.5)) return a;
+      }
+      return null;
+    }                                                               // (a spot on the rim clear of the tit and the other bird; mostly at the back,
                                                                            // facing the player)
     for (let k = 0; k < 20; k++) {
       const a = this.r() < 0.75 ? Math.PI * (1.1 + this.r() * 0.8) : this.r() * 6.28, d = q => Math.abs(Math.atan2(Math.sin(q - a), Math.cos(q - a)));
@@ -191,7 +202,7 @@ class BathBirds {
           const a = day > 0.6 ? this.angle(b) : null;
           if (a === null) { b.t = 4; continue; }
           b.a = a; const c = Math.cos(a), s = Math.sin(a), far = a + (this.r() - 0.5) * 1.2;
-          b.from = new THREE.Vector3(Math.cos(far) * 4, 2.6, Math.sin(far) * 4); b.on = new THREE.Vector3(c * BATH.R, BATH.rim, s * BATH.R);
+          b.from = new THREE.Vector3(Math.cos(far) * 4, 2.6, Math.sin(far) * 4); b.on = new THREE.Vector3(c * this.S.R, this.S.rim, s * this.S.R);
           b.st = 'in'; b.t = b.dur = 1.7;
         }
         continue;
@@ -203,11 +214,15 @@ class BathBirds {
         const e = b.st === 'in' ? 1 - (1 - u) * (1 - u) : u * u;
         b.g.position.lerpVectors(A, B, e); b.g.position.y += Math.sin(e * Math.PI) * 0.3;
         b.g.rotation.y = Math.atan2(B.x - A.x, B.z - A.z); flap = 0.5 + 0.5 * Math.sin(time * 40);
-        if (b.t <= 0) { if (b.st === 'in') { b.st = 'rim'; b.t = 1.8 + this.r() * 1.8; } else { b.st = 'away'; b.t = 6 + this.r() * 12; } }
+        if (b.t <= 0) { if (b.st === 'in') { b.st = 'rim'; b.t = this.S.bath ? 1.8 + this.r() * 1.8 : 4 + this.r() * 4; } else { b.st = 'away'; b.t = 6 + this.r() * 12; } }
       } else if (b.st === 'rim') {                                       // (on the rim: a look round, a sip or two)
         b.g.position.copy(b.on); b.g.rotation.y = Math.atan2(-b.on.x, -b.on.z) + Math.sin(time * 1.7 + b.a) * 0.6;
         look = Math.sin(time * 3.1) * 0.4; peck = smooth(0.6, 0.9, Math.sin(time * 4.2 + b.a));
-        if (b.t <= 0) { b.st = 'hop'; b.t = b.dur = 0.35; b.at = new THREE.Vector3(Math.cos(b.a) * 0.24, BATH.water - 0.028, Math.sin(b.a) * 0.24); }
+        if (!this.S.bath) {                                              // (at the fountain: sips, head right down, a look round between)
+          b.g.rotation.y = Math.atan2(-b.on.x, -b.on.z) + Math.sin(time * 0.8 + b.a) * 0.35;
+          const sip = smooth(0.55, 0.95, Math.sin(time * 1.9 + b.a * 3)); peck = sip * 1.35; look = (1 - sip) * Math.sin(time * 2.3 + b.a) * 0.5;
+          if (b.t <= 0) { b.st = 'off'; b.t = b.dur = 1.7; const a = b.a + (this.r() - 0.5) * 1.4; b.to = new THREE.Vector3(Math.cos(a) * 4.5, 2.7, Math.sin(a) * 4.5); }
+        } else if (b.t <= 0) { b.st = 'hop'; b.t = b.dur = 0.35; b.at = new THREE.Vector3(Math.cos(b.a) * 0.24, this.S.water - 0.028, Math.sin(b.a) * 0.24); }
       } else if (b.st === 'hop') {                                       // (a hop down into the water)
         const u = 1 - Math.max(0, b.t) / b.dur; b.g.position.lerpVectors(b.on, b.at, u); b.g.position.y += Math.sin(u * Math.PI) * 0.06; flap = 0.6;
         if (b.t <= 0) { b.st = 'bath'; b.t = 2.6 + this.r() * 1.6; this.splash(b.g.position, 6); }
@@ -288,6 +303,7 @@ export class DecorLife {
       if (d.model === 'beehives') this.bees = new Bees(frame(d), o.grade, r);
       if (d.model === 'flowers') this.flies = new Butterflies(frame(d), o.grade, r);
       if (d.model === 'birdbath') { const f = frame(d); this.bath = new BathBirds(f, o.grade, r, (p, n) => this.splash(f.localToWorld(p.clone()), n)); }
+      if (d.model === 'fountain') { const f = frame(d); this.fount = { f, birds: new BathBirds(f, o.grade, r, (p, n) => this.splash(f.localToWorld(p.clone()), n), FOUNT), dropIn: 0 }; }
       if (d.model === 'statue') this.statue = d;
       if (d.model === 'bandstand') this.band = d;
     }
@@ -306,6 +322,14 @@ export class DecorLife {
     if (this.bees) this.bees.update(dt, day, t);
     if (this.flies) this.flies.update(dt, day, t);
     if (this.bath) this.bath.update(dt, day, t);
+    if (this.fount) {                                                     // (the fountain: its birds; now and then a drop jumping up where its water falls in)
+      this.fount.birds.update(dt, day, t);
+      if ((this.fount.dropIn -= dt) <= 0) {
+        this.fount.dropIn = 0.18 + this.r() * 0.3;
+        const a = this.r() * 6.28, top = this.r() < 0.3, R = top ? 0.37 : 0.69;
+        this.splash(this.fount.f.localToWorld(this._v.set(Math.cos(a) * R, top ? 1.08 : 0.29, Math.sin(a) * R)), 1);
+      }
+    }
     // the cockerel catching the sun: a sparkle somewhere on him, now and then
     if (this.statue && day > 0.7 && (this.glintIn -= dt) <= 0) {
       this.glintIn = 1.8 + this.r() * 3.5;
@@ -333,7 +357,7 @@ export class DecorLife {
   state() {
     return {
       bees: this.bees ? this.bees.out : null, butterflies: this.flies ? this.flies.f.filter(f => f.g.visible).length : null,
-      bath: this.bath ? this.bath.list.map(b => b.st) : null, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
+      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
     };
   }
 }

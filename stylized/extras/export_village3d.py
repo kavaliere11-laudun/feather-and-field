@@ -47,6 +47,9 @@ for _k in ('carrot', 'straw', 'pump', 'lettuce', 'peas', 'corn', 'beet', 'sunf')
     for _s, _b in ((1, 4000), (2, 9000), (3, 12000)):
         BUILD['garden_%s_%d' % (_k, _s)] = ((lambda k=_k, s=_s: village3d.garden_crop_v(k, s, 'garden_%s_%d' % (k, s))), _b)
 BUILD.update({'garden_yard': (village3d.garden_yard_v, 30000), 'potting_shed': (village3d.potting_shed_v, 6000), 'garden_wild': (village3d.garden_wild_v, 2500), 'lock_sign': (lambda: village3d.lock_sign_v(s=1.6), 400), 'garden_ready': (village3d.garden_ready_v, 600), 'garden_free': (village3d.garden_free_v, 200), 'field_ready': (lambda: village3d.garden_ready_v('field_ready', 1.7, -1.5), 600), 'field_free': (lambda: village3d.garden_free_v('field_free', 1.8, -1.45), 200), 'field_wild': (village3d.field_wild_v, 4000)})      # (the kitchen garden's fixed place, 16 Nov 2026)
+import grand      # (the grand decorations, 24 Nov 2026: levels 41 to 49; the fountain's water in two parts of its own, moved in the browser)
+BUILD.update({'fountain': (lambda: grand.fountain_dec(part='stone'), 30000), 'fountain_pool': (lambda: grand.fountain_dec(part='pool'), 4000),
+              'fountain_fall': (lambda: grand.fountain_dec(part='fall'), 4000)})
 names = []
 for n in WANT:
     fn, budget = BUILD[n]; BUDGET[n] = budget; one(n, fn); names.append(n)
