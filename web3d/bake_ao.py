@@ -118,7 +118,7 @@ def main(paths):
                 pos = G.view(a['POSITION']).astype(float); nor = G.view(a['NORMAL']).astype(float)
                 idx = G.view(p['indices']).reshape(-1, 3).astype(np.int64) if 'indices' in p else np.arange(len(pos)).reshape(-1, 3)
                 mat = G.J['materials'][p['material']]['name'] if 'material' in p else ''
-                on = not name.startswith(SKIP_PART) and mat not in SKIP_MAT
+                on = (name.startswith('tree_house') or not name.startswith(SKIP_PART)) and mat not in SKIP_MAT      # (the Tree House is a building, not a tree)
                 P.append(pos); N.append(nor); T.append(idx + off); S.append(np.full(len(pos), on)); prims.append((p, off, len(pos))); off += len(pos)
             if not P: continue
             P, N, T, S = np.concatenate(P), np.concatenate(N), np.concatenate(T), np.concatenate(S)

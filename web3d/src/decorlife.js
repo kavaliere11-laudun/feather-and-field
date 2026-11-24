@@ -412,6 +412,103 @@ class OrchardLife {
   }
 }
 
+// ------------------------------------------------------------------ the Tree House (24 Nov 2026): a red squirrel lives in its oak.
+// By day now and then it comes down the trunk head first, leaps onto the deck's right-hand railing, runs along it and sits
+// up there nibbling a nut, its tail curled over its back; back to the trunk, down to the grass, a few bounds out in front
+// and a sit-up to look about; back and up the trunk into the leaves (grand.py tree_house_dec, in its own frame: the
+// trunk at x 0, z -0.9, its girth by height; the railing's top; a spot on the grass in front)
+const TREEHOUSE = { trunk: [0, -0.9], r: h => 0.345 - 0.04 * h, side: -0.35, crown: 2.75, low: 1.6, railBack: [0.92, 2.08, -0.5], railSit: [0.92, 2.08, 0.02], grass: [0.45, 0.02, 1.2] };
+function redSquirrel(grade) {
+  const mats = {}; const mat = c => mats[c] || (mats[c] = (m => { if (grade) grade(m); return m; })(new THREE.MeshLambertMaterial({ color: c })));
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  const add = (geo, c, x, y, z, sx = 1, sy = 1, sz = 1, to = body) => { const m = new THREE.Mesh(geo, mat(c)); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; to.add(m); return m; };
+  const S = new THREE.SphereGeometry(1, 12, 9), RED = '#b9582c', TAIL = '#c4652f', CREAM = '#f1e3c8';
+  add(S, RED, 0, 0.05, 0, 0.036, 0.036, 0.06); add(S, CREAM, 0, 0.04, 0.012, 0.028, 0.026, 0.045);
+  const head = new THREE.Group(); head.position.set(0, 0.078, 0.055); body.add(head);
+  add(S, RED, 0, 0, 0, 0.028, 0.027, 0.031, head); add(S, '#c96f3c', 0, -0.006, 0.026, 0.015, 0.014, 0.016, head);
+  add(S, '#2a1d18', 0, -0.004, 0.04, 0.005, 0.004, 0.004, head);
+  for (const sd of [-1, 1]) {
+    add(S, '#14100e', sd * 0.017, 0.007, 0.018, 0.0055, 0.006, 0.005, head);
+    const ear = add(new THREE.ConeGeometry(1, 1, 6), RED, sd * 0.014, 0.03, -0.006, 0.008, 0.026, 0.006, head); ear.rotation.z = -sd * 0.25;
+    add(new THREE.ConeGeometry(1, 1, 5), '#7e351a', sd * 0.016, 0.047, -0.006, 0.004, 0.014, 0.004, head);      // (its ear tufts)
+  }
+  const paws = new THREE.Group(); paws.position.set(0, 0.05, 0.05); body.add(paws);
+  for (const sd of [-1, 1]) add(S, RED, sd * 0.012, 0, 0, 0.008, 0.016, 0.008, paws);
+  const nut = add(S, '#7a5230', 0, 0.012, 0.012, 0.011, 0.012, 0.011, paws); nut.visible = false;
+  for (const sd of [-1, 1]) add(S, RED, sd * 0.024, 0.022, -0.03, 0.014, 0.02, 0.026);      // (its haunches)
+  const tail = new THREE.Group(); tail.position.set(0, 0.05, -0.055); body.add(tail);
+  const bits = [];
+  for (let i = 0; i < 6; i++) { const u = i / 5; bits.push(add(S, i % 2 ? TAIL : RED, 0, 0.02 + u * 0.12, -0.03 - Math.sin(u * Math.PI) * 0.045 + u * 0.03, 0.024 + Math.sin(u * Math.PI) * 0.01, 0.03, 0.026 + Math.sin(u * Math.PI) * 0.008, tail)); }
+  g.userData = { body, head, tail, paws, nut, bits };
+  g.scale.setScalar(1.45);                                                 // (a touch bigger than life, to be seen)
+  return g;
+}
+class TreeHouseLife {
+  constructor(parent, grade, r) {
+    this.r = r; this.g = redSquirrel(grade); this.g.visible = false; parent.add(this.g);
+    this.st = 'away'; this.t = 4 + r() * 8; this.dur = 1; this.from = new THREE.Vector3(); this.to = new THREE.Vector3(); this.n = 0;
+    this._m = new THREE.Matrix4(); this._x = new THREE.Vector3(); this._y = new THREE.Vector3(); this._z = new THREE.Vector3();
+  }
+  bark(h) { const T = TREEHOUSE, r = T.r(h); return new THREE.Vector3(T.trunk[0] + Math.cos(T.side) * r, h, T.trunk[1] - Math.sin(T.side) * r); }
+  out() { return this._y.set(Math.cos(TREEHOUSE.side), 0, -Math.sin(TREEHOUSE.side)); }
+  face(fwd, up) {                                                       // (its nose along fwd, its back towards up)
+    const z = this._z.copy(fwd).normalize(), y = this._y.copy(up).addScaledVector(z, -up.dot(z)).normalize(), x = this._x.crossVectors(y, z);
+    this.g.quaternion.setFromRotationMatrix(this._m.makeBasis(x, y, z));
+  }
+  go(st, dur, to) { this.st = st; this.t = this.dur = dur; this.from.copy(this.g.position); if (to) this.to.copy(to); }
+  update(dt, day, time) {
+    const T = TREEHOUSE, U = this.g.userData, r = this.r; this.t -= dt;
+    const u = 1 - Math.max(0, this.t) / this.dur, e = u * u * (3 - 2 * u);
+    let pitch = 0, look = 0, nod = 0, tail = 0.25 * Math.sin(time * 2.1), hold = false;
+    if (this.st === 'away') {
+      this.g.visible = false;
+      if (this.t <= 0) { if (day < 0.6) { this.t = 5; return; } this.g.position.copy(this.bark(T.crown)); this.g.visible = true; this.n = 1 + Math.floor(r() * 2); this.go('down', 1.7, this.bark(T.low)); }
+      return;
+    }
+    if (this.st === 'down' || this.st === 'up' || this.st === 'down2') {      // (on the bark: head first down, head first up)
+      this.g.position.lerpVectors(this.from, this.to, e);
+      this.face(this._z.set(0, this.st === 'up' ? 1 : -1, 0), this.out().clone());
+      pitch = Math.sin(time * 18) * 0.12; tail = 0.5 + Math.sin(time * 9) * 0.25;
+      if (this.t <= 0) {
+        if (this.st === 'down') this.go('leap', 0.5, new THREE.Vector3(...T.railBack));
+        else if (this.st === 'down2') this.go('bound', 1.5, new THREE.Vector3(...T.grass));
+        else { this.st = 'away'; this.t = 12 + r() * 22; this.g.visible = false; }
+      }
+    } else if (this.st === 'leap' || this.st === 'leapback') {      // (a leap between the trunk and the railing)
+      this.g.position.lerpVectors(this.from, this.to, u); this.g.position.y += Math.sin(u * Math.PI) * 0.18;
+      this.face(this._z.subVectors(this.to, this.from).setY(0), this._x.set(0, 1, 0));
+      pitch = -0.5 + u; tail = 0.9;
+      if (this.t <= 0) {
+        if (this.st === 'leap') this.go('rail', 0.9, new THREE.Vector3(...T.railSit));
+        else this.go('down2', 1.6, this.bark(0.04));
+      }
+    } else if (this.st === 'rail' || this.st === 'railback' || this.st === 'bound' || this.st === 'home') {      // (a scamper: bounding)
+      this.g.position.lerpVectors(this.from, this.to, e); this.g.position.y += Math.abs(Math.sin(u * Math.PI * (this.st === 'bound' || this.st === 'home' ? 5 : 3))) * 0.05;
+      this.face(this._z.subVectors(this.to, this.from).setY(0), this._x.set(0, 1, 0));
+      pitch = Math.sin(u * Math.PI * 8) * 0.2; tail = 0.6 + Math.sin(time * 12) * 0.2;
+      if (this.t <= 0) {
+        if (this.st === 'rail') { this.go('sit', 4 + r() * 3); U.nut.visible = true; }
+        else if (this.st === 'railback') this.go('leapback', 0.5, this.bark(T.low));
+        else if (this.st === 'bound') this.go('look', 2.5 + r() * 2);
+        else this.go('up', 2.2, this.bark(T.crown));
+      }
+    } else if (this.st === 'sit' || this.st === 'look') {      // (sat up: nibbling its nut on the railing, looking about on the grass)
+      this.g.position.copy(this.from);
+      this.face(this._z.set(this.st === 'sit' ? 0.7 : -0.4, 0, this.st === 'sit' ? 0.7 : 1), this._x.set(0, 1, 0));
+      pitch = -0.95; hold = this.st === 'sit'; tail = 1.25 + Math.sin(time * 1.3) * 0.08 + (Math.sin(time * 0.9) > 0.93 ? Math.sin(time * 30) * 0.15 : 0);
+      if (hold) nod = Math.max(0, Math.sin(time * 14)) * 0.18; else look = Math.sin(time * 1.1) * 0.7;
+      if (this.t <= 0) {
+        U.nut.visible = false;
+        if (this.st === 'sit') this.go('railback', 0.8, new THREE.Vector3(...T.railBack));
+        else if (--this.n > 0) { const a = r() * 6.28; this.go('bound', 0.9, new THREE.Vector3(T.grass[0] + Math.cos(a) * 0.35, T.grass[1], T.grass[2] + Math.sin(a) * 0.3)); }
+        else this.go('home', 1.5, this.bark(0.04));
+      }
+    }
+    U.body.rotation.x = pitch; U.head.rotation.set(-pitch * 0.8 + nod, look, 0); U.tail.rotation.x = tail;
+    U.paws.rotation.x = hold || this.st === 'look' ? -1.1 : 0; U.paws.position.y = hold ? 0.06 : 0.05;
+  }
+}
+
 // ------------------------------------------------------------------ sprites: a glint of sun, music notes, water drops
 class Floaters {
   constructor(scene, maps, max, grade) { this.scene = scene; this.maps = [].concat(maps); this.pool = []; this.max = max; this.grade = grade; }
@@ -480,6 +577,7 @@ export class DecorLife {
       if (d.model === 'dovecote') this.doves = new Doves(frame(d), o.grade, r);
       if (d.model === 'tractor') this.tractor = { f: frame(d), next: 8 + r() * 10, run: 0, puffIn: 0, jig: { on: false, x: 0, y: 0, roll: 0 } };
       if (d.model === 'orchard') this.orchard = new OrchardLife(frame(d), o.grade, r);
+      if (d.model === 'tree_house') this.treeHouse = new TreeHouseLife(frame(d), o.grade, r);
       if (d.model === 'statue') this.statue = d;
       if (d.model === 'bandstand') this.band = d;
     }
@@ -500,6 +598,7 @@ export class DecorLife {
     if (this.bath) this.bath.update(dt, day, t);
     if (this.doves) this.doves.update(dt, day, t);
     if (this.orchard) this.orchard.update(dt, day, t);
+    if (this.treeHouse) this.treeHouse.update(dt, day, t);
     // (the Red Tractor, 24 Nov 2026: now and then by day its engine putters for a few seconds: a little shake (main.js moves
     // it by jig), puffs of smoke from its exhaust, its top at TRACTOR_EXHAUST in its own frame (grand.py tractor_dec))
     if (this.tractor) {
@@ -558,7 +657,7 @@ export class DecorLife {
   state() {
     return {
       bees: this.bees ? this.bees.out : null, butterflies: this.flies ? this.flies.f.filter(f => f.g.visible).length : null,
-      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, arbour: this.arbour ? this.arbour.flies.f.filter(f => f.g.visible).length : null, doves: this.doves ? this.doves.list.map(d => d.st) : null, tractor: this.tractor ? { on: this.tractor.jig.on, next: +this.tractor.next.toFixed(1) } : null, orchard: this.orchard ? { apples: this.orchard.apples.filter(a => a.st !== 'off').length, bird: this.orchard.bird.st } : null, smoke: this.smoke.live, petals: this.petals.live, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
+      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, arbour: this.arbour ? this.arbour.flies.f.filter(f => f.g.visible).length : null, doves: this.doves ? this.doves.list.map(d => d.st) : null, tractor: this.tractor ? { on: this.tractor.jig.on, next: +this.tractor.next.toFixed(1) } : null, orchard: this.orchard ? { apples: this.orchard.apples.filter(a => a.st !== 'off').length, bird: this.orchard.bird.st } : null, squirrel: this.treeHouse ? this.treeHouse.st : null, squirrelAt: this.treeHouse ? this.treeHouse.g.getWorldPosition(new THREE.Vector3()).toArray().map(v => +v.toFixed(3)) : null, smoke: this.smoke.live, petals: this.petals.live, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
     };
   }
 }

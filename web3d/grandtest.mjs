@@ -45,6 +45,8 @@ const ALL = {
     life: L => L && L.tractor && L.tractor.on && L.smoke > 0, lifeSays: 'its engine puttering, puffs of smoke' },
   orchard: { level: 45, price: 70000, name: fr ? /Petit verger/ : /Little Orchard/, words: fr ? /merle/ : /blackbird/,
     life: L => L && L.orchard && L.orchard.apples > 0 && L.orchard.bird !== 'away', lifeSays: 'apples dropping, the blackbird about' },
+  tree_house: { level: 46, price: 80000, name: fr ? /Cabane dans l’arbre/ : /Tree House/, words: fr ? /écureuil/ : /squirrel/,
+    life: L => L && L.squirrel && L.squirrel !== 'away', lifeSays: 'its squirrel out, its swing swaying' },
 };
 const IDS = process.env.ONLY ? process.env.ONLY.split(',') : Object.keys(ALL);
 const fmt = n => new RegExp(String(Math.floor(n / 1000)) + '\\D?' + String(n % 1000).padStart(3, '0'));
@@ -96,7 +98,8 @@ for (const id of IDS) {
   const ft1 = await p.evaluate(() => window.__farm.deco.fountainT());
   let seen = false, L = null;
   for (let k = 0; k < 16 && !seen; k++) { await run(3); L = await p.evaluate(() => window.__farm.deco.life()); seen = G.life(L); }
-  ok(`${id}: by day ${G.lifeSays}`, seen && (id !== 'fountain' || ft1 > ft0), { ft0, ft1, L });
+  const sw0 = await p.evaluate(() => window.__farm.deco.swing()); await run(0.4); const sw1 = await p.evaluate(() => window.__farm.deco.swing());
+  ok(`${id}: by day ${G.lifeSays}`, seen && (id !== 'fountain' || ft1 > ft0) && (id !== 'tree_house' || (sw0 !== null && sw0 !== sw1)), { ft0, ft1, L, sw0, sw1 });
   await shot(id + '_3_farm');
   if (id === 'orchard') {      // (Audrey: "the glouton chickens would go in and try to steal apples and the farmer can run after them")
     const hen = await p.evaluate(() => { const g = window.__farm.game(), b = g.data.birds.find(x => x.sex === 'h' && g.coop(x.coop)); b.pers = 'glutton'; g.data.moment = null; g.data.moments = { last: 0, hen: 1 }; g.save(); return { id: b.id, name: b.name, coins: g.data.coins }; });

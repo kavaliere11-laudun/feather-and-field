@@ -692,8 +692,13 @@ def leafy(objs, C0, R, n, leaf, seed, sq=0.85, cores=7):
         objs.append(flat_leaf('thleaf', tuple(p), q, rnd.uniform(0.1, 0.13), rnd.uniform(0.036, 0.046), leaf[min(3, 1 + (k % 2) + (1 if el > 0.45 else 0))], both=False, fold=0.006))
 
 
-def tree_house_dec(seed=131, name='tree_house'):
-    """A tree house: a big old oak with its roots spread, a deck up in it on two posts and braces, with a railing round it;
+SWING_AT = Vector((1.45, 0.563, 2.37))      # (the tree house's swing: where it swings from, Blender's axes)
+
+
+def tree_house_dec(seed=131, name='tree_house', part=None):
+    """(part: None all of it, as in the pictures; for the game 'house' all but the swing, 'swing' its ropes and seat about
+    the point it swings from (SWING_AT), the browser swings it: main.js treeSwing)
+    A tree house: a big old oak with its roots spread, a deck up in it on two posts and braces, with a railing round it;
     on the deck a little cabin of blue boards with a steep roof of red shingles (its gable to the front), a round window
     with a box of flowers, a yellow door with a lantern by it, a stovepipe; a wooden ladder up to the deck, bunting from
     the roof down to the railing, a rope swing on a long low branch, a bucket on a rope; grass, toadstools by the roots."""
@@ -702,7 +707,7 @@ def tree_house_dec(seed=131, name='tree_house'):
     bark = [C('thbark', '#6a4e38', rough=0.95, var=0.12), C('thbark2', '#5b432f', rough=0.95, var=0.12)]
     wood = [C('thwood%d' % i, h, rough=0.85, var=0.1, grain=0.3) for i, h in enumerate(('#a07a52', '#8f6b47', '#b08a60'))]
     blue = [C('thblue', '#7fb0c6', rough=0.8, var=0.05), C('thblue2', '#76a7bd', rough=0.8, var=0.05)]
-    trim = C('thtrim', '#f3eee2', rough=0.7); door = C('thdoor', '#e3b03f', rough=0.7); glass = C('thglass', '#3e5767', rough=0.25)
+    trim = C('thtrim', '#f3eee2', rough=0.7); door = C('thdoor', '#e3b03f', rough=0.7); glass = C('glass', '#3e5767', rough=0.25)      # ('glass', 'lamp': lit at night in the game)
     tiles = [C('thtile%d' % i, h, rough=0.75, var=0.06) for i, h in enumerate(('#a9473a', '#b85a44', '#9b3f33'))]
     rope = C('thrope', '#d6c197', rough=0.9); iron = C('thiron', '#3b3b3e', rough=0.5)
     grassM = C('thgrass', '#74a443', rough=0.95, var=0.05); grass = [C('thgr%d' % i, h, rough=0.85, var=0.06) for i, h in enumerate(('#5f9a3a', '#6fab42', '#86bb50'))]
@@ -712,12 +717,11 @@ def tree_house_dec(seed=131, name='tree_house'):
     TX, TY = 0.0, 0.9                        # the trunk
     PZ, PX, PY0, PY1 = 1.5, 0.95, -0.85, 0.62  # the deck: its height, half its width, its front and back
     CX, CY0, CY1, WH = 0.62, -0.22, 0.45, 0.85  # the cabin: half its width, its front and back, its walls' height
-    objs.append(cyl('thground', 1.8, 0.02, (0.2, -0.05, 0.01), m=grassM, verts=40, bevel=0.0))
     # the oak: a thick trunk flaring at its foot, roots spread over the grass, big limbs up into its crown
     objs.append(cyl('thtrunk', 0.34, 3.0, (TX, TY, 1.5), m=bark[0], verts=14, r2=0.22, bevel=0.0))
     for k in range(7):
         a = k / 7 * math.tau + random.uniform(-0.25, 0.25); L = random.uniform(0.45, 0.7)
-        A = Vector((TX + math.cos(a) * 0.2, TY + math.sin(a) * 0.2, 0.32)); B = Vector((TX + math.cos(a) * (0.3 + L), TY + math.sin(a) * (0.3 + L), 0.0))
+        A = Vector((TX + math.cos(a) * 0.2, TY + math.sin(a) * 0.2, 0.3)); B = Vector((TX + math.cos(a) * (0.3 + L), TY + math.sin(a) * (0.3 + L), 0.03))
         objs.append(cyl('throot', 0.13, (B - A).length, tuple((A + B) / 2), (B - A).to_track_quat('Z', 'Y').to_euler(), m=bark[k % 2], verts=8, r2=0.04, bevel=0.0))
     LIMBS = [((0, 0, 2.6), (-1.05, 0.75, 3.25), 0.13), ((0, 0, 2.8), (0.85, 0.95, 3.5), 0.13), ((0, 0, 2.9), (0.1, 1.2, 3.9), 0.12), ((0, 0, 2.95), (-0.4, 0.6, 3.95), 0.1)]
     for a, b, r in LIMBS:
@@ -795,7 +799,7 @@ def tree_house_dec(seed=131, name='tree_house'):
     objs.append(ring('thgwinframe', 0.07, 0.1, 0, 0.035, trim, verts=20)); objs[-1].location = (0, FY - 0.02, GZ); objs[-1].rotation_euler = (math.pi / 2, 0, 0)
     LX = DX + 0.3                                # (a lantern on a bracket by the door)
     objs.append(plank('thbracket', (LX, FY, PZ + 0.82), (LX, FY - 0.14, PZ + 0.82), 0.025, 0.02, (0, 0, 1), iron, jitter=0.0, bevel=0.0))
-    objs.append(box('thlantern', (0.07, 0.07, 0.1), (LX, FY - 0.14, PZ + 0.72), m=C('thlamp', '#ffd98a', rough=0.3), bevel=0.0, segs=1))
+    objs.append(box('thlantern', (0.07, 0.07, 0.1), (LX, FY - 0.14, PZ + 0.72), m=C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)), bevel=0.0, segs=1))
     objs.append(cyl('thlanterntop', 0.055, 0.04, (LX, FY - 0.14, PZ + 0.79), m=iron, verts=4, r2=0.01, bevel=0.0))
     objs.append(cyl('thpipe', 0.04, 0.5, (0.32, CY1 - 0.12, ZR - 0.05), m=iron, verts=10, bevel=0.0))
     objs.append(cyl('thpipecap', 0.075, 0.05, (0.32, CY1 - 0.12, ZR + 0.22), m=iron, verts=10, r2=0.02, bevel=0.0))
@@ -814,10 +818,11 @@ def tree_house_dec(seed=131, name='tree_house'):
             a, b = pts[k], pts[k + 1]; mid = (a + b) / 2
             flag(objs, a, b, mid - Vector((0, 0, 0.13)), flagsM[(k // 2 + (0 if end.x < 0 else 2)) % 5])
     # the swing on its long low branch: two ropes, a plank seat
+    swing = []; SY = SW[0].y + (SW[1].y - SW[0].y) * 0.82
     for x in (1.28, 1.62):
         top = SW[0] + (SW[1] - SW[0]) * ((x - SW[0].x) / (SW[1].x - SW[0].x))
-        objs.append(cyl('thswingrope', 0.012, top.z - 0.08 - 0.5, (x, top.y, (top.z - 0.08 + 0.5) / 2), m=rope, verts=6, bevel=0.0))
-    objs.append(box('thseat', (0.46, 0.17, 0.035), (1.45, SW[0].y + (SW[1].y - SW[0].y) * 0.82, 0.5), m=wood[2], bevel=0.006, segs=1))
+        swing.append(cyl('thswingrope', 0.012, top.z - 0.08 - 0.5, (x, SY, (top.z - 0.08 + 0.5) / 2), m=rope, verts=6, bevel=0.0))
+    swing.append(box('thseat', (0.46, 0.17, 0.035), (1.45, SY, 0.5), m=wood[2], bevel=0.006, segs=1))
     # a bucket on a rope from a little arm at the deck's right
     objs.append(plank('tharm', (PX - 0.03, PY0 + 0.45, PZ + 0.56), (PX + 0.28, PY0 + 0.45, PZ + 0.62), 0.05, 0.04, (0, 0, 1), wood[1], jitter=0.0, bevel=0.0))
     objs.append(cyl('thpulley', 0.045, 0.025, (PX + 0.25, PY0 + 0.45, PZ + 0.55), (0, math.pi / 2, 0), m=iron, verts=10, bevel=0.0))
@@ -833,7 +838,14 @@ def tree_house_dec(seed=131, name='tree_house'):
         objs.append(cyl('thstemm', 0.025 * s, 0.09 * s, (x, y, 0.045 * s), m=stem, verts=8, bevel=0.0))
         objs.append(sphere('thcap', 0.07 * s, (x, y, 0.09 * s), (1, 1, 0.55), m=cap, seg=10, rings=6))
         for j in range(3): objs.append(sphere('thspot', 0.012 * s, (x + math.cos(j * 2.1) * 0.035 * s, y + math.sin(j * 2.1) * 0.035 * s, 0.115 * s), m=stem, seg=6, rings=4))
-    return finish(objs, name)
+    if part == 'swing':
+        for o in swing: o.matrix_basis = Matrix.Translation(-SWING_AT) @ o.matrix_basis
+        keep = swing
+    else:
+        keep = objs + (swing if part is None else [])
+    for o in objs + swing:
+        if not any(o is k for k in keep): bpy.data.objects.remove(o, do_unlink=True)
+    return finish(keep, name)
 
 
 GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec, 'dovecote': dovecote_dec, 'tractor': tractor_dec, 'orchard': orchard_dec, 'tree_house': tree_house_dec}

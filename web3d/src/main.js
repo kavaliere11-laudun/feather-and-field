@@ -1453,6 +1453,7 @@ const DECOR_NAMES = register('decor', {
   duckhouse: ['Duck house', 'Maison des canards'], greenhouse: ['Greenhouse', 'Serre'], windmill: ['Windmill', 'Moulin à vent'],
   bandstand: ['Bandstand', 'Kiosque à musique'], statue: ['Golden cockerel', 'Coq d’or'], fountain: ['Golden Egg Fountain', 'Fontaine à l’œuf d’or'],
   rose_arbour: ['Rose Arbour', 'Tonnelle de roses'], dovecote: ['Dovecote', 'Pigeonnier'], tractor: ['Red Tractor', 'Tracteur rouge'], orchard: ['Little Orchard', 'Petit verger'],
+  tree_house: ['Tree House', 'Cabane dans l’arbre'],
 });
 const DECOR_ROUND = { bandstand: 1.45, windmill: 1.45, flowers: 0.95, birdbath: 0.7, rose_arbour: 1.3, dovecote: 1.36 };     // (round ones: their circle)
 let DECOR_INFO = null, decorFree = null, decorSpots = null;
@@ -1545,11 +1546,14 @@ function buildDecor() {
   }
   if (decorList.length && !params.has('nolife')) decorLife = new DecorLife(scene, decorList, { grade: nightGrade, hour: () => DAY.hour, toCam: VIEW_DIR }, rng(91));
 }
+const SWING_AT = [1.45, 2.37, -0.563];      // (the Tree House's swing: where it hangs from, in its own frame: treeSwing)
+let SWING_T = 0;
 const _jig = new THREE.Matrix4();
 function tickDecor(dt) {
   if (sails) sails.children[0].rotation.z -= dt * (Math.PI * 2 / 14) * (0.8 + 0.4 * Math.sin(WIND.time.value * 0.31));
   if (decorLife) decorLife.update(dt);
   if (DEC.items.fountain) FOUNTAIN_T.value = (FOUNTAIN_T.value + dt) % 3600;      // (its water: fountainMat)
+  if (DEC.items.tree_house) swingSway(DEC.items.tree_house.group.userData.swing, (SWING_T += dt));      // (the Tree House's swing in the breeze)
   const tr = DEC.items.tractor;                              // (the Red Tractor: a little shake while its engine putters, decorlife.js)
   if (tr && decorLife && decorLife.tractor && DMOVE.id !== 'tractor') {
     const j = decorLife.tractor.jig;
@@ -8100,6 +8104,7 @@ const SHOP_STAGES = {
       return { tick: dt => { w.rotation.z += dt * 0.45; } };
     }
     if (id === 'fountain') { fountainWater(G, FOUNTAIN_PV_T); return { tick: dt => { FOUNTAIN_PV_T.value = (FOUNTAIN_PV_T.value + dt) % 3600; } }; }      // (its water moving, as on the farm)
+    if (id === 'tree_house') { const w = treeSwing(G), T = { t: 0 }; return { tick: dt => { T.t += dt; swingSway(w, T.t); } }; }      // (its swing swaying, as on the farm)
     return {};
   },
   animal(G, id, t, r) {
@@ -8747,8 +8752,18 @@ function decorModel(id) {
     g.add(w); g.userData.sails = w;
   }
   if (id === 'fountain') fountainWater(g);                  // (its water, moving: fountainMat)
+  if (id === 'tree_house') g.userData.swing = treeSwing(g, nightGrade);      // (its swing, swaying: tickDecor)
   return g;
 }
+// the Tree House's swing (decor.glb tree_house_swing, about the point it hangs from: grand.py SWING_AT), put in its group;
+// swayed in the breeze, a little more in the gusts (swingSway)
+function treeSwing(g, grade) {
+  if (!parts.tree_house_swing) return null;
+  const w = new THREE.Group(), s = part('tree_house_swing'); w.add(s); w.position.fromArray(SWING_AT);
+  s.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; if (grade) grade(o.material); } });
+  g.add(w); return w;
+}
+function swingSway(w, t) { if (w) w.rotation.x = Math.sin(t * 1.7) * (0.07 + 0.05 * Math.max(0, Math.sin(t * 0.23))) + Math.sin(t * 0.61) * 0.025; }
 // one on the farm: drawn, in everyone's way (V.props), and tappable (decorList); its life is made again with the rest's
 function addDecor(id, x, z, deg = 45) {
   let it = DEC.items[id];
@@ -11456,7 +11471,7 @@ window.__farm = {
   // tests (Rusty's visits in the game): the nights to come he visits (from a time), tonight's on the farm, the film's record
   foxGame: { nights: (from, n = 30) => { const out = []; for (let d = 0; d < n; d++) { const k = nightKey(from + d * 86400e3 + 12 * 3600e3); if (foxNight(k) && !out.some(o => o.key === k)) out.push({ key: k, t: foxAt(k) }); } return out; },
     live: () => FOXLIVE, rec: () => foxRec(), liveTick: now => foxLiveTick(now, true) },
-  deco: { shop: () => shopSheet(), buy: id => buyDecor(id), start: id => startDecor(id), to: (x, z) => decMoveTo(x, z), place: () => putDecor(), cancel: () => endDecor(false), card: id => decorCard(id),
+  deco: { swing: () => { const it = DEC.items.tree_house, w = it && it.group.userData.swing; return w ? +w.rotation.x.toFixed(4) : null; }, shop: () => shopSheet(), buy: id => buyDecor(id), start: id => startDecor(id), to: (x, z) => decMoveTo(x, z), place: () => putDecor(), cancel: () => endDecor(false), card: id => decorCard(id),
     spot: (id, x, z, deg) => { const S = decorSpot(id, x, z, deg ?? (id === 'kennel' ? KENNEL_DEG : 45)); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true, id === 'kennel' ? [KENNEL_DEG] : [45], true), way: (id, x, z) => decorWayOk(id, x, z),
     state: () => ({ on: DMOVE.id, at: DMOVE.at, ok: !!(DMOVE.spot && DMOVE.spot.ok), why: DMOVE.spot && DMOVE.spot.why, clear: DMOVE.spot ? DMOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent }),
     items: () => Object.entries(DEC.items).filter(([id]) => id !== 'wheat' && id !== 'wheat2' && id !== 'garden').map(([id, it]) => ({ id, at: it.d.pos, shown: !!it.group.parent, prop: V.props.includes(it.prop), tap: decorList.includes(it.d) })), life: () => decorLife && decorLife.state(), fountainT: () => FOUNTAIN_T.value, fountainWater: () => { const it = DEC.items.fountain; const n = []; if (it) it.group.traverse(o => { if (o.isMesh && /^fountain_/.test(o.material.name)) n.push(o.material.name); }); return n; }, duckHouse: () => !!(duckFlock && duckFlock.house),
