@@ -509,6 +509,36 @@ class TreeHouseLife {
   }
 }
 
+// ------------------------------------------------------------------ the Hot-Air Balloon (24 Nov 2026): it bobs gently on its
+// ropes (main.js balloonMove moves its balloon and basket by `s`), its pennant flutters, and now and then (every 10 to 24 s)
+// its burner puffs a flame for a second or so, up into the envelope's mouth, a warm glow on the dark (grand.py
+// hot_air_balloon_dec, in its own frame: the burner's top BALLOON_BURNER, the balloon's floor BALLOON_LIFT up)
+export function balloonSway(t) { return { y: Math.sin(t * 0.9) * 0.035 + Math.sin(t * 0.37) * 0.015, rx: Math.sin(t * 0.7) * 0.012, rz: Math.sin(t * 0.53 + 1) * 0.012, flag: Math.sin(t * 5.3) * 0.25 + Math.sin(t * 8.1) * 0.1 - 0.15 }; }
+const BALLOON_BURNER = 1.75;
+class BalloonLife {
+  constructor(parent, r) {
+    this.r = r; this.t = r() * 20; this.next = 4 + r() * 6; this.on = 0; this.s = balloonSway(this.t);
+    const outer = new THREE.MeshBasicMaterial({ color: '#ff9a2e', transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
+    const inner = new THREE.MeshBasicMaterial({ color: '#fff0a8', transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false });
+    this.flame = new THREE.Group(); this.flame.visible = false; parent.add(this.flame);
+    const a = new THREE.Mesh(new THREE.ConeGeometry(0.075, 0.36, 10, 1, true), outer); a.position.y = 0.18;
+    const b = new THREE.Mesh(new THREE.ConeGeometry(0.04, 0.22, 8, 1, true), inner); b.position.y = 0.11;
+    this.flame.add(a, b); this.flame.renderOrder = 3;
+  }
+  update(dt) {
+    this.t += dt; this.s = balloonSway(this.t);
+    if (this.on > 0) this.on -= dt;
+    else if ((this.next -= dt) <= 0) { this.next = 10 + this.r() * 14; this.on = 1.1 + this.r() * 0.6; }
+    const k = this.on > 0 ? Math.min(1, this.on / 0.25, (1.6 - this.on) / 0.12) : 0, F = this.flame;
+    F.visible = k > 0.02;
+    if (F.visible) {
+      F.position.set(0, BALLOON_BURNER + this.s.y, 0); F.rotation.set(this.s.rx, 0, this.s.rz);
+      const f = 0.85 + Math.sin(this.t * 37) * 0.1 + Math.sin(this.t * 23) * 0.08;
+      F.scale.set(k * f, k * (0.8 + 0.3 * f), k * f);
+    }
+  }
+}
+
 // ------------------------------------------------------------------ sprites: a glint of sun, music notes, water drops
 class Floaters {
   constructor(scene, maps, max, grade) { this.scene = scene; this.maps = [].concat(maps); this.pool = []; this.max = max; this.grade = grade; }
@@ -578,6 +608,7 @@ export class DecorLife {
       if (d.model === 'tractor') this.tractor = { f: frame(d), next: 8 + r() * 10, run: 0, puffIn: 0, jig: { on: false, x: 0, y: 0, roll: 0 } };
       if (d.model === 'orchard') this.orchard = new OrchardLife(frame(d), o.grade, r);
       if (d.model === 'tree_house') this.treeHouse = new TreeHouseLife(frame(d), o.grade, r);
+      if (d.model === 'hot_air_balloon') this.balloon = new BalloonLife(frame(d), r);
       if (d.model === 'statue') this.statue = d;
       if (d.model === 'bandstand') this.band = d;
     }
@@ -599,6 +630,7 @@ export class DecorLife {
     if (this.doves) this.doves.update(dt, day, t);
     if (this.orchard) this.orchard.update(dt, day, t);
     if (this.treeHouse) this.treeHouse.update(dt, day, t);
+    if (this.balloon) this.balloon.update(dt);
     // (the Red Tractor, 24 Nov 2026: now and then by day its engine putters for a few seconds: a little shake (main.js moves
     // it by jig), puffs of smoke from its exhaust, its top at TRACTOR_EXHAUST in its own frame (grand.py tractor_dec))
     if (this.tractor) {
@@ -657,7 +689,7 @@ export class DecorLife {
   state() {
     return {
       bees: this.bees ? this.bees.out : null, butterflies: this.flies ? this.flies.f.filter(f => f.g.visible).length : null,
-      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, arbour: this.arbour ? this.arbour.flies.f.filter(f => f.g.visible).length : null, doves: this.doves ? this.doves.list.map(d => d.st) : null, tractor: this.tractor ? { on: this.tractor.jig.on, next: +this.tractor.next.toFixed(1) } : null, orchard: this.orchard ? { apples: this.orchard.apples.filter(a => a.st !== 'off').length, bird: this.orchard.bird.st } : null, squirrel: this.treeHouse ? this.treeHouse.st : null, squirrelAt: this.treeHouse ? this.treeHouse.g.getWorldPosition(new THREE.Vector3()).toArray().map(v => +v.toFixed(3)) : null, smoke: this.smoke.live, petals: this.petals.live, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
+      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, arbour: this.arbour ? this.arbour.flies.f.filter(f => f.g.visible).length : null, doves: this.doves ? this.doves.list.map(d => d.st) : null, tractor: this.tractor ? { on: this.tractor.jig.on, next: +this.tractor.next.toFixed(1) } : null, orchard: this.orchard ? { apples: this.orchard.apples.filter(a => a.st !== 'off').length, bird: this.orchard.bird.st } : null, squirrel: this.treeHouse ? this.treeHouse.st : null, balloon: this.balloon ? { flame: this.balloon.flame.visible, y: +this.balloon.s.y.toFixed(4) } : null, squirrelAt: this.treeHouse ? this.treeHouse.g.getWorldPosition(new THREE.Vector3()).toArray().map(v => +v.toFixed(3)) : null, smoke: this.smoke.live, petals: this.petals.live, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
     };
   }
 }

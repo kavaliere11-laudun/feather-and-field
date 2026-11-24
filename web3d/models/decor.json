@@ -88,6 +88,12 @@
    -1.95,
    1.9,
    1.6
+  ],
+  "hot_air_balloon": [
+   -1.42,
+   -1.42,
+   1.42,
+   1.42
   ]
  },
  "stats": {
@@ -179,6 +185,21 @@
   "tree_house_swing": {
    "tris": 84,
    "verts": 48,
+   "prims": 1
+  },
+  "hot_air_balloon": {
+   "tris": 1144,
+   "verts": 1084,
+   "prims": 2
+  },
+  "hot_air_balloon_float": {
+   "tris": 3716,
+   "verts": 2910,
+   "prims": 4
+  },
+  "hot_air_balloon_flag": {
+   "tris": 2,
+   "verts": 6,
    "prims": 1
   }
  }

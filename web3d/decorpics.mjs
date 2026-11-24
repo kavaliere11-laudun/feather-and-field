@@ -7,9 +7,9 @@
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import { writeFileSync, mkdirSync } from 'fs';
 const OUT = process.argv[2] || 'decor', H = +(process.env.H || 300);
-const ALL = ['flowers', 'birdbath', 'beehives', 'duckhouse', 'greenhouse', 'windmill', 'bandstand', 'statue', 'fountain', 'rose_arbour', 'dovecote', 'tractor', 'orchard', 'tree_house'];
+const ALL = ['flowers', 'birdbath', 'beehives', 'duckhouse', 'greenhouse', 'windmill', 'bandstand', 'statue', 'fountain', 'rose_arbour', 'dovecote', 'tractor', 'orchard', 'tree_house', 'hot_air_balloon'];
 const ONLY = process.env.ONLY ? process.env.ONLY.split(',') : ALL;
-const CAM = { windmill: { el: 16, fov: 22 }, statue: { el: 22, fov: 22 }, bandstand: { el: 24, fov: 22 }, fountain: { el: 26, fov: 22 }, rose_arbour: { el: 24, fov: 22 }, dovecote: { el: 22, fov: 22 }, tractor: { el: 26, fov: 22 }, orchard: { el: 28, fov: 22 }, tree_house: { el: 18, fov: 24 } };
+const CAM = { windmill: { el: 16, fov: 22 }, statue: { el: 22, fov: 22 }, bandstand: { el: 24, fov: 22 }, fountain: { el: 26, fov: 22 }, rose_arbour: { el: 24, fov: 22 }, dovecote: { el: 22, fov: 22 }, tractor: { el: 26, fov: 22 }, orchard: { el: 28, fov: 22 }, tree_house: { el: 18, fov: 24 }, hot_air_balloon: { el: 12, fov: 26 } };
 mkdirSync(OUT, { recursive: true });
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const p = await b.newPage({ viewport: { width: 900, height: 900 }, deviceScaleFactor: 2 });

@@ -890,21 +890,21 @@ def hot_air_balloon_dec(seed=141, name='hot_air_balloon', part=None):
     L = BALLOON_LIFT
     BZ0, BZ1, BW = L, L + 0.62, 0.42             # the basket: its bottom, its rim, half its width
     BU = BZ1 + 0.62                              # the burner
-    MZ = BU + 0.3                                # the envelope's mouth
+    MZ = BU + 0.5                                # the envelope's mouth (room under it for the burner's flame to be seen)
     prof = [(0.0, 0.34), (0.25, 0.48), (0.6, 0.78), (1.0, 1.1), (1.45, 1.38), (1.9, 1.56), (2.35, 1.64), (2.75, 1.6), (3.1, 1.46), (3.4, 1.2), (3.62, 0.86), (3.76, 0.46), (3.82, 0.0)]
-    prof = [(MZ + z, r) for z, r in prof]
+    prof = [(MZ + z * 0.92, r * 0.92) for z, r in prof]
     NG = 16; cols = [red, cream, gold, cream]
     for g in range(NG):                          # (the gores, up and down, a sky-blue band round the middle)
         a0, a1 = g / NG * math.tau, (g + 1) / NG * math.tau
-        low = [p for p in prof if p[0] <= MZ + 1.9]; band = [p for p in prof if MZ + 1.9 <= p[0] <= MZ + 2.35]; high = [p for p in prof if p[0] >= MZ + 2.35]
+        low = [p for p in prof if p[0] <= MZ + 1.75]; band = [p for p in prof if MZ + 1.74 <= p[0] <= MZ + 2.17]; high = [p for p in prof if p[0] >= MZ + 2.16]
         flo.append(lathe_band('hbgore', low, a0, a1, cols[g % 4], segs=3))
         flo.append(lathe_band('hbband', band, a0, a1, blue, segs=3))
         flo.append(lathe_band('hbgore', high, a0, a1, cols[g % 4], segs=3))
-    skirt = [(MZ - 0.2, 0.3), (MZ - 0.1, 0.31), (MZ + 0.001, 0.34)]
+    skirt = [(MZ - 0.12, 0.29), (MZ - 0.06, 0.3), (MZ + 0.001, 0.313)]
     for g in range(NG):                          # (a fabric skirt round the mouth, in the gores' colours)
         flo.append(lathe_band('hbskirt', skirt, g / NG * math.tau, (g + 1) / NG * math.tau, cols[g % 4], segs=2))
-    flo.append(ring('hbcrown', 0.05, 0.18, MZ + 3.81, 0.04, white, verts=20))
-    flo.append(ring('hbmouth', 0.31, 0.37, MZ, 0.03, white, verts=24))
+    flo.append(ring('hbcrown', 0.05, 0.17, MZ + 3.505, 0.04, white, verts=20))
+    flo.append(ring('hbmouth', 0.29, 0.34, MZ, 0.03, white, verts=24))
     # the basket: wicker sides in courses, a leather rim, poles up to the burner, load lines up to the mouth
     for sd in range(4):
         ang = sd * math.pi / 2; n = Vector((math.cos(ang), math.sin(ang), 0)); t = Vector((-n.y, n.x, 0))
@@ -938,13 +938,13 @@ def hot_air_balloon_dec(seed=141, name='hot_air_balloon', part=None):
     # a little pennant on a pole at a corner
     P0 = Vector((BW * 0.92, -BW * 0.92, BZ1)); P1 = P0 + Vector((0, 0, 0.55))
     flo.append(cyl('hbflagpole', 0.01, 0.55, tuple((P0 + P1) / 2), m=wood[0], verts=5, bevel=0.0))
-    flag(flo, tuple(P1), tuple(P1 - Vector((0, 0, 0.16))), tuple(P1 + Vector((0.26, -0.04, -0.08))), red, name='hbpennant')
+    flg = []; flag(flg, tuple(P1), tuple(P1 - Vector((0, 0, 0.16))), tuple(P1 + Vector((0.26, -0.04, -0.08))), red, name='hbpennant')
     # the tether ropes down to stakes in the grass (with the balloon: they stay taut as it bobs), the stakes on the grass
     for k in range(4):
         ang = k * math.pi / 2 + math.pi / 4 + 0.15; d = Vector((math.cos(ang), math.sin(ang), 0))
         S0 = d * 1.35; A = d * (BW * 1.35) + Vector((0, 0, BZ0 + 0.12)); B = S0 + Vector((0, 0, 0.16))
         flo.append(cyl('hbtether', 0.009, (B - A).length, tuple((A + B) / 2), (B - A).to_track_quat('Z', 'Y').to_euler(), m=rope, verts=5, bevel=0.0))
-        objs.append(cyl('hbstake', 0.03, 0.22, tuple(S0 + Vector((0, 0, 0.08))), (random.uniform(-0.15, 0.15), random.uniform(-0.15, 0.15), 0), m=wood[k % 2], verts=6, r2=0.02, bevel=0.0))
+        objs.append(cyl('hbstake', 0.03, 0.2, tuple(S0 + Vector((0, 0, 0.105))), (random.uniform(-0.12, 0.12), random.uniform(-0.12, 0.12), 0), m=wood[k % 2], verts=6, r2=0.02, bevel=0.0))
     # on the grass: a wooden step, a coil of rope, two sandbags, a wicker hamper
     objs.append(box('hbstep', (0.42, 0.26, 0.04), (0.0, -0.78, 0.2), m=wood[0], bevel=0.006, segs=1))
     for sx in (-1, 1): objs.append(box('hbstepleg', (0.04, 0.24, 0.18), (sx * 0.17, -0.78, 0.09), m=wood[1], bevel=0.0, segs=1))
@@ -958,11 +958,163 @@ def hot_air_balloon_dec(seed=141, name='hot_air_balloon', part=None):
     if part == 'float':
         for o in flo: o.matrix_basis = Matrix.Translation((0, 0, -L)) @ o.matrix_basis
         keep = flo
+    elif part == 'flag':                         # (its pennant, about the top of its pole: main.js flutters it)
+        for o in flg: o.matrix_basis = Matrix.Translation(-P1) @ o.matrix_basis
+        keep = flg
     else:
-        keep = objs + (flo if part is None else [])
-    for o in objs + flo:
+        keep = objs + (flo + flg if part is None else [])
+    for o in objs + flo + flg:
         if not any(o is k for k in keep): bpy.data.objects.remove(o, do_unlink=True)
     return finish(keep, name)
 
 
-GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec, 'dovecote': dovecote_dec, 'tractor': tractor_dec, 'orchard': orchard_dec, 'tree_house': tree_house_dec, 'hot_air_balloon': hot_air_balloon_dec}
+CLOCK = {'z': 3.8, 'out': 0.68, 'r': 0.4}      # (the Clock Tower's faces: their middle's height, how far out from the middle, their size)
+BELL_AT = Vector((0, 0, 4.88))                 # (its bell: where it hangs from)
+
+
+def arch(objs, c, n, span, z0, rise, thick, depth, m, k=9, name='ctarch'):
+    """A round arch of stones in a wall facing n (c its middle at the springing, z0): k voussoirs over a span."""
+    t = Vector((-n.y, n.x, 0)); R = span / 2
+    for i in range(k):
+        a0, a1 = math.pi * i / k, math.pi * (i + 1) / k
+        p0 = c + t * (math.cos(a0) * (R + thick / 2)) + Vector((0, 0, z0 + math.sin(a0) * (R + thick / 2) * rise / R))
+        p1 = c + t * (math.cos(a1) * (R + thick / 2)) + Vector((0, 0, z0 + math.sin(a1) * (R + thick / 2) * rise / R))
+        objs.append(plank(name, tuple(p0), tuple(p1), depth, thick, tuple(n.cross(p1 - p0).cross(p1 - p0).normalized() * -1 if False else n), m, jitter=0.0, bevel=0.0))
+
+
+def clock_tower_dec(seed=151, name='clock_tower', part=None, hands=True):
+    """(part: None all of it, as in the pictures (its hands at ten past ten); for the game 'tower' all but the bell, 'bell'
+    the bell about where it hangs (BELL_AT): the browser draws the hands at the farm's own time and swings the bell on the
+    hour, main.js clockParts)
+    A village clock tower: a stone footing, a tall shaft rendered cream with stone quoins, a green arched door with a lamp
+    over it and a narrow window; a stone cornice, then the clock stage with a white dial on each of its four sides (gold
+    hour marks, a gold boss, black hands); an open belfry of four arches with its bronze bell; a steep slate spire with a
+    gold ball and a golden hen weathervane. On a square of flagstones, a bench at its side, two tubs of flowers by its door."""
+    random.seed(seed); objs = []; bell = []
+    stone = [C('ctstone%d' % i, h, rough=0.85, var=0.05) for i, h in enumerate(('#c9bea6', '#bdb196', '#d3c9b3'))]
+    render = C('ctrender', '#efe4cc', rough=0.85, var=0.02); slate = C('ctslate', '#71819a', rough=0.6, var=0.05); slate2 = C('ctslate2', '#5f6e85', rough=0.6, var=0.05)
+    dial = C('ctdial', '#fbf8ef', rough=0.5); black = C('ctblack', '#1f2226', rough=0.5); gold = C('ctgold', '#e9b949', rough=0.25, metal=1.0)
+    green = C('ctgreen', '#2f6a46', rough=0.6, var=0.05, grain=0.2); bronze = C('ctbronze', '#a8824a', rough=0.35, metal=0.8)
+    wood = [C('ctwood%d' % i, h, rough=0.85, var=0.1, grain=0.3) for i, h in enumerate(('#9a7650', '#8a6744'))]
+    flag_ = [C('ctflag%d' % i, h, rough=0.85, var=0.05) for i, h in enumerate(('#b9b3a4', '#aaa392', '#c4beb0'))]
+    lamp = C('lamp', '#ffd98a', rough=0.3, emission=('#ffcf70', 1.0)); glass = C('glass', '#3e5767', rough=0.25)
+    fl = [C('ctfl', '#e0414a', rough=0.6), C('ctfl2', '#f4d03c', rough=0.6), C('ctfl3', '#c9a0e0', rough=0.6)]; leaf = C('ctleaf', '#4a8731', rough=0.8)
+    H0, H1, H2, H3, H4 = 0.5, 3.35, 4.25, 4.35, 5.1      # (the footing's top, the shaft's top, the clock stage's top, the belfry's floor, its top)
+    W1, W2 = 0.6, 0.66                               # (half the shaft, half the clock stage)
+    # the flagstones, the footing
+    for i in range(-4, 4):
+        for j in range(-4, 4):
+            if abs(i + 0.5) < 2 and abs(j + 0.5) < 2: continue
+            objs.append(box('ctflag', (0.36, 0.36, 0.03), ((i + 0.5) * 0.4 + random.uniform(-0.01, 0.01), (j + 0.5) * 0.4 + random.uniform(-0.01, 0.01), 0.015), (0, 0, random.uniform(-0.04, 0.04)), m=random.choice(flag_), bevel=0.006, segs=1))
+    objs.append(box('ctfoot', (2 * W1 + 0.22, 2 * W1 + 0.22, H0), (0, 0, H0 / 2), m=stone[1], bevel=0.02, segs=2))
+    objs.append(box('ctfootcap', (2 * W1 + 0.3, 2 * W1 + 0.3, 0.07), (0, 0, H0), m=stone[2], bevel=0.015, segs=2))
+    # the shaft: rendered, stone quoins up its corners
+    objs.append(box('ctshaft', (2 * W1, 2 * W1, H1 - H0), (0, 0, (H0 + H1) / 2), m=render, bevel=0.0, segs=1))
+    z = H0 + 0.04; k = 0
+    while z < H1 - 0.1:
+        h = 0.22
+        for sx in (-1, 1):
+            for sy in (-1, 1):
+                L1 = 0.3 if k % 2 == 0 else 0.18; L2 = 0.18 if k % 2 == 0 else 0.3
+                objs.append(box('ctquoin', (L1, 0.04, h - 0.02), (sx * (W1 - L1 / 2 + 0.02), sy * (W1 + 0.01), z + h / 2), m=random.choice(stone), bevel=0.006, segs=1))
+                objs.append(box('ctquoin', (0.04, L2, h - 0.02), (sx * (W1 + 0.01), sy * (W1 - L2 / 2 + 0.02), z + h / 2), m=random.choice(stone), bevel=0.006, segs=1))
+        z += h; k += 1
+    for zz, hh in ((H1 - 0.02, 0.1), (H1 + 0.07, 0.07)): objs.append(box('ctcornice', (2 * W1 + 0.12 + (0.06 if zz > H1 else 0), 2 * W1 + 0.12 + (0.06 if zz > H1 else 0), hh), (0, 0, zz), m=stone[2], bevel=0.01, segs=1))
+    objs.append(box('ctband', (2 * W1 + 0.05, 2 * W1 + 0.05, 0.08), (0, 0, 1.95), m=stone[2], bevel=0.008, segs=1))      # (a string course half way up)
+    # the door, its arch, a lamp over it; a narrow window higher up
+    FY = -W1 - 0.012
+    objs.append(box('ctdoor', (0.52, 0.04, 0.95), (0, FY, H0 + 0.475), m=green, bevel=0.006, segs=1))
+    for i in range(8):                            # (the door's round top, in slabs)
+        z0 = i / 8 * 0.26; z1 = (i + 1) / 8 * 0.26; w = 2 * math.sqrt(max(0.0, 0.26 ** 2 - ((z0 + z1) / 2) ** 2))
+        objs.append(box('ctdoortop', (w, 0.04, z1 - z0 + 0.002), (0, FY, H0 + 0.95 + (z0 + z1) / 2), m=green, bevel=0.0, segs=1))
+    arch(objs, Vector((0, FY - 0.01, 0)), Vector((0, -1, 0)), 0.56, H0 + 0.95, 0.28, 0.09, 0.05, stone[2], k=7)
+    for sx in (-1, 1): objs.append(box('ctjamb', (0.09, 0.05, 0.95), (sx * 0.325, FY - 0.01, H0 + 0.475), m=stone[2], bevel=0.0, segs=1))
+    objs.append(sphere('ctknob', 0.025, (0.16, FY - 0.04, H0 + 0.48), m=gold, seg=8, rings=6))
+    for sx in (-1, 1):
+        for zz in (0.25, 0.7): objs.append(box('ctstrap', (0.2, 0.012, 0.035), (sx * 0.12, FY - 0.025, H0 + zz), m=black, bevel=0.0, segs=1))
+    objs.append(box('ctlampbox', (0.1, 0.1, 0.14), (0, FY - 0.2, H0 + 1.42), m=lamp, bevel=0.0, segs=1))
+    objs.append(cyl('ctlamptop', 0.08, 0.05, (0, FY - 0.2, H0 + 1.52), m=black, verts=4, r2=0.01, bevel=0.0))
+    objs.append(plank('ctlamparm', (0, FY, H0 + 1.55), (0, FY - 0.2, H0 + 1.55), 0.02, 0.02, (0, 0, 1), black, jitter=0.0, bevel=0.0))
+    objs.append(box('ctwindow', (0.16, 0.04, 0.5), (0, FY, 2.45), m=glass, bevel=0.0, segs=1))
+    arch(objs, Vector((0, FY - 0.01, 0)), Vector((0, -1, 0)), 0.18, 2.7, 0.09, 0.06, 0.05, stone[2], k=5)
+    objs.append(box('ctsill', (0.28, 0.08, 0.04), (0, FY - 0.03, 2.18), m=stone[2], bevel=0.006, segs=1))
+    # the clock stage and its four faces
+    objs.append(box('ctstage', (2 * W2, 2 * W2, H2 - H1 - 0.1), (0, 0, (H1 + 0.1 + H2) / 2), m=render, bevel=0.0, segs=1))
+    for sx in (-1, 1):
+        for sy in (-1, 1): objs.append(box('ctpilaster', (0.12, 0.12, H2 - H1 - 0.1), (sx * (W2 - 0.04), sy * (W2 - 0.04), (H1 + 0.1 + H2) / 2), m=stone[0], bevel=0.008, segs=1))
+    objs.append(box('ctstagecap', (2 * W2 + 0.14, 2 * W2 + 0.14, 0.1), (0, 0, H2), m=stone[2], bevel=0.012, segs=1))
+    CZ, CR = CLOCK['z'], CLOCK['r']
+    for side in range(4):
+        a = side * math.pi / 2; n = Vector((math.sin(a), -math.cos(a), 0)); t = Vector((-n.y, n.x, 0)); c = n * (W2 + 0.005) + Vector((0, 0, CZ))
+        objs.append(cyl('ctdial', CR, 0.03, tuple(c + n * 0.01), tuple(n.to_track_quat('Z', 'Y').to_euler()), m=dial, verts=32, bevel=0.0))
+        rr = ring('ctdialring', CR - 0.01, CR + 0.035, 0, 0.04, black, verts=32); rr.location = tuple(c + n * 0.02); rr.rotation_euler = n.to_track_quat('Z', 'Y').to_euler(); objs.append(rr)
+        for h in range(12):
+            ang = h / 12 * math.tau; d = t * math.sin(ang) + Vector((0, 0, math.cos(ang)))
+            big = h % 3 == 0
+            objs.append(plank('cttick', tuple(c + n * 0.03 + d * (CR - (0.1 if big else 0.07))), tuple(c + n * 0.03 + d * (CR - 0.03)), 0.035 if big else 0.02, 0.012, tuple(n), gold if big else black, jitter=0.0, bevel=0.0))
+        objs.append(cyl('ctboss', 0.03, 0.03, tuple(c + n * 0.045), tuple(n.to_track_quat('Z', 'Y').to_euler()), m=gold, verts=10, bevel=0.0))
+        if part is None and hands:               # (for the pictures: ten past ten)
+            for ang, L, w in ((math.tau * (10 + 10 / 60) / 12, 0.2, 0.03), (math.tau * 10 / 60, 0.31, 0.02)):
+                d = t * math.sin(ang) + Vector((0, 0, math.cos(ang)))
+                objs.append(plank('cthand', tuple(c + n * 0.05 - d * 0.04), tuple(c + n * 0.05 + d * L), w, 0.012, tuple(n), black, jitter=0.0, bevel=0.0))
+    # the belfry: a floor, four corner piers, an arch on each side, the bell inside
+    objs.append(box('ctbelfloor', (2 * W2 - 0.04, 2 * W2 - 0.04, H3 - H2), (0, 0, (H2 + H3) / 2), m=stone[1], bevel=0.0, segs=1))
+    PW = 0.2
+    for sx in (-1, 1):
+        for sy in (-1, 1): objs.append(box('ctpier', (PW, PW, H4 - H3), (sx * (W2 - 0.03 - PW / 2), sy * (W2 - 0.03 - PW / 2), (H3 + H4) / 2), m=random.choice(stone), bevel=0.01, segs=1))
+    span = 2 * (W2 - 0.03 - PW); spring = H4 - 0.12 - span / 2 * 0.75
+    for side in range(4):
+        a = side * math.pi / 2; n = Vector((math.sin(a), -math.cos(a), 0)); t = Vector((-n.y, n.x, 0)); c = n * (W2 - 0.09)
+        arch(objs, c, n, span, spring, span / 2 * 0.75, 0.08, 0.14, stone[2], k=9)
+        objs.append(box('ctspandrel', (2 * W2 - 0.06 if side % 2 == 0 else 0.14, 0.14 if side % 2 == 0 else 2 * W2 - 0.06, 0.1), tuple(c + Vector((0, 0, H4 - 0.05))), m=stone[0], bevel=0.0, segs=1))
+        objs.append(box('ctrail', (span if side % 2 == 0 else 0.05, 0.05 if side % 2 == 0 else span, 0.05), tuple(c + Vector((0, 0, H3 + 0.32))), m=black, bevel=0.0, segs=1))
+    objs.append(box('ctbelfrycap', (2 * W2 + 0.1, 2 * W2 + 0.1, 0.1), (0, 0, H4 + 0.05), m=stone[2], bevel=0.012, segs=1))
+    # the bell on its beam (the bell itself is its own part: it swings on the hour)
+    objs.append(box('ctbeam', (2 * W2 - 0.3, 0.1, 0.1), (0, 0, BELL_AT.z + 0.05), m=wood[0], bevel=0.0, segs=1))
+    bprof = [(0.0, 0.2), (0.03, 0.205), (0.08, 0.18), (0.18, 0.135), (0.3, 0.115), (0.4, 0.105), (0.45, 0.07), (0.47, 0.0)]
+    bz0 = BELL_AT.z - 0.52
+    for g in range(8):
+        bell.append(lathe_band('ctbell', [(bz0 + z, r) for z, r in bprof], g / 8 * math.tau, (g + 1) / 8 * math.tau, bronze, segs=3))
+    bell.append(ring('ctbellrim', 0.19, 0.215, bz0 + 0.03, 0.04, bronze, verts=24))
+    bell.append(box('ctyoke', (0.06, 0.06, 0.07), tuple(BELL_AT - Vector((0, 0, 0.04))), m=black, bevel=0.0, segs=1))
+    bell.append(cyl('ctclapper', 0.012, 0.3, tuple(Vector((0, 0, bz0 + 0.16))), m=black, verts=5, bevel=0.0))
+    bell.append(sphere('ctclapball', 0.035, (0, 0, bz0 + 0.03), m=black, seg=8, rings=6))
+    # the spire: a steep pyramid of slate with a few bands, a gold ball, a golden hen weathervane
+    SZ0, SZ1 = H4 + 0.1, H4 + 1.25
+    sp = cyl('ctspire', (W2 + 0.08) * math.sqrt(2), SZ1 - SZ0, (0, 0, (SZ0 + SZ1) / 2), (0, 0, math.pi / 4), m=slate, verts=4, r2=0.0, bevel=0.0); objs.append(sp)
+    for u in (0.2, 0.45, 0.68):
+        rr = (W2 + 0.08) * math.sqrt(2) * (1 - u) + 0.008
+        objs.append(cyl('ctspireband', rr, 0.035, (0, 0, SZ0 + (SZ1 - SZ0) * u), (0, 0, math.pi / 4), m=slate2, verts=4, r2=rr - 0.035 * (W2 + 0.08) * math.sqrt(2) / (SZ1 - SZ0), bevel=0.0))
+    objs.append(sphere('ctball', 0.06, (0, 0, SZ1 + 0.03), m=gold, seg=12, rings=8))
+    objs.append(cyl('ctrod', 0.012, 0.45, (0, 0, SZ1 + 0.25), m=black, verts=6, bevel=0.0))
+    for a in (0, math.pi / 2):
+        objs.append(plank('ctarm', (math.cos(a) * -0.16, math.sin(a) * -0.16, SZ1 + 0.2), (math.cos(a) * 0.16, math.sin(a) * 0.16, SZ1 + 0.2), 0.015, 0.015, (0, 0, 1), black, jitter=0.0, bevel=0.0))
+        for sd in (-1, 1): objs.append(sphere('ctarmball', 0.022, (math.cos(a) * 0.17 * sd, math.sin(a) * 0.17 * sd, SZ1 + 0.2), m=gold, seg=8, rings=6))
+    HZ = SZ1 + 0.42                               # (the hen: a little gold silhouette side on, turning in the wind)
+    objs.append(sphere('cthen', 0.1, (0, 0, HZ), (1.0, 0.18, 0.72), m=gold, seg=12, rings=8))
+    objs.append(sphere('cthen', 0.05, (0.09, 0, HZ + 0.07), (1, 0.2, 1), m=gold, seg=10, rings=6))
+    objs.append(cyl('cthencomb', 0.03, 0.02, (0.09, 0, HZ + 0.12), (math.pi / 2, 0, 0), m=C('ctred', '#c9302c', rough=0.5), verts=8, bevel=0.0))
+    flag(objs, (-0.07, 0, HZ + 0.02), (-0.2, 0, HZ + 0.14), (-0.16, 0, HZ - 0.03), gold, name='cthentail')
+    objs.append(cyl('ctbeak', 0.015, 0.04, (0.155, 0, HZ + 0.06), (0, math.pi / 2, 0), m=C('ctbeakm', '#e08a2a', rough=0.5), verts=6, r2=0.0, bevel=0.0))
+    # a bench at its side, tubs of flowers by its door
+    BX = W1 + 0.55
+    objs.append(box('ctbench', (0.18, 0.9, 0.04), (BX, 0.1, 0.42), m=wood[0], bevel=0.006, segs=1))
+    objs.append(box('ctbenchback', (0.04, 0.9, 0.22), (BX + 0.1, 0.1, 0.6), (0, -0.15, 0), m=wood[1], bevel=0.006, segs=1))
+    for yy in (-0.28, 0.48):
+        objs.append(box('ctbenchleg', (0.16, 0.04, 0.4), (BX, yy, 0.2), m=black, bevel=0.0, segs=1))
+    for sx in (-1, 1):
+        x = sx * 0.55; y = -W1 - 0.35
+        objs.append(cyl('cttub', 0.15, 0.24, (x, y, 0.15), m=wood[1], verts=12, r2=0.17, bevel=0.0))
+        objs.append(ring('cttubband', 0.155, 0.175, 0, 0.025, black, verts=16)); objs[-1].location = (x, y, 0.2)
+        objs.append(sphere('cttubleaf', 0.15, (x, y, 0.3), (1, 1, 0.6), m=leaf, ico=1, disp=0.3, seed=sx + 3))
+        for j in range(7):
+            a = j / 7 * math.tau; objs.append(sphere('cttubfl', 0.03, (x + math.cos(a) * 0.1, y + math.sin(a) * 0.1, 0.36 + random.uniform(0, 0.04)), m=fl[(j + (sx > 0)) % 3], ico=1))
+    keep = {None: objs + bell, 'tower': objs, 'bell': bell}[part]
+    if part == 'bell':
+        for o in bell: o.matrix_basis = Matrix.Translation(-BELL_AT) @ o.matrix_basis
+    for o in objs + bell:
+        if not any(o is k for k in keep): bpy.data.objects.remove(o, do_unlink=True)
+    return finish(keep, name)
+
+
+GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec, 'dovecote': dovecote_dec, 'tractor': tractor_dec, 'orchard': orchard_dec, 'tree_house': tree_house_dec, 'hot_air_balloon': hot_air_balloon_dec, 'clock_tower': clock_tower_dec}
