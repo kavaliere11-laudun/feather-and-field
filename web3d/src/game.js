@@ -144,8 +144,8 @@ export const TEXT = {
     res_champ: '{name} is a champion now!', res_in: 'The show results are in!',
     rosettes: 'Rosettes', ros_none: 'No rosettes yet: enter a show (the rosette at the top).', tier_v: 'Village', tier_c: 'County', tier_n: 'National',
     shop_title: 'The farm shop', shop_coins: 'Coins come from your eggs, your grown chicks, shows and jobs. Spend them on your farm:',
-    dec_flowers: 'Cottage flower bed', dec_birdbath: 'Bird bath', dec_beehives: 'Beehives', dec_duckhouse: 'Duck house', dec_greenhouse: 'Greenhouse', dec_windmill: 'Windmill', dec_bandstand: 'Bandstand', dec_statue: 'Golden cockerel', dec_fountain: 'Golden Egg Fountain', dec_rose_arbour: 'Rose Arbour', dec_dovecote: 'Dovecote', dec_tractor: 'Red Tractor',
-    decl_flowers: 'Butterflies come to it.', decl_birdbath: 'Little birds drop in for a bath.', decl_beehives: 'Bees busy over the lavender, and honey to sell: a jar every 8 hours.', decl_duckhouse: 'The ducks sleep in it, on the pond.', decl_greenhouse: 'Tomatoes under glass.', decl_windmill: 'Its sails turn in the wind.', decl_bandstand: 'Music of an evening, and when you tap it.', decl_statue: 'He catches the sun.', decl_fountain: 'Water falls and sparkles, and little birds come to drink.', decl_rose_arbour: 'Petals drift down, butterflies visit, and its lantern glows at night.', decl_dovecote: 'White doves fly round it now and then and land on its ledges.', decl_tractor: 'Now and then its engine putters: a little shake and puffs of smoke.',
+    dec_flowers: 'Cottage flower bed', dec_birdbath: 'Bird bath', dec_beehives: 'Beehives', dec_duckhouse: 'Duck house', dec_greenhouse: 'Greenhouse', dec_windmill: 'Windmill', dec_bandstand: 'Bandstand', dec_statue: 'Golden cockerel', dec_fountain: 'Golden Egg Fountain', dec_rose_arbour: 'Rose Arbour', dec_dovecote: 'Dovecote', dec_tractor: 'Red Tractor', dec_orchard: 'Little Orchard',
+    decl_flowers: 'Butterflies come to it.', decl_birdbath: 'Little birds drop in for a bath.', decl_beehives: 'Bees busy over the lavender, and honey to sell: a jar every 8 hours.', decl_duckhouse: 'The ducks sleep in it, on the pond.', decl_greenhouse: 'Tomatoes under glass.', decl_windmill: 'Its sails turn in the wind.', decl_bandstand: 'Music of an evening, and when you tap it.', decl_statue: 'He catches the sun.', decl_fountain: 'Water falls and sparkles, and little birds come to drink.', decl_rose_arbour: 'Petals drift down, butterflies visit, and its lantern glows at night.', decl_dovecote: 'White doves fly round it now and then and land on its ledges.', decl_tractor: 'Now and then its engine putters: a little shake and puffs of smoke.', decl_orchard: 'Apples drop into the grass and a blackbird comes to peck. Watch out for your Glutton hens!',
     dec_buy: 'Buy and place · {c}', dec_buy_pond: 'Buy · {c}', dec_level: 'Comes at level {n}', dec_broke: 'Not enough coins yet', dec_owned: 'On your farm', dec_move: 'Move', dec_xp: '+{xp} XP',
     dec_place_hint: 'Drag it, or tap where it should go.', dec_ok: 'A good spot!', dec_ok_clear: 'A good spot! What’s in the way will be cleared.', dec_bad_land: 'Only on your own land.', dec_bad_lane: 'Not on a lane or in the water.', dec_bad_room: 'Not enough room here.', dec_bad_grow: 'This ground is kept for a coop to grow into.', dec_bad_way: 'It would block the way to a coop.',
     dec_placed: 'New on the farm: {name}! +{xp} XP', dec_moved: '{name}: moved!', dec_new: 'New to buy: {names}', dec_card_body: 'Move it anywhere on your land.', dec_new_where: 'In the shop: tap your coins at the top.', dec_no_room: 'No room for it on your land just now: restore the next field, or move things about.', dec_pond_hint: 'Your duck house is on the pond! The ducks will sleep in it tonight.',
@@ -287,7 +287,7 @@ export const TEXT = {
     worms_done: '{name} is finding {n} worms for {farmer} 🪱', worms_done1: '{name} is finding a worm for {farmer} 🪱', worms_night: '{farmer} is asleep: worms in the morning', fish_level: 'Fishing opens at level {n}.',
     // farm moments (20 Nov 2026): a hen out
     mom_hen: '🐔 A hen is out!', mom_hen_hint: '{name} has slipped out of her pen. Find her on the farm and tap her!',
-    mom_hen_found: '✨ You found {name}! {farmer} carries her home. +{c} coins, +{x} XP', mom_hen_back: '{name} went back to her pen by herself for the night.',
+    mom_hen_found: '✨ You found {name}! {farmer} carries her home. +{c} coins, +{x} XP', mom_hen_back: '{name} went back to her pen by herself for the night.', mom_orch: '🍎 Apple thief!', mom_orch_hint: '{name} has slipped into the orchard after the apples! Tap her and {farmer} will run after her.', mom_orch_found: '🍎 Off runs {name}, {farmer} after her! +{c} coins, +{x} XP', mom_orch_back: '{name} has gone home by herself, full of apples.',
     busy_stray: '{farmer} is bringing {name} home.', next_stray: 'bring {name} home',
     mom_chick: '🐣 A chick is lost!', mom_chick_hint: 'One of {name}’s chicks has wandered off. Follow the peeps and tap it!', mom_peep: 'peep!',
     mom_chick_found: '✨ You found the chick! {farmer} takes it back to {name}. +{c} coins, +{x} XP', mom_chick_back: 'The lost chick found its way back to {name} by itself.',
@@ -530,8 +530,8 @@ export const TEXT = {
     res_champ: '{name} est champion maintenant !', res_in: 'Les résultats des concours sont arrivés !',
     rosettes: 'Cocardes', ros_none: 'Pas encore de cocarde : inscrivez-le à un concours (la cocarde en haut).', tier_v: 'Village', tier_c: 'Régional', tier_n: 'National',
     shop_title: 'La boutique de la ferme', shop_coins: 'Les pièces viennent de vos œufs, de vos poussins devenus grands, des concours et des tâches. Dépensez-les pour votre ferme :',
-    dec_flowers: 'Massif de fleurs', dec_birdbath: 'Bain d’oiseaux', dec_beehives: 'Ruches', dec_duckhouse: 'Maison des canards', dec_greenhouse: 'Serre', dec_windmill: 'Moulin à vent', dec_bandstand: 'Kiosque à musique', dec_statue: 'Coq d’or', dec_fountain: 'Fontaine à l’œuf d’or', dec_rose_arbour: 'Tonnelle de roses', dec_dovecote: 'Pigeonnier', dec_tractor: 'Tracteur rouge',
-    decl_flowers: 'Les papillons y viennent.', decl_birdbath: 'Les petits oiseaux viennent s’y baigner.', decl_beehives: 'Des abeilles affairées sur la lavande, et du miel à vendre : un pot toutes les 8 heures.', decl_duckhouse: 'Les canards y dorment, sur l’étang.', decl_greenhouse: 'Des tomates sous verre.', decl_windmill: 'Ses ailes tournent au vent.', decl_bandstand: 'De la musique le soir, et quand vous le touchez.', decl_statue: 'Il attrape le soleil.', decl_fountain: 'L’eau coule et scintille, et les petits oiseaux viennent y boire.', decl_rose_arbour: 'Des pétales tombent doucement, les papillons viennent, et sa lanterne brille la nuit.', decl_dovecote: 'De temps en temps, des colombes blanches volent autour et se posent sur ses rebords.', decl_tractor: 'De temps en temps son moteur pétarade : il tremble un peu et crache des petits nuages de fumée.',
+    dec_flowers: 'Massif de fleurs', dec_birdbath: 'Bain d’oiseaux', dec_beehives: 'Ruches', dec_duckhouse: 'Maison des canards', dec_greenhouse: 'Serre', dec_windmill: 'Moulin à vent', dec_bandstand: 'Kiosque à musique', dec_statue: 'Coq d’or', dec_fountain: 'Fontaine à l’œuf d’or', dec_rose_arbour: 'Tonnelle de roses', dec_dovecote: 'Pigeonnier', dec_tractor: 'Tracteur rouge', dec_orchard: 'Petit verger',
+    decl_flowers: 'Les papillons y viennent.', decl_birdbath: 'Les petits oiseaux viennent s’y baigner.', decl_beehives: 'Des abeilles affairées sur la lavande, et du miel à vendre : un pot toutes les 8 heures.', decl_duckhouse: 'Les canards y dorment, sur l’étang.', decl_greenhouse: 'Des tomates sous verre.', decl_windmill: 'Ses ailes tournent au vent.', decl_bandstand: 'De la musique le soir, et quand vous le touchez.', decl_statue: 'Il attrape le soleil.', decl_fountain: 'L’eau coule et scintille, et les petits oiseaux viennent y boire.', decl_rose_arbour: 'Des pétales tombent doucement, les papillons viennent, et sa lanterne brille la nuit.', decl_dovecote: 'De temps en temps, des colombes blanches volent autour et se posent sur ses rebords.', decl_tractor: 'De temps en temps son moteur pétarade : il tremble un peu et crache des petits nuages de fumée.', decl_orchard: 'Des pommes tombent dans l’herbe et un merle vient les picorer. Gare à vos poules gourmandes !',
     dec_buy: 'Acheter et placer · {c}', dec_buy_pond: 'Acheter · {c}', dec_level: 'Arrive au niveau {n}', dec_broke: 'Pas encore assez de pièces', dec_owned: 'Dans votre ferme', dec_move: 'Déplacer', dec_xp: '+{xp} XP',
     dec_place_hint: 'Faites-le glisser, ou touchez l’endroit voulu.', dec_ok: 'Bel emplacement !', dec_ok_clear: 'Bel emplacement ! Ce qui gêne sera dégagé.', dec_bad_land: 'Seulement sur votre terrain.', dec_bad_lane: 'Pas sur un chemin ni dans l’eau.', dec_bad_room: 'Pas assez de place ici.', dec_bad_grow: 'Cet endroit est gardé pour qu’un poulailler puisse s’agrandir.', dec_bad_way: 'Cela bloquerait le chemin d’un poulailler.',
     dec_placed: 'Nouveau dans la ferme : {name} ! +{xp} XP', dec_moved: '{name} : c’est déplacé !', dec_new: 'Nouveau à acheter : {names}', dec_card_body: 'Déplacez-le où vous voulez sur votre terrain.', dec_new_where: 'Dans la boutique : touchez vos pièces en haut.', dec_no_room: 'Pas de place sur votre terrain pour l’instant : remettez en état le prochain terrain, ou déplacez des choses.', dec_pond_hint: 'Votre maison des canards est sur l’étang ! Les canards y dormiront ce soir.',
@@ -672,7 +672,7 @@ export const TEXT = {
     worms_done: '{name} cherche {n} vers pour {farmer} 🪱', worms_done1: '{name} cherche un ver pour {farmer} 🪱', worms_night: '{farmer} dort : les vers, ce sera demain matin', fish_level: 'La pêche ouvre au niveau {n}.',
     // les surprises de la ferme (20 nov. 2026) : une poule échappée
     mom_hen: '🐔 Une poule s’est échappée\u00a0!', mom_hen_hint: '{name} s’est échappée de son enclos. Trouvez-la sur la ferme et touchez-la\u00a0!',
-    mom_hen_found: '✨ Vous avez retrouvé {name}\u00a0! {farmer} la ramène chez elle. +{c} pièces, +{x} XP', mom_hen_back: '{name} est rentrée toute seule dans son enclos pour la nuit.',
+    mom_hen_found: '✨ Vous avez retrouvé {name}\u00a0! {farmer} la ramène chez elle. +{c} pièces, +{x} XP', mom_hen_back: '{name} est rentrée toute seule dans son enclos pour la nuit.', mom_orch: '🍎 Voleuse de pommes\u00a0!', mom_orch_hint: '{name} s’est glissée dans le verger pour les pommes\u00a0! Touchez-la et {farmer} lui courra après.', mom_orch_found: '🍎 {name} file, {farmer} à ses trousses\u00a0! +{c} pièces, +{x} XP', mom_orch_back: '{name} est rentrée toute seule, pleine de pommes.',
     busy_stray: '{farmer} ramène {name} chez elle.', next_stray: 'ramener {name}',
     mom_chick: '🐣 Un poussin s’est perdu\u00a0!', mom_chick_hint: 'Un poussin de {name} s’est éloigné. Suivez les piou-piou et touchez-le\u00a0!', mom_peep: 'piou\u00a0!',
     mom_chick_found: '✨ Vous avez retrouvé le poussin\u00a0! {farmer} le ramène à {name}. +{c} pièces, +{x} XP', mom_chick_back: 'Le poussin perdu a retrouvé {name} tout seul.',
@@ -1096,6 +1096,7 @@ export const DECOR = {
   rose_arbour: { level: 42, price: 45000, grand: true },      // ("Yes, put it in (Recommended)", 24 Nov 2026)
   dovecote: { level: 43, price: 52000, grand: true },      // ("Yes, put it in (Recommended)", 24 Nov 2026)
   tractor: { level: 44, price: 60000, grand: true },      // ("Yes, put it in (Recommended)", 24 Nov 2026)
+  orchard: { level: 45, price: 70000, grand: true },      // ("Yes put it on but the glouton chickens would go in and try to steal apples and the farmer can run after them", 24 Nov 2026)
 };
 export const decorXp = id => Math.round(DECOR[id].price / 50);
 // ---- the guardians (release 3, Audrey: "The guardians"): animals bought with coins from their level. The geese first
@@ -1803,6 +1804,7 @@ export function checkFarm(d, now = Date.now()) {
   if (mo && mo.k === 'hen' && L >= MOMENTS.level && typeof mo.b === 'string' && out.birds.some(b => b.id === mo.b && b.sex === 'h' && !kindOf(b.breed)) &&
     Array.isArray(mo.at) && mo.at.length === 2 && mo.at.every(v => Number.isFinite(v) && Math.abs(v) < 150) && Number.isInteger(mo.t) && mo.t >= 0 && mo.t <= now + TZ_SLACK)
     out.moment = { k: 'hen', b: mo.b, at: mo.at.map(v => Math.round(v * 100) / 100), t: mo.t };
+  if (out.moment && out.moment.k === 'hen' && mo.o === 1 && (out.decor || []).some(x => x.id === 'orchard') && out.birds.some(b => b.id === mo.b && b.pers === 'glutton')) out.moment.o = 1;      // (the orchard's apple thief: with the orchard, a Glutton hen)
   // a rainy day: only once fishing's open; begun no later than now, over no later than its length after, the worms caught (a
   // whole number, no more than a shower gives)
   const RN = MOMENTS.rain;
@@ -1827,7 +1829,7 @@ export function checkFarm(d, now = Date.now()) {
     out.moment = { k: 'visit', who: mo.who, item: mo.item, n: mo.n, t: mo.t, until: mo.until };
   const ms = d.moments && typeof d.moments === 'object' ? d.moments : null;
   if (ms) { out.moments = { last: int(ms.last, 0, now + TZ_SLACK, 0), hen: int(ms.hen, 0, 1e6, 0) }; const rn = int(ms.rain, 0, 1e6, 0); if (rn) out.moments.rain = rn; const ck = int(ms.chick, 0, 1e6, 0); if (ck) out.moments.chick = ck; const vi = int(ms.visit, 0, 1e6, 0); if (vi) out.moments.visit = vi; }
-  if (ms && out.moments) { const sn = int(ms.snow, 0, 1e6, 0); if (sn) out.moments.snow = sn; const sa = int(ms.snowAt, 0, now + TZ_SLACK, 0); if (sa) out.moments.snowAt = sa; }      // (the snowy days: how many; when the last began)
+  if (ms && out.moments) { const oc = int(ms.orchard, 0, 1e6, 0); if (oc) out.moments.orchard = oc; const sn = int(ms.snow, 0, 1e6, 0); if (sn) out.moments.snow = sn; const sa = int(ms.snowAt, 0, now + TZ_SLACK, 0); if (sa) out.moments.snowAt = sa; }      // (the snowy days: how many; when the last began)
   return out;
 }
 
@@ -2402,7 +2404,8 @@ export class Game {
     const M = this.data.moments; if (M && now - M.last < MOMENTS.gap) return null;
     const sn = snowSeason(now), odds = MOMENTS.snow.odds[new Date(now).getMonth() + 1] || 0;
     return { first: !M, rain: this.fishOpen('pond'), firstRain: !!M && !M.rain && this.fishOpen('pond'), firstChick: !!M && !M.chick, visit: this.ordersOpen(), firstVisit: !!M && !M.visit && this.ordersOpen(),
-      snow: sn, snowOdds: sn ? odds : 0, firstSnow: !!M && sn && !(M.snowAt && now - M.snowAt < 100 * 864e5) };      // (the winter's first snowy day for sure the next time; then, in a rainy day's place, three times in four in December and January, one in two in February)
+      snow: sn, snowOdds: sn ? odds : 0, firstSnow: !!M && sn && !(M.snowAt && now - M.snowAt < 100 * 864e5),
+      orchard: this.orchardThieves().length > 0, firstOrchard: !!M && !M.orchard && this.orchardThieves().length > 0 };      // (the winter's first snowy day for sure the next time; then, in a rainy day's place, three times in four in December and January, one in two in February)
   }
   // a visitor (21 Nov 2026, the 17 Nov mock-up: "a villager at the gate with a quick order, double pay, ten minutes"): Mrs
   // Potts at the farm stall, from the level the village orders open. What she'd like: one of the things she asks for in
@@ -2471,11 +2474,15 @@ export class Game {
     const s = this.data && this.data.snow, S = MOMENTS.snow; if (!s || now >= s.until || now < s.t) return 0;
     return Math.max(0, Math.min(1, (now - s.t) / (S.secs * 800), (s.until - now) / S.melt));
   }
-  henOut(id, at, now = Date.now()) {
+  // (orchard, 24 Nov 2026, Audrey of the Little Orchard: "the glouton chickens would go in and try to steal apples and the
+  // farmer can run after them": a Glutton hen out in the orchard; counted)
+  henOut(id, at, now = Date.now(), orchard = false) {
     const b = this.bird(id); if (!this.data || this.data.moment || !b || b.sex !== 'h' || kindOf(b.breed) || this.level < MOMENTS.level) return null;
     if (!Array.isArray(at) || !at.every(v => Number.isFinite(v) && Math.abs(v) < 150)) return null;
+    if (orchard && (!this.decorOwned('orchard') || b.pers !== 'glutton')) return null;
     this.data.moment = { k: 'hen', b: id, at: [Math.round(at[0] * 100) / 100, Math.round(at[1] * 100) / 100], t: now };
-    const M = this.data.moments || (this.data.moments = { last: 0, hen: 0 }); M.last = now;
+    if (orchard) this.data.moment.o = 1;
+    const M = this.data.moments || (this.data.moments = { last: 0, hen: 0 }); M.last = now; if (orchard) M.orchard = (M.orchard || 0) + 1;
     this.save();
     return this.data.moment;
   }
@@ -2488,6 +2495,8 @@ export class Game {
     this.save();
     return { id: b.id, name: b.name, coins, xp: P.xp + (loved ? loved.xp : 0), cuddle: loved };
   }
+  // the hens who'd go after the orchard's apples: Glutton hens in chicken coops, once the orchard's on the farm
+  orchardThieves() { return this.data && this.decorOwned('orchard') ? this.data.birds.filter(b => b.sex === 'h' && b.pers === 'glutton' && b.coop && !kindOf(b.breed) && this.coop(b.coop)) : []; }
   henBack() { const m = this.data && this.data.moment; if (!m || m.k !== 'hen') return null; const b = this.bird(m.b); this.data.moment = null; this.save(); return b ? { id: b.id, name: b.name } : null; }
   // a lost chick (20 Nov 2026): one of a coop's chicks (its first day, an hour of it left at least) out on the farm; found
   // (a few coins, a little XP, a cuddle's worth of love for its mum if she's due one); back by itself (or no longer a chick)

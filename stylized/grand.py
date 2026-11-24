@@ -663,4 +663,177 @@ def orchard_dec(seed=121, name='orchard'):
     return finish(objs, name)
 
 
-GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec, 'dovecote': dovecote_dec, 'tractor': tractor_dec, 'orchard': orchard_dec}
+def flag(objs, a, b, c, m, name='thflag'):
+    """A little triangle of cloth (a bunting flag): its corners a, b, c, both faces."""
+    import bmesh
+    me = bpy.data.meshes.new(name); bm = bmesh.new()
+    A, B, Cc = Vector(a), Vector(b), Vector(c); n = (B - A).cross(Cc - A).normalized() * 0.002
+    f = [bm.verts.new(v) for v in (A, B, Cc)]; bm.faces.new(f)
+    g = [bm.verts.new(v - n) for v in (A, B, Cc)]; bm.faces.new(g[::-1])
+    bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m)
+    for pl in o.data.polygons: pl.use_smooth = False
+    objs.append(o)
+
+
+def leafy(objs, C0, R, n, leaf, seed, sq=0.85, cores=7):
+    """A big clump of leaves: dark leafy cores inside, little leaves all over its outside, lighter where the sun is."""
+    rnd = random.Random(seed)
+    objs.append(sphere('thcore', R * 0.74, tuple(C0), (1, 1, sq), (0, 0, rnd.uniform(0, 3)), m=leaf[0], ico=1, disp=0.3, disp_scale=4.0, seed=seed))
+    for k in range(cores):
+        a = k / cores * math.tau + rnd.uniform(-0.3, 0.3); el = rnd.uniform(-0.3, 0.6)
+        c = C0 + Vector((math.cos(a) * math.cos(el), math.sin(a) * math.cos(el), math.sin(el) * sq)) * R * 0.5
+        objs.append(sphere('thcore', R * rnd.uniform(0.42, 0.55), tuple(c), (1, 1, 0.9), (0, 0, rnd.uniform(0, 3)), m=leaf[0], ico=1, disp=0.3, disp_scale=4.0, seed=seed * 10 + k))
+    for k in range(n):
+        a = rnd.uniform(0, math.tau); el = math.asin(rnd.uniform(-0.5, 1.0))
+        d = Vector((math.cos(a) * math.cos(el), math.sin(a) * math.cos(el), math.sin(el)))
+        p = C0 + Vector((d.x, d.y, d.z * sq)) * R * rnd.uniform(0.92, 1.04)
+        q = d.to_track_quat('Z', 'Y') @ Quaternion((0, 0, 1), rnd.uniform(0, math.tau)) @ Quaternion((1, 0, 0), rnd.uniform(0.25, 0.6))
+        objs.append(flat_leaf('thleaf', tuple(p), q, rnd.uniform(0.1, 0.13), rnd.uniform(0.036, 0.046), leaf[min(3, 1 + (k % 2) + (1 if el > 0.45 else 0))], both=False, fold=0.006))
+
+
+def tree_house_dec(seed=131, name='tree_house'):
+    """A tree house: a big old oak with its roots spread, a deck up in it on two posts and braces, with a railing round it;
+    on the deck a little cabin of blue boards with a steep roof of red shingles (its gable to the front), a round window
+    with a box of flowers, a yellow door with a lantern by it, a stovepipe; a wooden ladder up to the deck, bunting from
+    the roof down to the railing, a rope swing on a long low branch, a bucket on a rope; grass, toadstools by the roots."""
+    random.seed(seed); objs = []
+    leaf = [C('thleaf%d' % i, h, rough=0.8, var=0.06, hue_var=0.012) for i, h in enumerate(('#2b5a22', '#386f28', '#478430', '#5b9939'))]
+    bark = [C('thbark', '#6a4e38', rough=0.95, var=0.12), C('thbark2', '#5b432f', rough=0.95, var=0.12)]
+    wood = [C('thwood%d' % i, h, rough=0.85, var=0.1, grain=0.3) for i, h in enumerate(('#a07a52', '#8f6b47', '#b08a60'))]
+    blue = [C('thblue', '#7fb0c6', rough=0.8, var=0.05), C('thblue2', '#76a7bd', rough=0.8, var=0.05)]
+    trim = C('thtrim', '#f3eee2', rough=0.7); door = C('thdoor', '#e3b03f', rough=0.7); glass = C('thglass', '#3e5767', rough=0.25)
+    tiles = [C('thtile%d' % i, h, rough=0.75, var=0.06) for i, h in enumerate(('#a9473a', '#b85a44', '#9b3f33'))]
+    rope = C('thrope', '#d6c197', rough=0.9); iron = C('thiron', '#3b3b3e', rough=0.5)
+    grassM = C('thgrass', '#74a443', rough=0.95, var=0.05); grass = [C('thgr%d' % i, h, rough=0.85, var=0.06) for i, h in enumerate(('#5f9a3a', '#6fab42', '#86bb50'))]
+    fl = [C('thfl', '#e0414a', rough=0.6), C('thfl2', '#f4d03c', rough=0.6), C('thfl3', '#f7f2ea', rough=0.6)]
+    flagsM = [C('thfg%d' % i, h, rough=0.7) for i, h in enumerate(('#e35d5b', '#f2c14e', '#5fa8d3', '#7bc47f', '#f4f1ea'))]
+    cap = C('thcap', '#c9302c', rough=0.6); stem = C('thstem', '#f1ead8', rough=0.7)
+    TX, TY = 0.0, 0.9                        # the trunk
+    PZ, PX, PY0, PY1 = 1.5, 0.95, -0.85, 0.62  # the deck: its height, half its width, its front and back
+    CX, CY0, CY1, WH = 0.62, -0.22, 0.45, 0.85  # the cabin: half its width, its front and back, its walls' height
+    objs.append(cyl('thground', 1.8, 0.02, (0.2, -0.05, 0.01), m=grassM, verts=40, bevel=0.0))
+    # the oak: a thick trunk flaring at its foot, roots spread over the grass, big limbs up into its crown
+    objs.append(cyl('thtrunk', 0.34, 3.0, (TX, TY, 1.5), m=bark[0], verts=14, r2=0.22, bevel=0.0))
+    for k in range(7):
+        a = k / 7 * math.tau + random.uniform(-0.25, 0.25); L = random.uniform(0.45, 0.7)
+        A = Vector((TX + math.cos(a) * 0.2, TY + math.sin(a) * 0.2, 0.32)); B = Vector((TX + math.cos(a) * (0.3 + L), TY + math.sin(a) * (0.3 + L), 0.0))
+        objs.append(cyl('throot', 0.13, (B - A).length, tuple((A + B) / 2), (B - A).to_track_quat('Z', 'Y').to_euler(), m=bark[k % 2], verts=8, r2=0.04, bevel=0.0))
+    LIMBS = [((0, 0, 2.6), (-1.05, 0.75, 3.25), 0.13), ((0, 0, 2.8), (0.85, 0.95, 3.5), 0.13), ((0, 0, 2.9), (0.1, 1.2, 3.9), 0.12), ((0, 0, 2.95), (-0.4, 0.6, 3.95), 0.1)]
+    for a, b, r in LIMBS:
+        A = Vector((TX + a[0], TY + a[1], a[2])); B = Vector(b)
+        objs.append(cyl('thlimb', r, (B - A).length, tuple((A + B) / 2), (B - A).to_track_quat('Z', 'Y').to_euler(), m=bark[0], verts=8, r2=r * 0.5, bevel=0.0))
+    SW = (Vector((TX + 0.15, TY - 0.05, 2.25)), Vector((1.78, 0.5, 2.5)))      # (the long low branch the swing hangs from, bending up at its end)
+    objs.append(cyl('thlimb', 0.1, (SW[1] - SW[0]).length, tuple((SW[0] + SW[1]) / 2), (SW[1] - SW[0]).to_track_quat('Z', 'Y').to_euler(), m=bark[1], verts=8, r2=0.06, bevel=0.0))
+    for a, b, r in ((SW[1] - Vector((0.04, 0, 0.02)), Vector((2.0, 0.55, 2.85)), 0.06), (SW[0] + (SW[1] - SW[0]) * 0.55, Vector((1.0, 0.25, 2.95)), 0.05)):
+        objs.append(cyl('thtwig', r, (b - a).length, tuple((a + b) / 2), (b - a).to_track_quat('Z', 'Y').to_euler(), m=bark[1], verts=6, r2=r * 0.5, bevel=0.0))
+    leafy(objs, Vector((0.0, 0.85, 3.85)), 1.3, 1150, leaf, seed * 10 + 1)
+    leafy(objs, Vector((-1.15, 0.75, 3.3)), 0.62, 300, leaf, seed * 10 + 2, cores=4)
+    leafy(objs, Vector((1.7, 0.6, 2.95)), 0.55, 260, leaf, seed * 10 + 3, cores=4)
+    # the deck: two posts at the front, its frame, boards across, braces back to the trunk
+    for x in (-PX + 0.08, PX - 0.08):
+        objs.append(box('thpost', (0.1, 0.1, PZ - 0.17), (x, PY0 + 0.08, (PZ - 0.17) / 2), m=wood[1], bevel=0.01, segs=1))
+        objs.append(plank('thbrace', (x, PY0 + 0.08, PZ - 0.55), (x, PY0 + 0.6, PZ - 0.08), 0.07, 0.05, (1, 0, 0), wood[0], jitter=0.0, bevel=0.0))
+    for y in (PY0 + 0.05, PY1 - 0.05): objs.append(box('thbeam', (2 * PX, 0.1, 0.12), (0, y, PZ - 0.1), m=wood[1], bevel=0.008, segs=1))
+    for x in (-PX + 0.05, PX - 0.05): objs.append(box('thbeam', (0.1, PY1 - PY0 - 0.22, 0.11), (x, (PY0 + PY1) / 2, PZ - 0.105), m=wood[1], bevel=0.008, segs=1))
+    for sd in (-1, 1): objs.append(plank('thbrace', (TX + sd * 0.2, TY - 0.15, PZ - 0.85), (sd * (PX - 0.1), PY1 - 0.1, PZ - 0.12), 0.08, 0.06, (0, -1, 0), wood[0], jitter=0.0, bevel=0.0))
+    n = int(round((PY1 - PY0) / 0.13))
+    for k in range(n):
+        y = PY0 + (k + 0.5) * (PY1 - PY0) / n
+        objs.append(box('thdeck', (2 * PX + 0.04, (PY1 - PY0) / n - 0.012, 0.035), (random.uniform(-0.01, 0.01), y, PZ - 0.02), m=random.choice(wood), bevel=0.0, segs=1))
+    # the railing: posts, a top rail and a middle one, round the front and the sides (a gap at the front left for the ladder)
+    def railing(a, b, first=True):
+        A, B = Vector((a[0], a[1], PZ)), Vector((b[0], b[1], PZ)); L = (B - A).length; nn = max(1, round(L / 0.45))
+        if True:
+            for k in range(0 if first else 1, nn + 1):
+                q = A + (B - A) * k / nn; objs.append(box('thrpost', (0.055, 0.055, 0.58), (q.x, q.y, PZ + 0.29), m=wood[2], bevel=0.0, segs=1))
+        for z in (0.3, 0.56): objs.append(plank('thrail', tuple(A + Vector((0, 0, z))), tuple(B + Vector((0, 0, z))), 0.06, 0.035, (0, 0, 1), random.choice(wood), jitter=0.3, bevel=0.0))
+    LG = -PX + 0.42                             # (where the ladder comes up)
+    railing((LG, PY0 + 0.03), (PX - 0.03, PY0 + 0.03)); railing((PX - 0.03, PY0 + 0.03), (PX - 0.03, PY1 - 0.03), first=False); railing((-PX + 0.03, PY0 + 0.25), (-PX + 0.03, PY1 - 0.03))
+    objs.append(box('thrpost', (0.055, 0.055, 0.58), (-PX + 0.03, PY0 + 0.03, PZ + 0.29), m=wood[2], bevel=0.0, segs=1))
+    # the cabin: boards up and down (its front up to the gable), white corners, a steep roof of shingles, its ridge front to back
+    RISE = 0.6; th = RISE / CX; ZW = PZ + WH
+    for k in range(13):
+        x = -CX + (k + 0.5) * 2 * CX / 13; top = ZW + (CX - abs(x)) * th - 0.03
+        for y, nrm in ((CY0, -1), (CY1, 1)): objs.append(plank('thboard', (x, y, PZ), (x, y, top), 2 * CX / 13 - 0.008, 0.03, (0, nrm, 0), blue[k % 2], jitter=0.2, bevel=0.0))
+    for k in range(7):
+        y = CY0 + (k + 0.5) * (CY1 - CY0) / 7
+        for x, nrm in ((-CX, -1), (CX, 1)): objs.append(plank('thboard', (x, y, PZ), (x, y, ZW), (CY1 - CY0) / 7 - 0.008, 0.03, (nrm, 0, 0), blue[k % 2], jitter=0.2, bevel=0.0))
+    for x in (-CX, CX):
+        for y in (CY0, CY1): objs.append(box('thcorner', (0.06, 0.06, WH), (x, y, PZ + WH / 2), m=trim, bevel=0.0, segs=1))
+    OV = 0.12; ZE = ZW - OV * th; ZR = ZW + RISE
+    for sd in (-1, 1):                          # (the shingles, in courses from the eaves up, each course over the one below)
+        E = Vector((sd * (CX + OV), 0, ZE)); Rr = Vector((0, 0, ZR)); u = (Rr - E).normalized(); nrm = Vector((sd * u.z, 0, -sd * u.x * -1)).normalized()
+        nrm = Vector((sd * math.sin(math.atan(th)), 0, math.cos(math.atan(th))))
+        Ls = (Rr - E).length; rows = int(Ls / 0.1) + 1
+        for r_ in range(rows):
+            s0 = min(r_ * 0.1, Ls - 0.13); off = 0.05 if r_ % 2 else 0.0
+            yy = CY0 - OV - 0.02 + off
+            while yy < CY1 + OV:
+                a = E + u * s0 + Vector((0, yy + 0.06, 0)) + nrm * (0.012 + r_ * 0.0015)
+                objs.append(plank('thtile', tuple(a), tuple(a + u * 0.15), 0.115, 0.02, tuple(nrm), random.choice(tiles), jitter=1.2, bevel=0.0))
+                yy += 0.12
+    objs.append(box('thridge', (0.07, CY1 - CY0 + 2 * OV + 0.04, 0.06), (0, (CY0 + CY1) / 2, ZR + 0.02), m=tiles[2], bevel=0.0, segs=1))
+    for sd in (-1, 1):                          # (white barge boards along the gable's edges)
+        objs.append(plank('thbarge', (sd * (CX + OV), CY0 - OV - 0.01, ZE - 0.03), (0, CY0 - OV - 0.01, ZR + 0.01), 0.1, 0.03, (0, -1, 0), trim, jitter=0.0, bevel=0.0))
+    # its front: a yellow door, a round window with a cross and a box of flowers, a little round window in the gable, a lantern
+    DX = 0.25; FY = CY0 - 0.03
+    objs.append(box('thdoor', (0.36, 0.03, 0.66), (DX, FY - 0.005, PZ + 0.33), m=door, bevel=0.006, segs=1))
+    for zz in (0.12, 0.54): objs.append(box('thdoorbar', (0.3, 0.015, 0.05), (DX, FY - 0.025, PZ + zz), m=C('thdoor2', '#d39c30', rough=0.7), bevel=0.0, segs=1))
+    objs.append(sphere('thknob', 0.02, (DX - 0.12, FY - 0.035, PZ + 0.34), m=iron, seg=8, rings=6))
+    for a, b in (((DX - 0.21, FY - 0.02, PZ), (DX - 0.21, FY - 0.02, PZ + 0.71)), ((DX + 0.21, FY - 0.02, PZ), (DX + 0.21, FY - 0.02, PZ + 0.71)), ((DX - 0.24, FY - 0.02, PZ + 0.7), (DX + 0.24, FY - 0.02, PZ + 0.7))):
+        objs.append(plank('thdoorframe', a, b, 0.05, 0.03, (0, -1, 0), trim, jitter=0.0, bevel=0.0))
+    WX, WZ = -0.3, PZ + 0.48
+    objs.append(cyl('thwin', 0.15, 0.03, (WX, FY - 0.01, WZ), (math.pi / 2, 0, 0), m=glass, verts=20, bevel=0.0))
+    objs.append(ring('thwinframe', 0.145, 0.19, 0, 0.04, trim, verts=24)); objs[-1].location = (WX, FY - 0.02, WZ); objs[-1].rotation_euler = (math.pi / 2, 0, 0)
+    objs.append(box('thwinbar', (0.3, 0.02, 0.025), (WX, FY - 0.03, WZ), m=trim, bevel=0.0, segs=1)); objs.append(box('thwinbar', (0.025, 0.02, 0.3), (WX, FY - 0.03, WZ), m=trim, bevel=0.0, segs=1))
+    objs.append(box('thflowerbox', (0.36, 0.1, 0.08), (WX, FY - 0.07, WZ - 0.25), m=wood[1], bevel=0.006, segs=1))
+    for k in range(9):
+        objs.append(sphere('thbloom', 0.03, (WX - 0.15 + k * 0.0375, FY - 0.07 + random.uniform(-0.03, 0.03), WZ - 0.18 + random.uniform(0, 0.03)), m=fl[k % 2] if k % 3 else grass[1], ico=1))
+    GZ = ZW + 0.26
+    objs.append(cyl('thgwin', 0.075, 0.03, (0, FY - 0.01, GZ), (math.pi / 2, 0, 0), m=glass, verts=16, bevel=0.0))
+    objs.append(ring('thgwinframe', 0.07, 0.1, 0, 0.035, trim, verts=20)); objs[-1].location = (0, FY - 0.02, GZ); objs[-1].rotation_euler = (math.pi / 2, 0, 0)
+    LX = DX + 0.3                                # (a lantern on a bracket by the door)
+    objs.append(plank('thbracket', (LX, FY, PZ + 0.82), (LX, FY - 0.14, PZ + 0.82), 0.025, 0.02, (0, 0, 1), iron, jitter=0.0, bevel=0.0))
+    objs.append(box('thlantern', (0.07, 0.07, 0.1), (LX, FY - 0.14, PZ + 0.72), m=C('thlamp', '#ffd98a', rough=0.3), bevel=0.0, segs=1))
+    objs.append(cyl('thlanterntop', 0.055, 0.04, (LX, FY - 0.14, PZ + 0.79), m=iron, verts=4, r2=0.01, bevel=0.0))
+    objs.append(cyl('thpipe', 0.04, 0.5, (0.32, CY1 - 0.12, ZR - 0.05), m=iron, verts=10, bevel=0.0))
+    objs.append(cyl('thpipecap', 0.075, 0.05, (0.32, CY1 - 0.12, ZR + 0.22), m=iron, verts=10, r2=0.02, bevel=0.0))
+    # the ladder up to the deck, at the front left
+    L0, L1 = Vector((LG - 0.21, PY0 - 0.55, 0.0)), Vector((LG - 0.21, PY0 - 0.02, PZ + 0.5))
+    for sd in (-1, 1): objs.append(plank('thladder', tuple(L0 + Vector((sd * 0.17, 0, 0))), tuple(L1 + Vector((sd * 0.17, 0, 0))), 0.05, 0.035, (0, -1, 0.3), wood[0], jitter=0.0, bevel=0.0))
+    for k in range(1, 8):
+        q = L0 + (L1 - L0) * k / 8.4; objs.append(plank('thrung', tuple(q - Vector((0.17, 0, 0))), tuple(q + Vector((0.17, 0, 0))), 0.035, 0.03, (0, 0, 1), wood[1], jitter=0.0, bevel=0.0))
+    # bunting from the gable's top down to the railing's front corners
+    for end in (Vector((LG, PY0 + 0.03, PZ + 0.58)), Vector((PX - 0.03, PY0 + 0.03, PZ + 0.58))):
+        S0 = Vector((0, CY0 - OV - 0.03, ZR - 0.04)); pts = []
+        for k in range(13):
+            u = k / 12; pts.append(S0 + (end - S0) * u - Vector((0, 0, math.sin(u * math.pi) * 0.12)))
+        polyline(objs, 'thstring', [tuple(q) for q in pts], 0.008, 0.008, (0, -1, 0), rope)
+        for k in range(1, 12, 2):
+            a, b = pts[k], pts[k + 1]; mid = (a + b) / 2
+            flag(objs, a, b, mid - Vector((0, 0, 0.13)), flagsM[(k // 2 + (0 if end.x < 0 else 2)) % 5])
+    # the swing on its long low branch: two ropes, a plank seat
+    for x in (1.28, 1.62):
+        top = SW[0] + (SW[1] - SW[0]) * ((x - SW[0].x) / (SW[1].x - SW[0].x))
+        objs.append(cyl('thswingrope', 0.012, top.z - 0.08 - 0.5, (x, top.y, (top.z - 0.08 + 0.5) / 2), m=rope, verts=6, bevel=0.0))
+    objs.append(box('thseat', (0.46, 0.17, 0.035), (1.45, SW[0].y + (SW[1].y - SW[0].y) * 0.82, 0.5), m=wood[2], bevel=0.006, segs=1))
+    # a bucket on a rope from a little arm at the deck's right
+    objs.append(plank('tharm', (PX - 0.03, PY0 + 0.45, PZ + 0.56), (PX + 0.28, PY0 + 0.45, PZ + 0.62), 0.05, 0.04, (0, 0, 1), wood[1], jitter=0.0, bevel=0.0))
+    objs.append(cyl('thpulley', 0.045, 0.025, (PX + 0.25, PY0 + 0.45, PZ + 0.55), (0, math.pi / 2, 0), m=iron, verts=10, bevel=0.0))
+    objs.append(cyl('thbucketrope', 0.008, PZ + 0.5 - 0.72, (PX + 0.25, PY0 + 0.45, (PZ + 0.5 + 0.72) / 2), m=rope, verts=5, bevel=0.0))
+    objs.append(cyl('thbucket', 0.1, 0.17, (PX + 0.25, PY0 + 0.45, 0.62), m=wood[0], verts=12, r2=0.12, bevel=0.0))
+    objs.append(ring('thbucketband', 0.1, 0.12, 0, 0.025, iron, verts=16)); objs[-1].location = (PX + 0.25, PY0 + 0.45, 0.66)
+    # grass, toadstools by the roots
+    for k in range(26):
+        a = random.uniform(0, math.tau); r = random.uniform(0.55, 1.65); x, y = 0.2 + math.cos(a) * r, -0.05 + math.sin(a) * r
+        if abs(x - (LG - 0.21)) < 0.3 and -1.5 < y < -0.8: continue
+        tuft(objs, x, y, 6, 0.08, random.uniform(0.1, 0.18), grass, z0=0.02, width=0.016)
+    for k, (x, y, s) in enumerate(((-0.55, 1.25, 1.0), (-0.42, 1.38, 0.7), (0.62, 1.35, 0.85), (0.5, 0.42, 0.6))):
+        objs.append(cyl('thstemm', 0.025 * s, 0.09 * s, (x, y, 0.045 * s), m=stem, verts=8, bevel=0.0))
+        objs.append(sphere('thcap', 0.07 * s, (x, y, 0.09 * s), (1, 1, 0.55), m=cap, seg=10, rings=6))
+        for j in range(3): objs.append(sphere('thspot', 0.012 * s, (x + math.cos(j * 2.1) * 0.035 * s, y + math.sin(j * 2.1) * 0.035 * s, 0.115 * s), m=stem, seg=6, rings=4))
+    return finish(objs, name)
+
+
+GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec, 'dovecote': dovecote_dec, 'tractor': tractor_dec, 'orchard': orchard_dec, 'tree_house': tree_house_dec}

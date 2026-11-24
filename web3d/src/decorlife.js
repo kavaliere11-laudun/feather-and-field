@@ -168,6 +168,7 @@ const ARBOUR = {
 const FOUNT = { rim: 0.375, R: 1.02, water: 0.28, frogs: [1, 3, 5, 7].map(k => k * Math.PI / 4), bath: false, kinds: ['chaffinch', 'robin', 'chaffinch'] };
 function smallBird(kind, grade) {
   const C = kind === 'robin' ? { back: '#7d6248', belly: '#ea6a32', head: '#7d6248', cap: '#7d6248', face: '#ea6a32', wing: '#6e5540' }
+    : kind === 'blackbird' ? { back: '#1f1d1c', belly: '#262422', head: '#1f1d1c', cap: '#1a1918', face: '#262422', wing: '#161514' }      // (the orchard's blackbird: black all over, an orange beak)
     : { back: '#8a7a6a', belly: '#d9907a', head: '#7f93a8', cap: '#6b84a3', face: '#d9907a', wing: '#4a4f4a' };
   const mats = {}; const mat = c => mats[c] || (mats[c] = (m => { if (grade) grade(m); return m; })(new THREE.MeshLambertMaterial({ color: c })));
   const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
@@ -177,7 +178,7 @@ function smallBird(kind, grade) {
   const head = new THREE.Group(); head.position.set(0, 0.074, 0.028); body.add(head);
   add(S, C.head, 0, 0, 0, 0.022, 0.021, 0.022, head); add(S, C.cap, 0, 0.011, -0.002, 0.019, 0.011, 0.019, head);
   add(S, C.face, 0, -0.004, 0.012, 0.015, 0.013, 0.012, head);
-  add(new THREE.ConeGeometry(1, 1, 6).rotateX(Math.PI / 2), kind === 'robin' ? '#2a2420' : '#b9a48a', 0, -0.001, 0.027, 0.0055, 0.0055, 0.014, head);
+  add(new THREE.ConeGeometry(1, 1, 6).rotateX(Math.PI / 2), kind === 'robin' ? '#2a2420' : kind === 'blackbird' ? '#f2a03a' : '#b9a48a', 0, -0.001, 0.027, 0.0055, 0.0055, 0.014, head);
   for (const s of [-1, 1]) add(S, '#111', s * 0.014, 0.005, 0.012, 0.0045, 0.0045, 0.0045, head);
   const tail = add(new THREE.BoxGeometry(1, 1, 1), C.wing, 0, 0.05, -0.06, 0.02, 0.005, 0.045); tail.rotation.x = -0.35;
   const wings = [-1, 1].map(s => { const w = new THREE.Group(); w.position.set(s * 0.024, 0.058, 0); body.add(w); add(S, C.wing, s * 0.004, -0.008, -0.008, 0.007, 0.019, 0.036, w); if (kind !== 'robin') add(S, '#f2efe6', s * 0.007, -0.006, 0.006, 0.004, 0.006, 0.012, w); return w; });
@@ -338,6 +339,79 @@ class Doves {
   }
 }
 
+// ------------------------------------------------------------------ the Little Orchard (24 Nov 2026): now and then by day an
+// apple drops from one of its three apple trees into the grass (a bounce, a little roll; gone after a while), and a blackbird
+// drops in to hop about under the trees, pecking at the fallen fruit, and flies off again (grand.py orchard_dec, in its own
+// frame: each apple tree's trunk x, z, its crown's middle and size; the meadow's top)
+const ORCHARD = { trees: [[-1.05, 0.8, 1.4, 0.54], [1.05, 0.75, 1.365, 0.53], [1.05, -1.2, 1.47, 0.57]], ground: 0.02 };
+class OrchardLife {
+  constructor(parent, grade, r) {
+    this.r = r; this.apples = []; this.next = 3 + r() * 6;
+    const m = new THREE.MeshLambertMaterial({ color: '#c9302c' }); if (grade) grade(m);
+    const geo = new THREE.SphereGeometry(0.052, 10, 8);
+    for (let i = 0; i < 4; i++) { const a = new THREE.Mesh(geo, m); a.castShadow = true; a.visible = false; parent.add(a); this.apples.push({ m: a, st: 'off', v: 0, t: 0, out: new THREE.Vector2() }); }
+    this.bird = { g: smallBird('blackbird', grade), st: 'away', t: 6 + r() * 8, a: 0 }; this.bird.g.visible = false; parent.add(this.bird.g);
+  }
+  spot() {                                                              // (by a fallen apple, if there's one; else under a tree)
+    const lie = this.apples.filter(a => a.st === 'rest'), r = this.r;
+    if (lie.length && r() < 0.8) { const A = lie[Math.floor(r() * lie.length) % lie.length], a = r() * 6.28; return new THREE.Vector3(A.m.position.x + Math.cos(a) * 0.12, ORCHARD.ground, A.m.position.z + Math.sin(a) * 0.12); }
+    const T = ORCHARD.trees[Math.floor(r() * 3) % 3], a = r() * 6.28, d = 0.35 + r() * 0.35;
+    return new THREE.Vector3(T[0] + Math.cos(a) * d, ORCHARD.ground, T[1] + Math.sin(a) * d);
+  }
+  update(dt, day, time) {
+    if (day > 0.5 && (this.next -= dt) <= 0) {                         // (an apple drops)
+      this.next = 7 + this.r() * 12;
+      const A = this.apples.find(a => a.st === 'off') || this.apples.reduce((x, y) => (x.t > y.t ? x : y));
+      const T = ORCHARD.trees[Math.floor(this.r() * 3) % 3], a = this.r() * 6.28, rr = T[3] * (0.55 + this.r() * 0.3);
+      A.m.position.set(T[0] + Math.cos(a) * rr, T[2] - T[3] * 0.45, T[1] + Math.sin(a) * rr); A.m.scale.setScalar(1); A.m.visible = true;
+      A.st = 'fall'; A.v = 0; A.t = 0; A.bounced = false; A.out.set(Math.cos(a), Math.sin(a)).multiplyScalar(0.35 + this.r() * 0.25);
+    }
+    for (const A of this.apples) {
+      if (A.st === 'off') continue;
+      A.t += dt; const g = ORCHARD.ground + 0.05;
+      if (A.st === 'fall') {
+        A.v -= 9.8 * dt; A.m.position.y += A.v * dt;
+        if (A.bounced) { A.m.position.x += A.out.x * dt; A.m.position.z += A.out.y * dt; A.m.rotation.x += dt * 5; }
+        if (A.m.position.y <= g) { A.m.position.y = g; if (!A.bounced && A.v < -1) { A.v = -A.v * 0.28; A.bounced = true; } else { A.st = 'roll'; A.t = 0; } }
+      } else if (A.st === 'roll') {                                     // (a little roll in the grass, slowing)
+        const k = Math.max(0, 1 - A.t / 0.7); A.m.position.x += A.out.x * k * dt; A.m.position.z += A.out.y * k * dt; A.m.rotation.x += dt * 5 * k;
+        if (k <= 0) { A.st = 'rest'; A.t = 0; }
+      } else if (A.st === 'rest' && A.t > 40) { const k = Math.max(0, 1 - (A.t - 40) / 1.5); A.m.scale.setScalar(Math.max(0.01, k)); if (k <= 0) { A.st = 'off'; A.m.visible = false; } }
+    }
+    const B = this.bird, U = B.g.userData; B.t -= dt;                   // the blackbird
+    if (B.st === 'away') {
+      B.g.visible = false;
+      if (B.t <= 0) {
+        if (day < 0.6) { B.t = 5; return; }
+        B.on = this.spot(); const far = this.r() * 6.28; B.from = new THREE.Vector3(Math.cos(far) * 5, 3.2, Math.sin(far) * 5);
+        B.st = 'in'; B.t = B.dur = 1.8; B.hops = 2 + Math.floor(this.r() * 3);
+      }
+      return;
+    }
+    B.g.visible = true;
+    let flap = 0, peck = 0, look = 0;
+    if (B.st === 'in' || B.st === 'off' || B.st === 'hop') {
+      const u = 1 - Math.max(0, B.t) / B.dur, A = B.st === 'off' ? B.on : B.from, Z = B.st === 'off' ? B.to : B.on;
+      const e = B.st === 'in' ? 1 - (1 - u) * (1 - u) : B.st === 'off' ? u * u : u;
+      B.g.position.lerpVectors(A, Z, e); B.g.position.y += Math.sin(e * Math.PI) * (B.st === 'hop' ? 0.08 : 0.4);
+      B.g.rotation.y = Math.atan2(Z.x - A.x, Z.z - A.z); flap = B.st === 'hop' ? 0.4 : 0.5 + 0.5 * Math.sin(time * 40);
+      if (B.t <= 0) {
+        if (B.st === 'off') { B.st = 'away'; B.t = 14 + this.r() * 20; }
+        else { B.st = 'peck'; B.t = 1.4 + this.r() * 1.8; }
+      }
+    } else if (B.st === 'peck') {                                       // (pecking at the fruit, a look about between)
+      B.g.position.copy(B.on); peck = smooth(0.5, 0.9, Math.sin(time * 5.5 + B.a)); look = (1 - peck) * Math.sin(time * 2.7) * 0.5;
+      if (B.t <= 0 || day < 0.5) {
+        if (B.hops-- > 0 && day >= 0.5) { B.from = B.on.clone(); const a = this.r() * 6.28; B.on = B.on.clone().add(new THREE.Vector3(Math.cos(a) * 0.22, 0, Math.sin(a) * 0.22)); B.st = 'hop'; B.t = B.dur = 0.35; }
+        else { const a = this.r() * 6.28; B.to = new THREE.Vector3(Math.cos(a) * 5, 3.4, Math.sin(a) * 5); B.st = 'off'; B.t = B.dur = 1.7; }
+      }
+    }
+    U.head.rotation.set(peck * 0.9, look, 0); U.body.rotation.x = peck * 0.4;
+    U.wings.forEach((w, i) => { w.rotation.z = (i ? -1 : 1) * flap * 1.2; });
+    U.tail.rotation.x = -0.35 + Math.sin(time * 3) * 0.1 + peck * 0.3;
+  }
+}
+
 // ------------------------------------------------------------------ sprites: a glint of sun, music notes, water drops
 class Floaters {
   constructor(scene, maps, max, grade) { this.scene = scene; this.maps = [].concat(maps); this.pool = []; this.max = max; this.grade = grade; }
@@ -405,6 +479,7 @@ export class DecorLife {
       if (d.model === 'rose_arbour') { const f = frame(d); this.arbour = { f, flies: new Butterflies(f, o.grade, r, 3, ARBOUR.rose), petalIn: 0.5 }; }
       if (d.model === 'dovecote') this.doves = new Doves(frame(d), o.grade, r);
       if (d.model === 'tractor') this.tractor = { f: frame(d), next: 8 + r() * 10, run: 0, puffIn: 0, jig: { on: false, x: 0, y: 0, roll: 0 } };
+      if (d.model === 'orchard') this.orchard = new OrchardLife(frame(d), o.grade, r);
       if (d.model === 'statue') this.statue = d;
       if (d.model === 'bandstand') this.band = d;
     }
@@ -424,6 +499,7 @@ export class DecorLife {
     if (this.flies) this.flies.update(dt, day, t);
     if (this.bath) this.bath.update(dt, day, t);
     if (this.doves) this.doves.update(dt, day, t);
+    if (this.orchard) this.orchard.update(dt, day, t);
     // (the Red Tractor, 24 Nov 2026: now and then by day its engine putters for a few seconds: a little shake (main.js moves
     // it by jig), puffs of smoke from its exhaust, its top at TRACTOR_EXHAUST in its own frame (grand.py tractor_dec))
     if (this.tractor) {
@@ -482,7 +558,7 @@ export class DecorLife {
   state() {
     return {
       bees: this.bees ? this.bees.out : null, butterflies: this.flies ? this.flies.f.filter(f => f.g.visible).length : null,
-      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, arbour: this.arbour ? this.arbour.flies.f.filter(f => f.g.visible).length : null, doves: this.doves ? this.doves.list.map(d => d.st) : null, tractor: this.tractor ? { on: this.tractor.jig.on, next: +this.tractor.next.toFixed(1) } : null, smoke: this.smoke.live, petals: this.petals.live, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
+      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, arbour: this.arbour ? this.arbour.flies.f.filter(f => f.g.visible).length : null, doves: this.doves ? this.doves.list.map(d => d.st) : null, tractor: this.tractor ? { on: this.tractor.jig.on, next: +this.tractor.next.toFixed(1) } : null, orchard: this.orchard ? { apples: this.orchard.apples.filter(a => a.st !== 'off').length, bird: this.orchard.bird.st } : null, smoke: this.smoke.live, petals: this.petals.live, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
     };
   }
 }

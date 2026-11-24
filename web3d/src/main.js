@@ -1452,7 +1452,7 @@ const DECOR_NAMES = register('decor', {
   flowers: ['Cottage flower bed', 'Massif de fleurs'], birdbath: ['Bird bath', 'Bain d’oiseaux'], beehives: ['Beehives', 'Ruches'],
   duckhouse: ['Duck house', 'Maison des canards'], greenhouse: ['Greenhouse', 'Serre'], windmill: ['Windmill', 'Moulin à vent'],
   bandstand: ['Bandstand', 'Kiosque à musique'], statue: ['Golden cockerel', 'Coq d’or'], fountain: ['Golden Egg Fountain', 'Fontaine à l’œuf d’or'],
-  rose_arbour: ['Rose Arbour', 'Tonnelle de roses'], dovecote: ['Dovecote', 'Pigeonnier'], tractor: ['Red Tractor', 'Tracteur rouge'],
+  rose_arbour: ['Rose Arbour', 'Tonnelle de roses'], dovecote: ['Dovecote', 'Pigeonnier'], tractor: ['Red Tractor', 'Tracteur rouge'], orchard: ['Little Orchard', 'Petit verger'],
 });
 const DECOR_ROUND = { bandstand: 1.45, windmill: 1.45, flowers: 0.95, birdbath: 0.7, rose_arbour: 1.3, dovecote: 1.36 };     // (round ones: their circle)
 let DECOR_INFO = null, decorFree = null, decorSpots = null;
@@ -9765,6 +9765,7 @@ function strayMake(gid, at) {
   b.name = gb.name; b.pers = gb.pers; b.gid = gb.id; b.blob = freeBlobs.length ? freeBlobs.pop() : -1;
   b.root.position.y = 0.015 + groundY(at[0], at[1]);
   b.stray = { at: [at[0], at[1]], t: 0.6, to: null, act: null, carry: null, called: false, fade: 0 };
+  const mo = game.moment(); if (mo && mo.k === 'hen' && mo.o && mo.b === gid) { b.stray.orchard = true; const tr = orchardAt(...ORCH_TREE[orchSpotOf(at)]); if (tr) b.root.rotation.y = Math.atan2(tr[0] - at[0], tr[1] - at[1]); }      // (the orchard's apple thief: facing her tree)
   SP.birds.length = 0; SP.birds.push(b); allBirds.push(b);
   STRAY.bird = b; STRAY.gid = gid; STRAY.seq = null;
   return b;
@@ -9860,6 +9861,47 @@ function startHenOut(id = null) {
   }
   return null;
 }
+// ---- the orchard's apple thief (24 Nov 2026, Audrey of the Little Orchard: "Yes put it on but the glouton chickens would
+// go in and try to steal apples and the farmer can run after them"): a farm moment, once the orchard's on the farm and a
+// Glutton hen lives here (the first for sure the next time; then one of the moments there can be, a little more often than
+// the others): one of the Glutton hens has slipped into the orchard and is under one of its front apple trees, pecking at
+// the fallen apples and leaping up at the low ones; "🍎 Apple thief!" beside the coins, "🍎 her name" over her. A tap on
+// her: off she runs out of its gate, wings going, the farmer running after her; he catches her out on the grass ("Caught
+// you, little thief!") and carries her home as for a hen out (game.js henOut(…, orchard), the moment's `o`)
+const ORCH_SPOTS = [[-0.72, 1.12], [0.68, 0.6]], ORCH_TREE = [[-1.05, 0.8], [1.05, 0.75]];      // (in the orchard's own frame: where she stands, the tree she's after)
+function orchardAt(lx, lz) { const it = DEC.items.orchard; if (!it) return null; const v = new THREE.Vector3(lx, 0, lz).applyMatrix4(it.d.m); return [v.x, v.z]; }
+// the thief's way out, tapped: out of its gate if he can get to her out there; if not (its front shut in, against a hedge, a
+// fence or a pen), a flutter over its fence where he can, the nearest such spot (in its own frame: fence x ±1.95, z -1.75..1.7)
+function orchardFlee(from) {
+  const it = DEC.items.orchard; if (!it) return null;
+  const nav = navGrid(), reach = farmReach(), side = Math.random() < 0.5 ? -1 : 1;
+  for (const s of [side, -side]) { const e = orchardAt(s * 0.75, 2.95), q = e && nav.nearestIn(reach, e[0], e[1], 0.35); if (q) return [orchardAt(s * 0.05, 1.25), orchardAt(0, 2.25), q]; }
+  const X = 1.95, Z0 = -1.75, Z1 = 1.7, cand = [];
+  for (let z = -1.5; z <= 1.45; z += 0.25) { cand.push([-X, z, -1, 0]); cand.push([X, z, 1, 0]); }
+  for (let x = -1.7; x <= 1.7; x += 0.25) { cand.push([x, Z0, 0, -1]); if (Math.abs(x) > 0.6) cand.push([x, Z1, 0, 1]); }
+  let best = null, bd = 1e9;
+  for (const [fx, fz, nx, nz] of cand) {
+    if (ORCH_TRUNKS.some(t => Math.hypot(t[0] - (fx - nx * 0.3), t[1] - (fz - nz * 0.3)) < 0.3)) continue;
+    const i = orchardAt(fx - nx * 0.3, fz - nz * 0.3), o = orchardAt(fx + nx * 0.7, fz + nz * 0.7), q = nav.nearestIn(reach, o[0], o[1], 0.3); if (!q) continue;
+    const d = Math.hypot(i[0] - from[0], i[1] - from[1]) + Math.hypot(q[0] - i[0], q[1] - i[1]);
+    if (d < bd) { bd = d; const over = orchardAt(fx + nx * 0.4, fz + nz * 0.4); best = [i, [over[0], over[1], 1], q]; }      // (the middle leg: up and over)
+  }
+  return best || [orchardAt(side * 0.05, 1.25), orchardAt(0, 2.25), orchardAt(side * 0.75, 2.95)];
+}
+const ORCH_TRUNKS = [[-1.05, 0.8], [1.05, 0.75], [0, -0.3], [-1.05, -1.15], [1.05, -1.2]];
+function orchSpotOf(at) { let best = 0, bd = 1e9; ORCH_SPOTS.forEach((s, i) => { const w = orchardAt(s[0], s[1]); const d = w ? Math.hypot(w[0] - at[0], w[1] - at[1]) : 1e9; if (d < bd) { bd = d; best = i; } }); return best; }
+function startOrchardThief(id = null) {
+  if (STRAY.bird || game.moment() || !DEC.items.orchard) return null;
+  const r = rng(Math.floor(Date.now() / 1000) % 100000);
+  const list = allBirds.filter(b => b.gid && b.kind === 'hen' && b.plot && b.plot.kind === 'coop' && !b.busy() && !b.play && b.root.visible && !b.broody && !b.mum && !b.cuddle && !b.called && !b.plot.farmer && !b.plot.fw && !b.isGoose && !b.rig.peafowl
+    && (game.bird(b.gid) || {}).pers === 'glutton' && (!id || b.gid === id));
+  if (!list.length) return null;
+  const b = list[Math.floor(r() * list.length) % list.length], k = Math.floor(r() * ORCH_SPOTS.length) % ORCH_SPOTS.length, at = orchardAt(...ORCH_SPOTS[k]);
+  if (!at || !game.henOut(b.gid, at, Date.now(), true)) return null;
+  const m = game.moment(); strayMake(m.b, m.at);
+  hintNext(game.t('mom_orch_hint', { name: b.name, farmer: farmerName() }));
+  return m;
+}
 // what she does out there: a few steps about her spot, pecking, scratching, a shake; tapped, she stops and turns to the
 // farmer coming, settling down as he gets near; in his arms (carry); going home by herself (fade: a few steps off, smaller)
 function strayStep(b, dt) {
@@ -9869,6 +9911,15 @@ function strayStep(b, dt) {
     S.fade = Math.max(0, S.fade - dt); const u = 1 - S.fade / 1.2; b.root.scale.setScalar(Math.max(0.01, (b.size || 1) * (1 - u * u)));
     const y = b.root.rotation.y, st = b.speed * 1.3 * dt; p.x += Math.sin(y) * st; p.z += Math.cos(y) * st; p.y = 0.015 + groundY(p.x, p.z); o.walking = true;
     if (!S.fade) strayPut(true);
+    return o;
+  }
+  if (S.flee) {      // (the apple thief, tapped: off she runs out of the orchard's gate, wings going; then she waits for him)
+    const q = S.flee[0], dx = q[0] - p.x, dz = q[1] - p.z, d = Math.hypot(dx, dz); S.ft = (S.ft || 0) + dt;
+    if (q[2] && !S.hop) S.hop = Math.max(0.1, d);      // (over the fence: up and down again across this leg)
+    if (d > 1e-4) { b.root.rotation.y = Math.atan2(dx, dz); const st = Math.min(d, b.speed * 2.6 * dt); p.x += dx / d * st; p.z += dz / d * st; }
+    const hop = S.hop ? Math.sin(Math.PI * Math.min(1, Math.max(0, 1 - Math.hypot(q[0] - p.x, q[1] - p.z) / S.hop))) * 0.72 : 0;
+    o.walking = !hop; o.flap = hop ? 1 : 0.5 + 0.5 * Math.sin(S.ft * 17); p.y = 0.015 + groundY(p.x, p.z) + (hop || Math.abs(Math.sin(S.ft * 9)) * 0.03);
+    if (d < 0.06) { S.flee.shift(); S.hop = 0; if (!S.flee.length) { S.flee = null; S.called = true; S.lift = 0; strayFetch(); } }
     return o;
   }
   if (S.called) {
@@ -9891,16 +9942,19 @@ function strayStep(b, dt) {
     if (A.type === 'peck') o.peck = (A.left % 0.55) > 0.24 ? 1 : 0.3;
     else if (A.type === 'scratch') { if (A.left > 0.9) { o.kick = 1; o.leg = A.leg; } else o.peck = (A.left % 0.45) > 0.2 ? 1 : 0.4; }
     else if (A.type === 'ruffle') o.ruffle = Math.sin(Math.max(0, Math.min(1, 1 - A.left / 0.75)) * Math.PI);
-    if (A.left <= 0) { S.act = null; S.t = 0.3 + b.r() * 0.9; }
+    else if (A.type === 'leap') { const u = 1 - A.left / 0.9; o.flap = u > 0.1 && u < 0.85 ? 1 : 0; S.lift = Math.sin(Math.max(0, Math.min(1, (u - 0.12) / 0.7)) * Math.PI) * 0.32; }      // (the apple thief: up at an apple, wings going)
+    if (A.left <= 0) { S.act = null; S.lift = 0; S.t = 0.3 + b.r() * 0.9; }
   } else if (S.t <= 0) {
     const x = b.r(), nav = navGrid();
-    if (x < 0.4) { for (let k = 0; k < 6; k++) { const a = b.r() * 6.28, d = (0.2 + b.r() * 0.7) * (S.chick ? 0.55 : 1), q = [S.at[0] + Math.sin(a) * d, S.at[1] + Math.cos(a) * d]; if (nav.freeAt(q[0], q[1])) { S.to = q; S.t = 0; break; } } }
+    if (S.orchard) {      // (in the orchard: pecking at the fallen apples, leaping up at the low ones, a shake)
+      S.n = (S.n || 0) + 1; S.act = S.n % 2 ? { type: 'leap', left: 0.9 } : x < 0.75 ? { type: 'peck', left: 1.2 + b.r() * 1.6 } : { type: 'ruffle', left: 0.75 };
+    } else if (x < 0.4) { for (let k = 0; k < 6; k++) { const a = b.r() * 6.28, d = (0.2 + b.r() * 0.7) * (S.chick ? 0.55 : 1), q = [S.at[0] + Math.sin(a) * d, S.at[1] + Math.cos(a) * d]; if (nav.freeAt(q[0], q[1])) { S.to = q; S.t = 0; break; } } }
     else if (x < 0.75) S.act = { type: 'peck', left: 1.2 + b.r() * 1.8 };
     else if (x < 0.9) S.act = { type: 'scratch', left: 1.9, leg: b.r() < 0.5 ? 0 : 1 };
     else S.act = { type: 'ruffle', left: 0.75 };
     if (!S.to && !S.act) S.t = 0.5;
   }
-  p.y = 0.015 + groundY(p.x, p.z);
+  p.y = 0.015 + groundY(p.x, p.z) + (S.lift || 0);
   return o;
 }
 // in his arms k of the way (0 on the ground .. 1): in front of his chest, across his arms, her head to his left, her eyes shut
@@ -9961,6 +10015,15 @@ function strayTap() {
     return true;
   }
   const r = game.henFound(); if (!r) return false;
+  if (b.stray.orchard) {      // (the apple thief: off she runs out of the gate; he comes once she's out: strayStep)
+    b.stray.act = null; b.stray.lift = 0;
+    b.stray.flee = (orchardFlee([b.root.position.x, b.root.position.z]) || []).filter(Boolean);
+    farmSound('mum', b.root.position.x, b.root.position.z, 1.3);
+    hint(game.t('mom_orch_found', { name: r.name, farmer: farmerName(), c: r.coins, x: r.xp }));
+    gameUI.refresh(); gameUI.bumpCoins(); if (r.cuddle) { jobsDone(r.cuddle.done); if (r.cuddle.up) hintNext(game.t('trust_up' + r.cuddle.up, { name: r.name, farmer: farmerName(), xp: r.cuddle.xp })); }
+    strayPill(); wake(1500);
+    return true;
+  }
   b.stray.called = true; heartOver(b); farmSound('mum', b.root.position.x, b.root.position.z, 1.2);
   hint(game.t('mom_hen_found', { name: r.name, farmer: farmerName(), c: r.coins, x: r.xp }));
   gameUI.refresh(); gameUI.bumpCoins(); if (r.cuddle) { jobsDone(r.cuddle.done); if (r.cuddle.up) hintNext(game.t('trust_up' + r.cuddle.up, { name: r.name, farmer: farmerName(), xp: r.cuddle.xp })); }
@@ -9974,18 +10037,18 @@ function strayFetch() {
     return;
   }
   const home = b.stray.chick ? b.lostFrom : strayHome(game.bird(b.gid)), P = home && plots.includes(home) && farmLife && !farmLife.home && !farmLife.running ? penSpec(home) : null;
-  if (!P) { strayFade(); return; }
+  if (!P) { STRAY.why = 'pen'; strayFade(); return; }
   const p = b.root.position, F = farmLife.pos, nav = navGrid(), reach = farmReach(), a0 = Math.atan2(F.x - p.x, F.z - p.z), off = b.stray.chick ? 0.36 : 0.42;
   let at = null;
   for (const da of [0, 0.5, -0.5, 1, -1, 1.6, -1.6, 2.4, -2.4, 3.14]) { const q = [p.x + Math.sin(a0 + da) * off, p.z + Math.cos(a0 + da) * off]; if (nav.nearestIn(reach, q[0], q[1], 0)) { at = q; break; } }
   if (!at) at = nav.nearestIn(reach, p.x, p.z, 1.0);
-  const seq = at && farmLife.bringHome({ P, at, hen: b, face: () => Math.atan2(b.root.position.x - at[0], b.root.position.z - at[1]), lift: (k, Lf) => strayLift(k, Lf), down: () => strayPut(), heart: () => { if (STRAY.bird) heartOver(STRAY.bird); } });
-  if (!seq) { strayFade(); return; }
-  STRAY.seq = seq; wake(1500);
+  const seq = at && farmLife.bringHome({ P, at, hen: b, pace: b.stray.orchard ? 'run' : undefined, say: b.stray.orchard ? 'caught' : undefined, face: () => Math.atan2(b.root.position.x - at[0], b.root.position.z - at[1]), lift: (k, Lf) => strayLift(k, Lf), down: () => strayPut(), heart: () => { if (STRAY.bird) heartOver(STRAY.bird); } });
+  if (!seq) { STRAY.why = at ? 'seq' : 'at'; strayFade(); return; }
+  STRAY.seq = seq; STRAY.why = 'ok'; wake(1500);
 }
 // a tap on the farm: on her, or near her (a thumb's width)
 function strayHit(rr, x, y) {
-  const b = STRAY.bird; if (!b || b.stray.called || b.stray.fade) return false;
+  const b = STRAY.bird; if (!b || b.stray.called || b.stray.fade || b.stray.flee) return false;
   const w = b.root.getWorldPosition(new THREE.Vector3()), sp = new THREE.Sphere(new THREE.Vector3(w.x, w.y + b.hitY, w.z), Math.max(b.stray.chick ? 0.24 : 0.3, b.hitR * 1.6));
   let hit = !!rr.intersectSphere(sp, new THREE.Vector3());
   if (!hit) { bubV.set(w.x, w.y + b.hitY, w.z).project(camera); const sx = (bubV.x + 1) / 2 * canvas.clientWidth, sy = (1 - bubV.y) / 2 * canvas.clientHeight; hit = bubV.z < 1 && Math.hypot(sx - x, sy - y) < 30; }
@@ -9995,7 +10058,7 @@ function strayHit(rr, x, y) {
 // (or "🌧️ It's raining!" while it rains: farm moments' rainy day)
 function strayPill() {
   const m = game.moment(); let key = '', text = null, tap = null;
-  if (m && m.k === 'hen' && STRAY.bird && !STRAY.bird.stray.called) { key = 'hen' + m.b + LANG; text = game.t('mom_hen'); tap = () => { const gb = game.bird(m.b); if (gb) hint(game.t('mom_hen_hint', { name: gb.name })); }; }
+  if (m && m.k === 'hen' && STRAY.bird && !STRAY.bird.stray.called) { key = 'hen' + m.b + (m.o ? 'o' : '') + LANG; text = game.t(m.o ? 'mom_orch' : 'mom_hen'); tap = () => { const gb = game.bird(m.b); if (gb) hint(game.t(m.o ? 'mom_orch_hint' : 'mom_hen_hint', { name: gb.name, farmer: farmerName() })); }; }
   else if (m && m.k === 'rain' && RAIN.on) { key = 'rain' + LANG; text = game.t('mom_rain'); tap = () => hint(game.t('mom_rain_hint')); }
   else if (m && m.k === 'snow' && SNOWF.on) { key = 'snow' + LANG; text = game.t('mom_snow'); tap = () => hint(game.t('mom_snow_hint')); }
   else if (m && m.k === 'chick' && STRAY.bird && !STRAY.bird.stray.called) { key = 'chick' + m.c + m.i + LANG; text = game.t('mom_chick'); tap = () => { const c = game.coop(m.c), mum = c && c.brood && game.bird(c.brood.hen); hint(game.t('mom_chick_hint', { name: mum ? mum.name : '' })); }; }
@@ -10024,7 +10087,7 @@ function tickStray(dt) {
     const S = b.stray || { called: true, fade: 1 };      // (a chick just set down back home: nothing more here)
     if (b.stray && b.stray.chick && b.lostFrom) { const mum = b.mum && b.lostFrom.birds.includes(b.mum) ? b.mum : null; if (mum && !mum.asleep && !mum.roost) { const w = b.root.getWorldPosition(new THREE.Vector3()); setWorry(mum, [w.x, w.z]); } }      // (its mum worried till it's back)
     if (S.chick && !S.called && !S.fade && !mc) strayFade();      // (its moment over some other way: back by itself)
-    else if (!S.called && !S.fade && (h >= MOMENTS.home || h < 6)) { const r = S.chick ? game.chickBack() : game.henBack(); if (r && !document.hidden) hintNext(game.t(S.chick ? 'mom_chick_back' : 'mom_hen_back', { name: r.name })); strayFade(); }
+    else if (!S.called && !S.fade && (h >= MOMENTS.home || h < 6)) { const r = S.chick ? game.chickBack() : game.henBack(); if (r && !document.hidden) hintNext(game.t(S.chick ? 'mom_chick_back' : S.orchard ? 'mom_orch_back' : 'mom_hen_back', { name: r.name })); strayFade(); }
     else if (S.chick && !S.called && !S.fade && (S.peep -= dt) <= 0) {      // (its peeps: heard from where it is, and "peep!" floating up from it on the screen)
       S.peep = 2.2 + Math.random() * 1.8; S.peeps = (S.peeps || 0) + 1; const w = b.root.getWorldPosition(new THREE.Vector3()); farmSound('chicks', w.x, w.z, 1.4);
       bubV.set(w.x, w.y + 0.12, w.z).project(camera); const sx = (bubV.x + 1) / 2 * canvas.clientWidth, sy = (1 - bubV.y) / 2 * canvas.clientHeight;
@@ -10040,9 +10103,9 @@ function tickStray(dt) {
   if (STRAY.worried && !(STRAY.bird && STRAY.bird.stray && STRAY.bird.stray.chick)) { setWorry(STRAY.worried, null); STRAY.worried = null; }      // (no chick of hers lost any more)
   const B = STRAY.bub || (STRAY.bub = (() => { const e = document.createElement('button'); e.type = 'button'; e.className = 'gbub gstraybub'; e.hidden = true; e.addEventListener('click', ev => { ev.stopPropagation(); strayTap(); }); document.body.append(e); return e; })());
   const bb = STRAY.bird;
-  if (!bb || !bb.stray || bb.stray.called || bb.stray.fade || inside.open || gameUI.isOpen) B.hidden = true;
+  if (!bb || !bb.stray || bb.stray.called || bb.stray.fade || bb.stray.flee || inside.open || gameUI.isOpen) B.hidden = true;
   else {
-    const t = bb.stray.chick ? '🐣 ' + game.t('mom_peep') : '❗ ' + bb.name; if (B.textContent !== t) B.textContent = t;
+    const t = bb.stray.chick ? '🐣 ' + game.t('mom_peep') : (bb.stray.orchard ? '🍎 ' : '❗ ') + bb.name; if (B.textContent !== t) B.textContent = t;
     const w = bb.root.getWorldPosition(new THREE.Vector3()); bubV.set(w.x, w.y + bb.rig.scale * (bb.size || 1) * 1.15 + (bb.stray.chick ? 0.06 : 0), w.z).project(camera);
     const sx = (bubV.x + 1) / 2 * canvas.clientWidth, sy = (1 - bubV.y) / 2 * canvas.clientHeight;
     if (bubV.z > 1 || sx < -40 || sx > canvas.clientWidth + 40 || sy < 20 || sy > canvas.clientHeight + 40) B.hidden = true; else bubAt(B, sx, sy);
@@ -10057,11 +10120,11 @@ function tickStray(dt) {
     // (21 Nov 2026: a visitor at the farm stall, once the village orders are open; her first visit straight after the first hen out)
     // (23 Nov 2026, a snowy day: from 1 December to 28 February, the winter's first for sure the next time; then in a rainy
     // day's place three times in four in December and January, one in two in February)
-    const chicks = due && gamePlots().some(p => p.kind === 'coop' && game.chicksIn(p.gc.id)), visit = due && due.visit && !!stallSpot(), kinds = ['hen', ...(due && (due.rain || due.snow) ? ['rain'] : []), ...(chicks ? ['chick'] : []), ...(visit ? ['visit'] : [])];
-    let kind = !due ? null : due.first ? 'hen' : due.firstVisit && visit ? 'visit' : due.firstSnow ? 'snow' : due.firstRain ? 'rain' : due.firstChick && chicks ? 'chick' : Math.random() < MOMENTS.chance ? kinds[Math.floor(Math.random() * kinds.length)] : null;
+    const chicks = due && gamePlots().some(p => p.kind === 'coop' && game.chicksIn(p.gc.id)), visit = due && due.visit && !!stallSpot(), orch = due && due.orchard && !!DEC.items.orchard, kinds = ['hen', ...(due && (due.rain || due.snow) ? ['rain'] : []), ...(chicks ? ['chick'] : []), ...(visit ? ['visit'] : []), ...(orch ? ['orchard', 'orchard'] : [])];
+    let kind = !due ? null : due.first ? 'hen' : due.firstOrchard && orch ? 'orchard' : due.firstVisit && visit ? 'visit' : due.firstSnow ? 'snow' : due.firstRain ? 'rain' : due.firstChick && chicks ? 'chick' : Math.random() < MOMENTS.chance ? kinds[Math.floor(Math.random() * kinds.length)] : null;
     if (kind === 'rain' && due.snow && (!due.rain || Math.random() < due.snowOdds)) kind = 'snow';
     if (kind === 'snow') { if (!snowStart()) startHenOut(); }
-    else if (kind === 'rain') rainStart(); else if (kind === 'chick') { if (!startChickOut()) startHenOut(); } else if (kind === 'visit') { if (!visitStart()) startHenOut(); } else if (kind === 'hen') startHenOut();
+    else if (kind === 'rain') rainStart(); else if (kind === 'chick') { if (!startChickOut()) startHenOut(); } else if (kind === 'visit') { if (!visitStart()) startHenOut(); } else if (kind === 'orchard') { if (!startOrchardThief()) startHenOut(); } else if (kind === 'hen') startHenOut();
   }
 }
 // ---- farm moments, the rainy day (20 Nov 2026, "Carry on"; the 17 Nov mock-up: "Worms come up in the rain. Tap them";
@@ -11305,7 +11368,7 @@ window.__farm = {
     way: () => VISIT.way, card: () => visitCard(), give: () => visitGive(), no: () => visitNo(), tap: () => { const f = VISIT.f; if (!f) return null; bubV.set(f.pos.x, f.pos.y + 0.7, f.pos.z).project(camera); return { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight }; } },
   snow: { start: () => snowStart(), state: () => ({ on: SNOWF.on, k: +SNOWF.k.toFixed(2), cover: +SNOW_U.value.toFixed(2), flakes: !!(SNOWF.pts && SNOWF.pts.visible), prints: gamePlots().filter(p => p.snowP).length, steps: gamePlots().reduce((a, p) => a + (p.snowP ? p.snowP.live : 0), 0) }) },
   rain: { start: () => rainStart(), penWorm: () => { const pen = penWormSpot(); if (!pen) return null; const W = makeWorm(pen.at[0], pen.at[1], 0); W.pen = pen; W.turn = 0; W.still = true; W.henIn = 1.3; RAIN.worms.push(W); RAIN.spawned++; return pen.q; }, state: () => ({ on: RAIN.on, k: +RAIN.k.toFixed(2), wet: +RAIN.wet.toFixed(2), pud: RAIN.pud.length, worms: RAIN.worms.filter(W => !W.pop && !W.eaten && W.t < W.life).map(W => { W.g.updateMatrixWorld(true); const w = W.segs[5].getWorldPosition(new THREE.Vector3()), q = w.clone().project(camera); return { at: [w.x, w.z], x: (q.x + 1) / 2 * canvas.clientWidth, y: (1 - q.y) / 2 * canvas.clientHeight, t: W.t, pen: !!W.pen, hen: W.hen ? W.hen.gid || W.hen.name : null }; }), spawned: RAIN.spawned, eaten: RAIN.eaten || 0, lines: !!(RAIN.lines && RAIN.lines.visible) }), fieldOf: (x, z) => fieldAt(x, z) },
-  moment: { seat: STRAY_SEAT, start: id => startHenOut(id), chick: coopId => startChickOut(coopId), roll: () => { STRAY.roll = true; }, why: () => ({ roll: STRAY.roll, open: gameUI.isOpen, kind: gameUI.kind, inside: inside.open, guide: GUIDE_UI.on, intro: GUIDE_UI.intro, hint: hintLeft, news: performance.now() - newsFrom, home: farmLife && farmLife.home, run: farmLife && farmLife.running, show: !!SHOWDAY }), bird: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); return { gid: b.gid, name: b.name, at: [w.x, w.z], y: w.y, called: b.stray.called, fade: b.stray.fade, carry: b.stray.carry ? b.stray.carry.k : 0, spot: b.stray.at, chick: !!b.stray.chick, kidI: b.kidI, peeps: b.stray.peeps || 0, mum: b.mum && b.mum.worry ? (() => { const q = b.mum.root.getWorldPosition(new THREE.Vector3()), c = b.mum.plot.frame.localToWorld(new THREE.Vector3((penOf(b.mum.plot).yard.min[0] + penOf(b.mum.plot).yard.max[0]) / 2, 0, (penOf(b.mum.plot).yard.min[2] + penOf(b.mum.plot).yard.max[2]) / 2)); return { calls: b.mum.worry.calls || 0, at: [q.x, q.z], mid: [c.x, c.z] }; })() : null }; },
+  moment: { seat: STRAY_SEAT, start: id => startHenOut(id), orchard: id => startOrchardThief(id), orchAt: (lx, lz) => orchardAt(lx, lz), reach: (x, z, r) => navGrid().nearestIn(farmReach(), x, z, r), free: (x, z) => navGrid().freeAt(x, z), chick: coopId => startChickOut(coopId), roll: () => { STRAY.roll = true; }, why: () => ({ roll: STRAY.roll, open: gameUI.isOpen, kind: gameUI.kind, inside: inside.open, guide: GUIDE_UI.on, intro: GUIDE_UI.intro, hint: hintLeft, news: performance.now() - newsFrom, home: farmLife && farmLife.home, run: farmLife && farmLife.running, show: !!SHOWDAY }), bird: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); return { gid: b.gid, name: b.name, at: [w.x, w.z], y: w.y, why: STRAY.why || null, orchard: !!b.stray.orchard, flee: !!b.stray.flee, called: b.stray.called, fade: b.stray.fade, carry: b.stray.carry ? b.stray.carry.k : 0, spot: b.stray.at, chick: !!b.stray.chick, kidI: b.kidI, peeps: b.stray.peeps || 0, mum: b.mum && b.mum.worry ? (() => { const q = b.mum.root.getWorldPosition(new THREE.Vector3()), c = b.mum.plot.frame.localToWorld(new THREE.Vector3((penOf(b.mum.plot).yard.min[0] + penOf(b.mum.plot).yard.max[0]) / 2, 0, (penOf(b.mum.plot).yard.min[2] + penOf(b.mum.plot).yard.max[2]) / 2)); return { calls: b.mum.worry.calls || 0, at: [q.x, q.z], mid: [c.x, c.z] }; })() : null }; },
     screen: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); bubV.set(w.x, w.y + b.hitY, w.z).project(camera); return { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight, z: bubV.z }; },
     tap: () => strayTap(), seq: () => !!STRAY.seq, pill: () => { const e = document.querySelector('.gmom'); return e && !e.hidden ? e.textContent : null; }, bub: () => STRAY.bub && !STRAY.bub.hidden ? STRAY.bub.textContent : null, spot: id => { const b = allBirds.find(x => x.gid === id && x.plot && x.plot.kind === 'coop'); return b ? straySpot(b.plot, rng(5)) : null; } },
   hunt: { at: () => HUNT_UI.mesh && HUNT_UI.mesh.visible ? HUNT_UI.at : null, tap: () => { const e = HUNT_UI.mesh; if (!e || !e.visible) return false; bubV.set(e.position.x, e.position.y + 0.06, e.position.z).project(camera); return huntTap((bubV.x + 1) / 2 * canvas.clientWidth, (1 - bubV.y) / 2 * canvas.clientHeight); }, tick: dt => tickHunt(dt || 0.03) },      // (tests: the golden egg)

@@ -36,6 +36,7 @@ export const FARMER_TEXT = register('say', {
   there: ['There you are!', 'Vous voilà !'],
   wormsH: ['Thank you, my lovely!', 'Merci, ma belle !'], wormsR: ['Thanks, old chap!', 'Merci, mon brave !'],      // (worms from a hen or a rooster)
   found: ['There you are!', 'Te voilà, toi !'], homego: ['Home you go!', 'Allez, à la maison !'],      // (a hen out, brought home: main.js farm moments)
+  caught: ['Caught you, little thief!', 'Je te tiens, petite voleuse !'],      // (the orchard's apple thief, caught: 24 Nov 2026)
   visit: ['Here you are!', 'Et voilà !'],      // (a visitor at the stall, given what she'd like: main.js farm moments)
   fishgot: ['Got one!', 'Attrapé !'], fishnew: ['A new fish!', 'Un nouveau poisson !'], fishbig: ['What a beauty!', 'Quelle beauté !'],      // (fishing: fishing.js)
   role: { m: ['farmer', 'fermier'], f: ['farmer', 'fermière'] },
@@ -439,10 +440,10 @@ export class FarmLife {
     const pen = on => () => { if (on) { self.pen = P; P.enter(); } else { P.leave(); self.pen = null; } return null; };
     const there = { name: 'check', run(Lf) { if (Math.hypot(Lf.pos.x - o.at[0], Lf.pos.z - o.at[1]) > 0.8) { seq.aborted = true; put(); } return true; } };
     const atGate = { name: 'check', run(Lf) { if (Math.hypot(Lf.pos.x - P.out[0], Lf.pos.z - P.out[1]) > 0.8) { seq.aborted = true; put(); } return true; } };
-    const L = [TK.path(o.at[0], o.at[1], 'hurry'), there, () => TK.face(o.face()),
+    const L = [TK.path(o.at[0], o.at[1], o.pace || 'hurry'), there, () => TK.face(o.face()),
       TK.act('scoop', 1.0, (W, u, Lf) => { W.pose = 'scoop'; W.face = 'happy'; W.look = [0, -0.5]; o.lift(0.32 * sm(step(0.45, 1.0, u)), Lf); }),
       TK.act('rise', 1.0, (W, u, Lf) => { W.pose = 'cuddle'; W.face = 'happy'; o.lift(0.32 + 0.68 * sm(step(0, 0.85, u)), Lf); }),
-      TK.say('found'),
+      TK.say(o.say || 'found'),
       TK.act('hug', 2.2, (W, u, Lf) => { W.pose = 'cuddle'; W.face = 'cuddle'; W.hug = u; W.hugK = 0; o.lift(1, Lf); if (u > heart) { heart += 0.7; if (o.heart) o.heart(); } }),
       () => { held = true; return null; },
       TK.path(P.out[0], P.out[1], 'walk'), atGate, TK.face(P.toGate), pen(true), TK.walk(P.in),

@@ -5,7 +5,8 @@
 // picture, price and button; its page in 3D (the view still); bought and put down: its coins and XP (a fiftieth), on the
 // farm, in everyone's way; its life by day (the fountain: its water moving, birds drinking at its rim, drops where the
 // water falls in; the Rose Arbour: butterflies on its roses, petals drifting down). A reload: all where they were. A save
-// changed outside to have them before their level: flagged, not kept. No page errors.
+// changed outside to have them before their level: flagged, not kept. The orchard's apple thief: a Glutton hen in it, tapped
+// she runs out of its gate, the farmer runs after her, catches her and carries her home. No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const fr = process.env.LANG === 'fr', W = +(process.env.W || 874), H = +(process.env.H || 402), SHOTS = process.env.SHOTS;
@@ -42,6 +43,8 @@ const ALL = {
     life: L => L && L.doves && L.doves.some(x => x === 'circle'), lifeSays: 'its doves off round it' },
   tractor: { level: 44, price: 60000, name: fr ? /Tracteur rouge/ : /Red Tractor/, words: fr ? /fumée/ : /smoke/,
     life: L => L && L.tractor && L.tractor.on && L.smoke > 0, lifeSays: 'its engine puttering, puffs of smoke' },
+  orchard: { level: 45, price: 70000, name: fr ? /Petit verger/ : /Little Orchard/, words: fr ? /merle/ : /blackbird/,
+    life: L => L && L.orchard && L.orchard.apples > 0 && L.orchard.bird !== 'away', lifeSays: 'apples dropping, the blackbird about' },
 };
 const IDS = process.env.ONLY ? process.env.ONLY.split(',') : Object.keys(ALL);
 const fmt = n => new RegExp(String(Math.floor(n / 1000)) + '\\D?' + String(n % 1000).padStart(3, '0'));
@@ -49,6 +52,9 @@ await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
+// (a farm of these levels: its land bought, room for all five)
+await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = f.xpFor(40) + 5; g.data.lvSeen = 40; g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.land = [0, 1, 2, 3, 4, 5, 6, 7]; g.save(); });
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
 await p.evaluate(() => window.__farm.gameUI().close());
 const placed = {};
 for (const id of IDS) {
@@ -92,6 +98,24 @@ for (const id of IDS) {
   for (let k = 0; k < 16 && !seen; k++) { await run(3); L = await p.evaluate(() => window.__farm.deco.life()); seen = G.life(L); }
   ok(`${id}: by day ${G.lifeSays}`, seen && (id !== 'fountain' || ft1 > ft0), { ft0, ft1, L });
   await shot(id + '_3_farm');
+  if (id === 'orchard') {      // (Audrey: "the glouton chickens would go in and try to steal apples and the farmer can run after them")
+    const hen = await p.evaluate(() => { const g = window.__farm.game(), b = g.data.birds.find(x => x.sex === 'h' && g.coop(x.coop)); b.pers = 'glutton'; g.data.moment = null; g.data.moments = { last: 0, hen: 1 }; g.save(); return { id: b.id, name: b.name, coins: g.data.coins }; });
+    await run(0.5);
+    const m = await p.evaluate(id => { const f = window.__farm; return f.moment.orchard(id); }, hen.id); await run(0.5);
+    const th = await p.evaluate(([x, z]) => { const f = window.__farm, b = f.moment.bird(); return { b, pill: f.moment.pill(), bub: f.moment.bub(), d: b ? Math.hypot(b.at[0] - x, b.at[1] - z) : null }; }, [at.x, at.z]);
+    ok('the orchard\'s apple thief: a Glutton hen in the orchard under an apple tree, "🍎 Apple thief!" beside the coins, "🍎 her name" over her', m && m.o === 1 && th.b && th.b.orchard && th.d < 1.6 && (fr ? /Voleuse de pommes/ : /Apple thief/).test(th.pill || '') && /🍎/.test(th.bub || '') && th.bub.includes(hen.name), { m, th });
+    let up = 0; for (let k = 0; k < 24; k++) { await run(0.25); const y = await p.evaluate(() => { const b = window.__farm.moment.bird(); return b ? b.y : 0; }); up = Math.max(up, y); }
+    ok('…pecking at the fallen apples, leaping up at the low ones', up > 0.15, { up });
+    await shot(id + '_4_thief');
+    const tapped = await p.evaluate(() => window.__farm.moment.tap()); await run(1.2);
+    const fl = await p.evaluate(() => window.__farm.moment.bird());
+    await run(2.5);
+    const out = await p.evaluate(([x, z]) => { const f = window.__farm, b = f.moment.bird(); const L = f.farmer(); return { b, seq: f.moment.seq(), d: b ? Math.hypot(b.at[0] - x, b.at[1] - z) : null, coins: f.game().data.coins, m: f.game().data.moment, farmer: L && { home: L.home, running: L.running, task: L.task && L.task.name, pos: [L.pos.x, L.pos.z] } }; }, [at.x, at.z]);
+    ok('tapped: off she runs out of its gate (or over its fence where he can get to her), the farmer running after her; paid', tapped && fl && fl.flee && out.b && !out.b.flee && out.d > 2.1 && out.seq && out.coins > hen.coins && !out.m, { fl, out });
+    await shot(id + '_5_chase');
+    let home = null; for (let k = 0; k < 40 && !home; k++) { await run(1); home = await p.evaluate(id => { const f = window.__farm; return !f.moment.bird() && f.coopPlots().some(P => P.birds.some(b => b.gid === id)) ? true : null; }, hen.id); }
+    ok('…he catches her out on the grass and carries her home', !!home, home);
+  }
 }
 // a reload: all still there
 await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
