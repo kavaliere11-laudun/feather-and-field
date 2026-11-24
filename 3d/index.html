@@ -706,6 +706,13 @@
   .gwelcome-empty { text-align: center; }
   .gwelcome-acct { display: flex; flex-direction: column; gap: 6px; }
   .gwelcome-acct .gbtn { margin-top: 0; }
+  /* the app's My account: Sign in with Apple in Apple's black, its logo before the words (Apple asks this of that button) */
+  .gbtn.gacct-apple { display: inline-flex; align-items: center; justify-content: center; gap: 7px; }
+  .gbtn.gacct-apple:not(:disabled) { background: #000; color: #fff; box-shadow: none; }
+  .gbtn.gacct-apple svg { width: 1.1em; height: 1.1em; flex: none; fill: currentColor; margin-top: -3px; }
+  .gacct-ins { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; }
+  .gacct .gacct-ins .gsmallbtn { margin: 0; }
+  .gfox-row.gacct-nudge2 { flex-direction: column; gap: 8px; margin-top: 10px; } .gfox-row.gacct-nudge2 .gbtn { flex: none; width: 100%; }
   /* the farm code (release 1 step 9g) */
   .gcode .gsmallbtn { align-self: flex-start; margin: 4px 0 2px; }
   .gcodebox { width: 100%; box-sizing: border-box; font: 12px/1.35 ui-monospace, Menlo, monospace; border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; background: #fff; color: var(--ink); resize: none; word-break: break-all; }
@@ -984,6 +991,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1795547831"></script>
+<script src="app.js?v=1795554513"></script>
 </body>
 </html>
