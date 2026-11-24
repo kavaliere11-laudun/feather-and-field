@@ -54,6 +54,19 @@ ok('the rare Silkie trios: each £6.99, all four £19.99', rare.tiles.length ===
 await shot('1_chickens');
 await p.evaluate(() => { const e = document.querySelector('.gsheet:not([hidden]) .gcshelf'); if (e) e.scrollIntoView(); }); await shot('1b_shelf');
 await p.evaluate(() => { const e = document.querySelector('.gsheet:not([hidden]) .grare-tiles'); if (e) e.scrollIntoView(); }); await shot('2_rare');
+// (24 Nov 2026, Audrey: "For the chickens create 3 pills at the top for special breeds and rare breeds please and all")
+const pills = () => p.evaluate(() => { const S = document.querySelector('.gsheet:not([hidden])'); return { pills: [...S.querySelectorAll('.ghens-pills .gchip')].map(c => [c.dataset.hens, c.textContent, c.classList.contains('on')]), shelf: S.querySelectorAll('.gshop-main [data-shelf]').length, rare: S.querySelectorAll('.gshop-main [data-rare]').length, top: (() => { const r = S.querySelector('.ghens-pills'), m = S.querySelector('.gshop-main'); return r && m ? r.getBoundingClientRect().top - m.getBoundingClientRect().top : 99; })() }; });
+const pa = await pills();
+ok('three pills at the top: All (picked), Special breeds, Rare breeds; All shows both', pa.pills.length === 3 && pa.pills[0][0] === 'all' && pa.pills[0][2] && (fr ? /Races spéciales/ : /Special breeds/).test(pa.pills[1][1]) && (fr ? /Races rares/ : /Rare breeds/).test(pa.pills[2][1]) && pa.shelf === 8 && pa.rare === 4 && pa.top < 30, pa);
+await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .ghens-pills [data-hens="special"]').click()); await p.waitForTimeout(300);
+const ps = await pills();
+ok('…Special breeds: the collector\'s shelf only', ps.pills[1][2] && ps.shelf === 8 && ps.rare === 0, ps);
+await shot('2b_special');
+await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .ghens-pills [data-hens="rare"]').click()); await p.waitForTimeout(300);
+const pr2 = await pills();
+ok('…Rare breeds: the rare Silkie trios only', pr2.pills[2][2] && pr2.shelf === 0 && pr2.rare === 4, pr2);
+await shot('2c_rare');
+await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .ghens-pills [data-hens="all"]').click()); await p.waitForTimeout(300);
 // bought with coins from here: its coop to place
 await openTab('hens');
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gshelf-t[data-shelf="sil_buff"] button[data-shelfgo="coins"]').click()); await p.waitForTimeout(1500);

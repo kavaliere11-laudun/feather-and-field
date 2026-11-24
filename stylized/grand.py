@@ -1204,16 +1204,16 @@ def topiary_garden_dec(seed=161, name='topiary_garden'):
     B = 1.22
     bx, by = -B, -B + 0.1                                  # (front left: a spiral cone)
     for i in range(7):
-        z = 0.12 + i * 0.2; r = 0.36 * (1 - i / 7.5)
+        z = 0.18 + i * 0.19; r = 0.36 * (1 - i / 7.5)
         clipped(objs, 'tgspiral', (bx, by, z), r, (1, 1, 0.45), leaf, seed + 40 + i, ico=3, disp=0.05)
     bx, by = B, -B + 0.1                                   # (front right: a tiered cake)
-    for i, (r, z) in enumerate(((0.38, 0.18), (0.28, 0.5), (0.18, 0.76), (0.1, 0.95))):
+    for i, (r, z) in enumerate(((0.38, 0.23), (0.28, 0.53), (0.18, 0.78), (0.1, 0.97))):
         clipped(objs, 'tgcake', (bx, by, z), r, (1, 1, 0.55 if i < 3 else 1.0), leaf, seed + 50 + i, ico=3, disp=0.05)
     bx, by = -B, B                                         # (back left: a ball on a ball)
-    clipped(objs, 'tgballs', (bx, by, 0.32), 0.32, (1, 1, 1), leaf, seed + 60, ico=3, disp=0.07, leaves=16)
+    clipped(objs, 'tgballs', (bx, by, 0.35), 0.32, (1, 1, 1), leaf, seed + 60, ico=3, disp=0.07, leaves=16)
     clipped(objs, 'tgballs', (bx, by, 0.82), 0.2, (1, 1, 1), leaf, seed + 61, ico=3, disp=0.07, leaves=10)
     bx, by = B, B - 0.05                                   # (back right: a little topiary chick, looking up at the hen)
-    clipped(objs, 'tgchick', (bx, by, 0.3), 0.28, (0.9, 1.0, 0.95), leaf, seed + 70, ico=3, disp=0.07)
+    clipped(objs, 'tgchick', (bx, by, 0.32), 0.28, (0.9, 1.0, 0.95), leaf, seed + 70, ico=3, disp=0.07)
     clipped(objs, 'tgchick', (bx - 0.05, by - 0.16, 0.6), 0.16, (1, 1, 1), leaf, seed + 71, ico=3, disp=0.07)
     objs.append(cyl('tgbeak', 0.03, 0.06, (bx - 0.08, by - 0.31, 0.6), (math.radians(90), 0, math.radians(-15)), m=beak, verts=6, r2=0.0, bevel=0.0))
     for sx in (-1, 1): objs.append(sphere('tgeye', 0.018, (bx - 0.05 + sx * 0.08, by - 0.27, 0.66), m=eye, seg=8, rings=6))

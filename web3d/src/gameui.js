@@ -921,9 +921,27 @@ export class GameUI {
   // its picture (the Book's: the trio as it is), its name, and from its level the coins (greyed when there aren't enough:
   // h.shelf(breed)) and, in the app, Apple's price (h.got(breed) once bought); had: on the farm, or its coop to place. Before
   // its level: the level and no button (her rule: never a button that can't do anything). Its eggs and coop: a tap on it
-  shelfPages(b, h) {
+  // ---- the shop's Chickens shelf (24 Nov 2026, Audrey: "For the chickens create 3 pills at the top for special breeds and
+  // rare breeds please and all"): All, Special breeds (the collector's shelf), Rare breeds (the rare Silkie trios), the one
+  // picked kept while the game's open; with no rare trios to be had here (the website), no pills: the special breeds alone
+  hensShelf(b, h) {
+    const rare = this.rareLines().length > 0, pick = rare ? (this.hensPick || 'all') : 'all';
+    if (rare) {
+      const row = el('div', 'gchips ghens-pills');
+      for (const k of ['all', 'special', 'rare']) {
+        const c = el('button', 'gchip' + (pick === k ? ' on' : ''), this.t('hens_' + k)); c.type = 'button'; c.dataset.hens = k;
+        c.addEventListener('click', () => { if (this.hensPick !== k) { this.hensPick = k; this.shopSheet(h, 'hens'); } });
+        row.append(c);
+      }
+      b.append(row);
+    }
+    if (pick !== 'rare') this.shelfPages(b, h, pick === 'all');
+    if (pick !== 'special') this.rareTiles(b, h, pick === 'all');
+  }
+  shelfPages(b, h, head = true) {
     const g = this.g, PAY = this.payOn(), fmt = n => n.toLocaleString(g.locale());
-    b.append(el('p', 'gsub gshelf-h', this.t('shelf_t')), el('p', 'gnote gshelf-l', this.t('shelf_l')));
+    if (head) b.append(el('p', 'gsub gshelf-h', this.t('shelf_t')));
+    b.append(el('p', 'gnote gshelf-l', this.t('shelf_l')));
     const tiles = el('div', 'gcoop-tiles gcshelf'), notes = el('div', 'gcoop-notes');      // (gcshelf: the milestones' keepsake shelf has .gshelf)
     for (const S of g.shelfList()) {
       const name = g.bookName(S.breed), c = el('div', 'gcard gcoop-tile gshelf-t' + (S.open || S.had ? '' : ' glocked')), pic = el('button', 'gtheme-pic'), img = el('img'), side = el('div', 'gcoop-ts');
@@ -950,11 +968,15 @@ export class GameUI {
   }
   // the rare Silkie trios as the shop's tiles (23 Nov 2026, the shop's Chickens shelf): only where they can be had (Apple's
   // price in the app, or the preview), each its picture, its name and its price; the four together; once had: on the farm
-  rareTiles(b, h = {}) {
-    const g = this.g, PAY = this.payOn(); if (!(IAP_DEMO || (PAY && PAY.price('trios')))) return;
-    const pages = g.bookPages(), lines = TRIO_LINES.filter(l => pages.some(p => p.breed === l));
+  rareLines() {      // (the rare Silkie trios to be had here: in the app at Apple's price, or the preview)
+    const PAY = this.payOn(); if (!(IAP_DEMO || (PAY && PAY.price('trios')))) return [];
+    const pages = this.g.bookPages(); return TRIO_LINES.filter(l => pages.some(p => p.breed === l));
+  }
+  rareTiles(b, h = {}, head = true) {
+    const g = this.g, PAY = this.payOn(), lines = this.rareLines(), pages = g.bookPages();
     if (!lines.length) return;
-    b.append(el('p', 'gsub gshelf-h', '✨ ' + this.dt('all_t')), el('p', 'gnote gshelf-l', this.dt('adopt_note')));
+    if (head) b.append(el('p', 'gsub gshelf-h', '✨ ' + this.dt('all_t')));
+    b.append(el('p', 'gnote gshelf-l', this.dt('adopt_note')));
     const tiles = el('div', 'gcoop-tiles gcshelf grare-tiles');
     for (const line of lines) {
       const pg = pages.find(p => p.breed === line), name = g.bookName(line), c = el('div', 'gcard gcoop-tile gshelf-t'), pic = el('div', 'gtheme-pic'), img = el('img'), side = el('div', 'gcoop-ts');
@@ -1252,7 +1274,7 @@ export class GameUI {
     // (a tile's words: shown when its picture is tapped, one at a time)
     b.addEventListener('click', e => { const pic = e.target.closest('.gpage > .gpic'); if (!pic || pic.closest('.gviewable')) return; const card = pic.parentNode, was = card.classList.contains('gsay'); for (const x of b.querySelectorAll('.gsay')) x.classList.remove('gsay'); card.classList.toggle('gsay', !was); });
     if (tab === 'coins' && (IAP_DEMO || this.payOn())) { this.coinCards(b); return; }
-    if (tab === 'hens' && g.level >= PAY_LEVEL) { this.shelfPages(b, h); this.rareTiles(b, h); return; }
+    if (tab === 'hens' && g.level >= PAY_LEVEL) { this.hensShelf(b, h); return; }
     if (tab === 'coops' && h.coops) { this.coopTiles(b, h); return; }
     if (tab === 'outfits') { this.outfitCards(b, h, fmt); return; }
     if (tab === 'animals') { this.animalCards(b, h, fmt); return; }

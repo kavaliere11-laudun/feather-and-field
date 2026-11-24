@@ -51,6 +51,8 @@ const ALL = {
     life: L => L && L.balloon && L.balloon.flame, lifeSays: 'bobbing on its ropes, its pennant fluttering, its burner puffing a flame' },
   clock_tower: { level: 48, price: 105000, name: fr ? /Tour de l’horloge/ : /Clock Tower/, words: fr ? /cloche/ : /bell/,
     life: () => true, lifeSays: 'its hands at the farm\'s time, its bell swinging on the hour' },
+  topiary_garden: { level: 49, price: 120000, name: fr ? /Jardin de topiaires/ : /Topiary Garden/, words: fr ? /buis/ : /box/,
+    life: L => L && L.topiary && L.topiary.flies > 0 && L.topiary.birds.some(b => b !== 'away'), lifeSays: 'butterflies about it, a little bird on its hedge' },
 };
 const IDS = process.env.ONLY ? process.env.ONLY.split(',') : Object.keys(ALL);
 const fmt = n => new RegExp(String(Math.floor(n / 1000)) + '\\D?' + String(n % 1000).padStart(3, '0'));
@@ -101,7 +103,7 @@ for (const id of IDS) {
   const ft0 = await p.evaluate(() => window.__farm.deco.fountainT()); await run(0.2);
   const ft1 = await p.evaluate(() => window.__farm.deco.fountainT());
   let seen = false, L = null;
-  const fine = id === 'hot_air_balloon';      // (its flame lasts a second or so: looked for often)
+  const fine = id === 'hot_air_balloon' || id === 'topiary_garden';      // (its flame lasts a second or so: looked for often)
   for (let k = 0; k < (fine ? 110 : 16) && !seen; k++) { await run(fine ? 0.5 : 3); L = await p.evaluate(() => window.__farm.deco.life()); seen = G.life(L); }
   const sw0 = await p.evaluate(() => window.__farm.deco.swing()); await run(0.4); const sw1 = await p.evaluate(() => window.__farm.deco.swing());
   const bb0 = await p.evaluate(() => window.__farm.deco.balloon()); await run(0.4); const bb1 = await p.evaluate(() => window.__farm.deco.balloon());

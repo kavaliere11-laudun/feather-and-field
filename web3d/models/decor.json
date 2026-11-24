@@ -100,6 +100,12 @@
    -1.6,
    1.6,
    1.6
+  ],
+  "topiary_garden": [
+   -2.04,
+   -2.04,
+   2.04,
+   2.06
   ]
  },
  "stats": {
@@ -216,6 +222,11 @@
   "clock_tower_bell": {
    "tris": 612,
    "verts": 596,
+   "prims": 2
+  },
+  "topiary_garden": {
+   "tris": 13052,
+   "verts": 9398,
    "prims": 2
   }
  }

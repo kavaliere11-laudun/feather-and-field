@@ -1454,6 +1454,7 @@ const DECOR_NAMES = register('decor', {
   bandstand: ['Bandstand', 'Kiosque à musique'], statue: ['Golden cockerel', 'Coq d’or'], fountain: ['Golden Egg Fountain', 'Fontaine à l’œuf d’or'],
   rose_arbour: ['Rose Arbour', 'Tonnelle de roses'], dovecote: ['Dovecote', 'Pigeonnier'], tractor: ['Red Tractor', 'Tracteur rouge'], orchard: ['Little Orchard', 'Petit verger'],
   tree_house: ['Tree House', 'Cabane dans l’arbre'], hot_air_balloon: ['Hot-Air Balloon', 'Montgolfière'], clock_tower: ['Clock Tower', 'Tour de l’horloge'],
+  topiary_garden: ['Topiary Garden', 'Jardin de topiaires'],
 });
 const DECOR_ROUND = { bandstand: 1.45, windmill: 1.45, flowers: 0.95, birdbath: 0.7, rose_arbour: 1.3, dovecote: 1.36, hot_air_balloon: 1.42 };     // (round ones: their circle)
 let DECOR_INFO = null, decorFree = null, decorSpots = null;

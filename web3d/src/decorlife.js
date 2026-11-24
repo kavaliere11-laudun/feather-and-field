@@ -539,6 +539,71 @@ class BalloonLife {
   }
 }
 
+// ------------------------------------------------------------------ the Topiary Garden (24 Nov 2026): butterflies settle on its
+// clipped hen, her comb of roses and the lollipop trees (Butterflies, TOPIARY.land); two little birds (a robin, a chaffinch)
+// now and then drop onto its hedge, hop along it pecking, and fly off (HedgeBirds; grand.py topiary_garden_dec, in its own
+// frame: the hedge's top 0.42 up, its lines 1.88 out, the front's gap)
+const TOPIARY = {
+  top: 0.43, out: 1.88, len: 1.6, gap: 0.8,
+  land(r) {
+    const k = r();
+    if (k < 0.3) { const a = r() * 6.28; return new THREE.Vector3(Math.cos(a) * 0.08, 1.48 + r() * 0.04, 0.3 + Math.sin(a) * 0.06); }      // (her comb)
+    if (k < 0.6) { const a = Math.PI / 4 + Math.floor(r() * 4) * Math.PI / 2, b = r() * 6.28; return new THREE.Vector3(Math.cos(a) * 0.82 + Math.cos(b) * 0.1, 1.04 + r() * 0.03, -Math.sin(a) * 0.82 + Math.sin(b) * 0.1); }      // (a lollipop's top)
+    if (k < 0.8) { const a = r() * 6.28; return new THREE.Vector3(Math.cos(a) * 0.25, 1.2, -0.05 + Math.sin(a) * 0.25); }      // (her back)
+    return TOPIARY.hedge(r);
+  },
+  hedge(r) {                                                             // (a spot on the hedge's top: its back, its sides, the front either side of the gap)
+    const T = TOPIARY, side = Math.floor(r() * 5) % 5, u = (r() * 2 - 1) * T.len;
+    if (side === 0) return new THREE.Vector3(u, T.top, -T.out);
+    if (side === 1) return new THREE.Vector3(-T.out, T.top, u);
+    if (side === 2) return new THREE.Vector3(T.out, T.top, u);
+    const x = (side === 3 ? -1 : 1) * (T.gap + r() * (T.len - T.gap)); return new THREE.Vector3(x, T.top, T.out);
+  },
+};
+class HedgeBirds {
+  constructor(parent, grade, r) {
+    this.r = r; this.list = ['robin', 'chaffinch'].map((kind, i) => { const g = smallBird(kind, grade); g.visible = false; parent.add(g); return { g, st: 'away', t: 5 + i * 9 + r() * 6, hops: 0, on: new THREE.Vector3(), from: new THREE.Vector3(), to: new THREE.Vector3(), dur: 1, a: r() * 6 }; });
+  }
+  along(B) {                                                             // (a hop along the hedge: the way its line runs)
+    const T = TOPIARY, p = B.on.clone(), d = (this.r() < 0.5 ? -1 : 1) * (0.12 + this.r() * 0.12);
+    if (Math.abs(Math.abs(p.z) - T.out) < 0.01) p.x = Math.max(-T.len, Math.min(T.len, p.x + d)); else p.z = Math.max(-T.len, Math.min(T.len, p.z + d));
+    if (p.z > 0 && Math.abs(Math.abs(p.z) - T.out) < 0.01 && Math.abs(p.x) < T.gap) p.x = Math.sign(p.x || 1) * T.gap;      // (not into the gap)
+    return p;
+  }
+  update(dt, day, time) {
+    for (const B of this.list) {
+      const U = B.g.userData; B.t -= dt;
+      if (B.st === 'away') {
+        B.g.visible = false;
+        if (B.t <= 0) { if (day < 0.6) { B.t = 5; continue; } B.on = TOPIARY.hedge(this.r); const a = this.r() * 6.28; B.from.set(Math.cos(a) * 5, 3.2, Math.sin(a) * 5); B.st = 'in'; B.t = B.dur = 1.8; B.hops = 2 + Math.floor(this.r() * 4); }
+        continue;
+      }
+      B.g.visible = true;
+      let flap = 0, peck = 0, look = 0;
+      if (B.st === 'in' || B.st === 'off' || B.st === 'hop') {
+        const u = 1 - Math.max(0, B.t) / B.dur, A = B.st === 'off' ? B.on : B.from, Z = B.st === 'off' ? B.to : B.on;
+        const e = B.st === 'in' ? 1 - (1 - u) * (1 - u) : B.st === 'off' ? u * u : u;
+        B.g.position.lerpVectors(A, Z, e); B.g.position.y += Math.sin(e * Math.PI) * (B.st === 'hop' ? 0.07 : 0.4);
+        if (Z.distanceToSquared(A) > 1e-6) B.g.rotation.y = Math.atan2(Z.x - A.x, Z.z - A.z);
+        flap = B.st === 'hop' ? 0.4 : 0.5 + 0.5 * Math.sin(time * 40);
+        if (B.t <= 0) {
+          if (B.st === 'off') { B.st = 'away'; B.t = 12 + this.r() * 22; }
+          else { B.st = 'peck'; B.t = 1.2 + this.r() * 1.8; }
+        }
+      } else if (B.st === 'peck') {                                      // (pecking at the hedge's top, a look about between)
+        B.g.position.copy(B.on); peck = smooth(0.5, 0.9, Math.sin(time * 5.5 + B.a)); look = (1 - peck) * Math.sin(time * 2.7 + B.a) * 0.5;
+        if (B.t <= 0 || day < 0.5) {
+          if (B.hops-- > 0 && day >= 0.5) { B.from.copy(B.on); B.on = this.along(B); B.st = 'hop'; B.t = B.dur = 0.35; }
+          else { const a = this.r() * 6.28; B.to.set(Math.cos(a) * 5, 3.4, Math.sin(a) * 5); B.st = 'off'; B.t = B.dur = 1.7; }
+        }
+      }
+      U.head.rotation.set(peck * 0.9, look, 0); U.body.rotation.x = peck * 0.4;
+      U.wings.forEach((w, i) => { w.rotation.z = (i ? -1 : 1) * flap * 1.2; });
+      U.tail.rotation.x = -0.35 + Math.sin(time * 3 + B.a) * 0.1 + peck * 0.3;
+    }
+  }
+}
+
 // ------------------------------------------------------------------ sprites: a glint of sun, music notes, water drops
 class Floaters {
   constructor(scene, maps, max, grade) { this.scene = scene; this.maps = [].concat(maps); this.pool = []; this.max = max; this.grade = grade; }
@@ -609,6 +674,7 @@ export class DecorLife {
       if (d.model === 'orchard') this.orchard = new OrchardLife(frame(d), o.grade, r);
       if (d.model === 'tree_house') this.treeHouse = new TreeHouseLife(frame(d), o.grade, r);
       if (d.model === 'hot_air_balloon') this.balloon = new BalloonLife(frame(d), r);
+      if (d.model === 'topiary_garden') { const f = frame(d); this.topiary = { flies: new Butterflies(f, o.grade, r, 3, TOPIARY.land), birds: new HedgeBirds(f, o.grade, r) }; }
       if (d.model === 'statue') this.statue = d;
       if (d.model === 'bandstand') this.band = d;
     }
@@ -631,6 +697,7 @@ export class DecorLife {
     if (this.orchard) this.orchard.update(dt, day, t);
     if (this.treeHouse) this.treeHouse.update(dt, day, t);
     if (this.balloon) this.balloon.update(dt);
+    if (this.topiary) { this.topiary.flies.update(dt, day, t); this.topiary.birds.update(dt, day, t); }
     // (the Red Tractor, 24 Nov 2026: now and then by day its engine putters for a few seconds: a little shake (main.js moves
     // it by jig), puffs of smoke from its exhaust, its top at TRACTOR_EXHAUST in its own frame (grand.py tractor_dec))
     if (this.tractor) {
@@ -689,7 +756,7 @@ export class DecorLife {
   state() {
     return {
       bees: this.bees ? this.bees.out : null, butterflies: this.flies ? this.flies.f.filter(f => f.g.visible).length : null,
-      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, arbour: this.arbour ? this.arbour.flies.f.filter(f => f.g.visible).length : null, doves: this.doves ? this.doves.list.map(d => d.st) : null, tractor: this.tractor ? { on: this.tractor.jig.on, next: +this.tractor.next.toFixed(1) } : null, orchard: this.orchard ? { apples: this.orchard.apples.filter(a => a.st !== 'off').length, bird: this.orchard.bird.st } : null, squirrel: this.treeHouse ? this.treeHouse.st : null, balloon: this.balloon ? { flame: this.balloon.flame.visible, y: +this.balloon.s.y.toFixed(4) } : null, squirrelAt: this.treeHouse ? this.treeHouse.g.getWorldPosition(new THREE.Vector3()).toArray().map(v => +v.toFixed(3)) : null, smoke: this.smoke.live, petals: this.petals.live, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
+      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, arbour: this.arbour ? this.arbour.flies.f.filter(f => f.g.visible).length : null, doves: this.doves ? this.doves.list.map(d => d.st) : null, tractor: this.tractor ? { on: this.tractor.jig.on, next: +this.tractor.next.toFixed(1) } : null, orchard: this.orchard ? { apples: this.orchard.apples.filter(a => a.st !== 'off').length, bird: this.orchard.bird.st } : null, squirrel: this.treeHouse ? this.treeHouse.st : null, balloon: this.balloon ? { flame: this.balloon.flame.visible, y: +this.balloon.s.y.toFixed(4) } : null, topiary: this.topiary ? { flies: this.topiary.flies.f.filter(f => f.g.visible).length, birds: this.topiary.birds.list.map(b => b.st) } : null, squirrelAt: this.treeHouse ? this.treeHouse.g.getWorldPosition(new THREE.Vector3()).toArray().map(v => +v.toFixed(3)) : null, smoke: this.smoke.live, petals: this.petals.live, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
     };
   }
 }
