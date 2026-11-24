@@ -49,6 +49,8 @@ const ALL = {
     life: L => L && L.squirrel && L.squirrel !== 'away', lifeSays: 'its squirrel out, its swing swaying' },
   hot_air_balloon: { level: 47, price: 92000, name: fr ? /Montgolfière/ : /Hot-Air Balloon/, words: fr ? /brûleur/ : /burner/,
     life: L => L && L.balloon && L.balloon.flame, lifeSays: 'bobbing on its ropes, its pennant fluttering, its burner puffing a flame' },
+  clock_tower: { level: 48, price: 105000, name: fr ? /Tour de l’horloge/ : /Clock Tower/, words: fr ? /cloche/ : /bell/,
+    life: () => true, lifeSays: 'its hands at the farm\'s time, its bell swinging on the hour' },
 };
 const IDS = process.env.ONLY ? process.env.ONLY.split(',') : Object.keys(ALL);
 const fmt = n => new RegExp(String(Math.floor(n / 1000)) + '\\D?' + String(n % 1000).padStart(3, '0'));
@@ -103,7 +105,8 @@ for (const id of IDS) {
   for (let k = 0; k < (fine ? 110 : 16) && !seen; k++) { await run(fine ? 0.5 : 3); L = await p.evaluate(() => window.__farm.deco.life()); seen = G.life(L); }
   const sw0 = await p.evaluate(() => window.__farm.deco.swing()); await run(0.4); const sw1 = await p.evaluate(() => window.__farm.deco.swing());
   const bb0 = await p.evaluate(() => window.__farm.deco.balloon()); await run(0.4); const bb1 = await p.evaluate(() => window.__farm.deco.balloon());
-  ok(`${id}: by day ${G.lifeSays}`, seen && (id !== 'fountain' || ft1 > ft0) && (id !== 'tree_house' || (sw0 !== null && sw0 !== sw1)) && (id !== 'hot_air_balloon' || (bb0 && bb1 && bb0.y !== bb1.y && bb0.flag !== bb1.flag)), { ft0, ft1, L, sw0, sw1, bb0, bb1 });
+  let ck = null; if (id === 'clock_tower') { const c0 = await p.evaluate(() => window.__farm.deco.clock()); await p.evaluate(() => window.__farm.deco.ring()); let c1 = null, sw = 0; for (let k = 0; k < 8; k++) { await run(0.15); c1 = await p.evaluate(() => window.__farm.deco.clock()); sw = Math.max(sw, Math.abs(c1.bell)); } const want = -((c0.hour % 12) / 12) * Math.PI * 2, wantM = -(c0.hour % 1) * Math.PI * 2; ck = { c0, c1, ok: Math.abs(c0.hr - want) < 0.01 && Math.abs(c0.mn - wantM) < 0.01 && sw > 0.2, sw }; }
+  ok(`${id}: by day ${G.lifeSays}`, seen && (id !== 'clock_tower' || ck.ok) && (id !== 'fountain' || ft1 > ft0) && (id !== 'tree_house' || (sw0 !== null && sw0 !== sw1)) && (id !== 'hot_air_balloon' || (bb0 && bb1 && bb0.y !== bb1.y && bb0.flag !== bb1.flag)), { ft0, ft1, L, sw0, sw1, bb0, bb1, ck });
   await shot(id + '_3_farm');
   if (id === 'orchard') {      // (Audrey: "the glouton chickens would go in and try to steal apples and the farmer can run after them")
     const hen = await p.evaluate(() => { const g = window.__farm.game(), b = g.data.birds.find(x => x.sex === 'h' && g.coop(x.coop)); b.pers = 'glutton'; g.data.moment = null; g.data.moments = { last: 0, hen: 1 }; g.save(); return { id: b.id, name: b.name, coins: g.data.coins }; });

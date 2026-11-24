@@ -1453,7 +1453,7 @@ const DECOR_NAMES = register('decor', {
   duckhouse: ['Duck house', 'Maison des canards'], greenhouse: ['Greenhouse', 'Serre'], windmill: ['Windmill', 'Moulin à vent'],
   bandstand: ['Bandstand', 'Kiosque à musique'], statue: ['Golden cockerel', 'Coq d’or'], fountain: ['Golden Egg Fountain', 'Fontaine à l’œuf d’or'],
   rose_arbour: ['Rose Arbour', 'Tonnelle de roses'], dovecote: ['Dovecote', 'Pigeonnier'], tractor: ['Red Tractor', 'Tracteur rouge'], orchard: ['Little Orchard', 'Petit verger'],
-  tree_house: ['Tree House', 'Cabane dans l’arbre'], hot_air_balloon: ['Hot-Air Balloon', 'Montgolfière'],
+  tree_house: ['Tree House', 'Cabane dans l’arbre'], hot_air_balloon: ['Hot-Air Balloon', 'Montgolfière'], clock_tower: ['Clock Tower', 'Tour de l’horloge'],
 });
 const DECOR_ROUND = { bandstand: 1.45, windmill: 1.45, flowers: 0.95, birdbath: 0.7, rose_arbour: 1.3, dovecote: 1.36, hot_air_balloon: 1.42 };     // (round ones: their circle)
 let DECOR_INFO = null, decorFree = null, decorSpots = null;
@@ -1548,13 +1548,15 @@ function buildDecor() {
 }
 const SWING_AT = [1.45, 2.37, -0.563];      // (the Tree House's swing: where it hangs from, in its own frame: treeSwing)
 let SWING_T = 0;
-const BALLOON_AT = 0.32, BALLOON_FLAG = [0.3864, 1.17, 0.3864];      // (the Hot-Air Balloon: its basket's floor over the grass, its pennant's pole top: balloonParts)
+const BALLOON_AT = 0.32, BALLOON_FLAG = [0.3864, 1.17, 0.3864];
+const CLOCK_FACE = 0.715, CLOCK_Z = 3.8, CLOCK_BELL = [0, 4.88, 0];      // (the Clock Tower: its hands out from its middle, their height; where its bell hangs: grand.py CLOCK, BELL_AT)      // (the Hot-Air Balloon: its basket's floor over the grass, its pennant's pole top: balloonParts)
 const _jig = new THREE.Matrix4();
 function tickDecor(dt) {
   if (sails) sails.children[0].rotation.z -= dt * (Math.PI * 2 / 14) * (0.8 + 0.4 * Math.sin(WIND.time.value * 0.31));
   if (decorLife) decorLife.update(dt);
   if (DEC.items.fountain) FOUNTAIN_T.value = (FOUNTAIN_T.value + dt) % 3600;      // (its water: fountainMat)
   if (DEC.items.tree_house) swingSway(DEC.items.tree_house.group.userData.swing, (SWING_T += dt));      // (the Tree House's swing in the breeze)
+  if (DEC.items.clock_tower) clockMove(DEC.items.clock_tower.group.userData.clock, DAY.hour, dt);      // (the Clock Tower: its hands, its bell)
   if (DEC.items.hot_air_balloon && decorLife && decorLife.balloon) balloonMove(DEC.items.hot_air_balloon.group.userData.balloon, decorLife.balloon.s, decorLife.balloon.k);      // (the Hot-Air Balloon bobbing: decorlife.js)
   const tr = DEC.items.tractor;                              // (the Red Tractor: a little shake while its engine putters, decorlife.js)
   if (tr && decorLife && decorLife.tractor && DMOVE.id !== 'tractor') {
@@ -8108,6 +8110,7 @@ const SHOP_STAGES = {
     if (id === 'fountain') { fountainWater(G, FOUNTAIN_PV_T); return { tick: dt => { FOUNTAIN_PV_T.value = (FOUNTAIN_PV_T.value + dt) % 3600; } }; }      // (its water moving, as on the farm)
     if (id === 'tree_house') { const w = treeSwing(G), T = { t: 0 }; return { tick: dt => { T.t += dt; swingSway(w, T.t); } }; }      // (its swing swaying, as on the farm)
     if (id === 'hot_air_balloon') { const B = balloonParts(G), T = { t: 0 }; return { tick: dt => { T.t += dt; balloonMove(B, balloonSway(T.t)); } }; }      // (bobbing, its pennant fluttering, as on the farm)
+    if (id === 'clock_tower') { const C = clockParts(G); return { tick: dt => clockMove(C, clockHour(), dt) }; }      // (the time now on its clocks, as on the farm)
     return {};
   },
   animal(G, id, t, r) {
@@ -8757,6 +8760,7 @@ function decorModel(id) {
   if (id === 'fountain') fountainWater(g);                  // (its water, moving: fountainMat)
   if (id === 'tree_house') g.userData.swing = treeSwing(g, nightGrade);      // (its swing, swaying: tickDecor)
   if (id === 'hot_air_balloon') g.userData.balloon = balloonParts(g, nightGrade);      // (its balloon bobbing, its pennant: tickDecor)
+  if (id === 'clock_tower') g.userData.clock = clockParts(g, nightGrade);      // (its hands at the farm's time, its bell on the hour: tickDecor)
   return g;
 }
 // the Tree House's swing (decor.glb tree_house_swing, about the point it hangs from: grand.py SWING_AT), put in its group;
@@ -8777,6 +8781,28 @@ function balloonParts(g, grade) {
   let env = null;      // (its envelope's own material: it glows warm from inside while the burner's lit, seen from above as the flame isn't)
   up.traverse(o => { if (o.isMesh) { if (o.material && o.material.name === 'satin' && o.material.emissive) { o.material = env = o.material.clone(); } o.castShadow = true; o.receiveShadow = true; if (grade) grade(o.material); } });
   g.add(up); return { up, fl, env };
+}
+// the Clock Tower's hands, drawn here (black, on each of its four faces, CLOCK_FACE out from its middle, CLOCK_Z up), turned to
+// the farm's own time; its bell (decor.glb clock_tower_bell, about where it hangs: CLOCK_BELL) swings for a few seconds on
+// the hour (clockMove)
+function clockParts(g, grade) {
+  const mat = new THREE.MeshLambertMaterial({ color: '#1f2226' }); if (grade) grade(mat);
+  const hand = (len, w) => { const geo = new THREE.BoxGeometry(w, len + 0.04, 0.012); geo.translate(0, len / 2 - 0.02, 0); const m = new THREE.Mesh(geo, mat); m.castShadow = false; return m; };
+  const faces = [];
+  for (let k = 0; k < 4; k++) {
+    const a = k * Math.PI / 2, f = new THREE.Group(); f.position.set(Math.sin(a) * CLOCK_FACE, CLOCK_Z, Math.cos(a) * CLOCK_FACE); f.rotation.y = a;
+    const hr = hand(0.2, 0.03), mn = hand(0.31, 0.02); mn.position.z = 0.012; f.add(hr, mn); g.add(f); faces.push({ hr, mn });
+  }
+  let bell = null;
+  if (parts.clock_tower_bell) { bell = new THREE.Group(); const b = part('clock_tower_bell'); bell.add(b); bell.position.fromArray(CLOCK_BELL); b.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; if (grade) grade(o.material); } }); g.add(bell); }
+  return { faces, bell, ring: 0, hour: null };
+}
+function clockMove(C, h, dt) {
+  if (!C) return;
+  const hr = -((h % 12) / 12) * Math.PI * 2, mn = -(h % 1) * Math.PI * 2;
+  for (const f of C.faces) { f.hr.rotation.z = hr; f.mn.rotation.z = mn; }
+  const H = Math.floor(h); if (C.hour !== null && H !== C.hour) C.ring = 4.5; C.hour = H;      // (on the hour: its bell)
+  if (C.bell) { if (C.ring > 0) { C.ring = Math.max(0, C.ring - dt); const t = 4.5 - C.ring; C.bell.rotation.x = Math.sin(t * 5.2) * 0.55 * Math.exp(-t * 0.55) * Math.min(1, t * 3); } else C.bell.rotation.x = 0; }
 }
 function balloonMove(B, s, k = 0) {
   if (!B) return; B.up.position.y = BALLOON_AT + s.y; B.up.rotation.set(s.rx, 0, s.rz); B.fl.rotation.y = s.flag;
@@ -11490,7 +11516,7 @@ window.__farm = {
   // tests (Rusty's visits in the game): the nights to come he visits (from a time), tonight's on the farm, the film's record
   foxGame: { nights: (from, n = 30) => { const out = []; for (let d = 0; d < n; d++) { const k = nightKey(from + d * 86400e3 + 12 * 3600e3); if (foxNight(k) && !out.some(o => o.key === k)) out.push({ key: k, t: foxAt(k) }); } return out; },
     live: () => FOXLIVE, rec: () => foxRec(), liveTick: now => foxLiveTick(now, true) },
-  deco: { balloon: () => { const it = DEC.items.hot_air_balloon, B = it && it.group.userData.balloon; return B ? { y: +B.up.position.y.toFixed(4), flag: +B.fl.rotation.y.toFixed(3), flame: !!(decorLife && decorLife.balloon && decorLife.balloon.flame.visible) } : null; }, swing: () => { const it = DEC.items.tree_house, w = it && it.group.userData.swing; return w ? +w.rotation.x.toFixed(4) : null; }, shop: () => shopSheet(), buy: id => buyDecor(id), start: id => startDecor(id), to: (x, z) => decMoveTo(x, z), place: () => putDecor(), cancel: () => endDecor(false), card: id => decorCard(id),
+  deco: { clock: () => { const it = DEC.items.clock_tower, C = it && it.group.userData.clock; return C ? { hour: DAY.hour, hr: +C.faces[0].hr.rotation.z.toFixed(4), mn: +C.faces[0].mn.rotation.z.toFixed(4), bell: +(C.bell ? C.bell.rotation.x : 0).toFixed(4), ring: C.ring } : null; }, ring: () => { const it = DEC.items.clock_tower, C = it && it.group.userData.clock; if (C) C.ring = 4.5; return !!C; }, balloon: () => { const it = DEC.items.hot_air_balloon, B = it && it.group.userData.balloon; return B ? { y: +B.up.position.y.toFixed(4), flag: +B.fl.rotation.y.toFixed(3), flame: !!(decorLife && decorLife.balloon && decorLife.balloon.flame.visible) } : null; }, swing: () => { const it = DEC.items.tree_house, w = it && it.group.userData.swing; return w ? +w.rotation.x.toFixed(4) : null; }, shop: () => shopSheet(), buy: id => buyDecor(id), start: id => startDecor(id), to: (x, z) => decMoveTo(x, z), place: () => putDecor(), cancel: () => endDecor(false), card: id => decorCard(id),
     spot: (id, x, z, deg) => { const S = decorSpot(id, x, z, deg ?? (id === 'kennel' ? KENNEL_DEG : 45)); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true, id === 'kennel' ? [KENNEL_DEG] : [45], true), way: (id, x, z) => decorWayOk(id, x, z),
     state: () => ({ on: DMOVE.id, at: DMOVE.at, ok: !!(DMOVE.spot && DMOVE.spot.ok), why: DMOVE.spot && DMOVE.spot.why, clear: DMOVE.spot ? DMOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent }),
     items: () => Object.entries(DEC.items).filter(([id]) => id !== 'wheat' && id !== 'wheat2' && id !== 'garden').map(([id, it]) => ({ id, at: it.d.pos, shown: !!it.group.parent, prop: V.props.includes(it.prop), tap: decorList.includes(it.d) })), life: () => decorLife && decorLife.state(), fountainT: () => FOUNTAIN_T.value, fountainWater: () => { const it = DEC.items.fountain; const n = []; if (it) it.group.traverse(o => { if (o.isMesh && /^fountain_/.test(o.material.name)) n.push(o.material.name); }); return n; }, duckHouse: () => !!(duckFlock && duckFlock.house),

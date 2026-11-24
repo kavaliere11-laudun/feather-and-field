@@ -51,7 +51,8 @@ import grand      # (the grand decorations, 24 Nov 2026: levels 41 to 49; the fo
 BUILD.update({'fountain': (lambda: grand.fountain_dec(part='stone'), 30000), 'fountain_pool': (lambda: grand.fountain_dec(part='pool'), 4000),
               'fountain_fall': (lambda: grand.fountain_dec(part='fall'), 4000), 'rose_arbour': (grand.rose_arbour_dec, 40000), 'dovecote': (grand.dovecote_dec, 40000), 'tractor': (grand.tractor_dec, 40000), 'orchard': (grand.orchard_dec, 40000),
               'tree_house': (lambda: grand.tree_house_dec(part='house'), 40000), 'tree_house_swing': (lambda: grand.tree_house_dec(part='swing', name='tree_house_swing'), 1000),
-              'hot_air_balloon': (lambda: grand.hot_air_balloon_dec(part='ground'), 6000), 'hot_air_balloon_float': (lambda: grand.hot_air_balloon_dec(part='float', name='hot_air_balloon_float'), 30000), 'hot_air_balloon_flag': (lambda: grand.hot_air_balloon_dec(part='flag', name='hot_air_balloon_flag'), 100)})
+              'hot_air_balloon': (lambda: grand.hot_air_balloon_dec(part='ground'), 6000), 'hot_air_balloon_float': (lambda: grand.hot_air_balloon_dec(part='float', name='hot_air_balloon_float'), 30000), 'hot_air_balloon_flag': (lambda: grand.hot_air_balloon_dec(part='flag', name='hot_air_balloon_flag'), 100),
+              'clock_tower': (lambda: grand.clock_tower_dec(part='tower'), 40000), 'clock_tower_bell': (lambda: grand.clock_tower_dec(part='bell', name='clock_tower_bell'), 2000)})
 names = []
 for n in WANT:
     fn, budget = BUILD[n]; BUDGET[n] = budget; one(n, fn); names.append(n)

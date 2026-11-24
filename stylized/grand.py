@@ -968,6 +968,21 @@ def hot_air_balloon_dec(seed=141, name='hot_air_balloon', part=None):
     return finish(keep, name)
 
 
+def panel(name, w, h, nx, ny, center, n, m):
+    """A flat wall panel w wide, h tall, facing n, with nx by ny little squares (corners enough for the baked corner
+    shading to stay true across it: a plain box's four corners, all tucked behind quoins, darkened a whole wall)."""
+    import bmesh
+    me = bpy.data.meshes.new(name); bm = bmesh.new()
+    bmesh.ops.create_grid(bm, x_segments=nx, y_segments=ny, size=0.5)
+    for v in bm.verts: v.co = Vector((v.co.x * w, v.co.y * h, 0))
+    bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m)
+    n = Vector(n).normalized(); X = Vector((0, 0, 1)).cross(n).normalized(); Y = Vector((0, 0, 1))      # (X x Y = n: not mirrored, its faces wound outwards)
+    o.matrix_basis = Matrix.Translation(Vector(center)) @ Matrix((X, Y, n)).transposed().to_4x4()
+    for pl in o.data.polygons: pl.use_smooth = False
+    return o
+
+
 CLOCK = {'z': 3.8, 'out': 0.68, 'r': 0.4}      # (the Clock Tower's faces: their middle's height, how far out from the middle, their size)
 BELL_AT = Vector((0, 0, 4.88))                 # (its bell: where it hangs from)
 
@@ -991,8 +1006,8 @@ def clock_tower_dec(seed=151, name='clock_tower', part=None, hands=True):
     hour marks, a gold boss, black hands); an open belfry of four arches with its bronze bell; a steep slate spire with a
     gold ball and a golden hen weathervane. On a square of flagstones, a bench at its side, two tubs of flowers by its door."""
     random.seed(seed); objs = []; bell = []
-    stone = [C('ctstone%d' % i, h, rough=0.85, var=0.05) for i, h in enumerate(('#c9bea6', '#bdb196', '#d3c9b3'))]
-    render = C('ctrender', '#efe4cc', rough=0.85, var=0.02); slate = C('ctslate', '#71819a', rough=0.6, var=0.05); slate2 = C('ctslate2', '#5f6e85', rough=0.6, var=0.05)
+    stone = [C('ctstone%d' % i, h, rough=0.85, var=0.05) for i, h in enumerate(('#d9c9a6', '#cdbb96', '#e3d5b6'))]      # (warm: its walls face the view, mostly out of the sun)
+    render = C('ctrender', '#fbefd6', rough=0.85, var=0.02); slate = C('ctslate', '#71819a', rough=0.6, var=0.05); slate2 = C('ctslate2', '#5f6e85', rough=0.6, var=0.05)
     dial = C('ctdial', '#fbf8ef', rough=0.5); black = C('ctblack', '#1f2226', rough=0.5); gold = C('ctgold', '#e9b949', rough=0.25, metal=1.0)
     green = C('ctgreen', '#2f6a46', rough=0.6, var=0.05, grain=0.2); bronze = C('ctbronze', '#a8824a', rough=0.35, metal=0.8)
     wood = [C('ctwood%d' % i, h, rough=0.85, var=0.1, grain=0.3) for i, h in enumerate(('#9a7650', '#8a6744'))]
@@ -1009,7 +1024,9 @@ def clock_tower_dec(seed=151, name='clock_tower', part=None, hands=True):
     objs.append(box('ctfoot', (2 * W1 + 0.22, 2 * W1 + 0.22, H0), (0, 0, H0 / 2), m=stone[1], bevel=0.02, segs=2))
     objs.append(box('ctfootcap', (2 * W1 + 0.3, 2 * W1 + 0.3, 0.07), (0, 0, H0), m=stone[2], bevel=0.015, segs=2))
     # the shaft: rendered, stone quoins up its corners
-    objs.append(box('ctshaft', (2 * W1, 2 * W1, H1 - H0), (0, 0, (H0 + H1) / 2), m=render, bevel=0.0, segs=1))
+    for side in range(4):                         # (its walls as panels: see panel)
+        a = side * math.pi / 2; n = Vector((math.sin(a), -math.cos(a), 0))
+        objs.append(panel('ctshaft', 2 * W1, H1 - H0, 6, 14, tuple(n * W1 + Vector((0, 0, (H0 + H1) / 2))), tuple(n), render))
     z = H0 + 0.04; k = 0
     while z < H1 - 0.1:
         h = 0.22
@@ -1039,7 +1056,9 @@ def clock_tower_dec(seed=151, name='clock_tower', part=None, hands=True):
     arch(objs, Vector((0, FY - 0.01, 0)), Vector((0, -1, 0)), 0.18, 2.7, 0.09, 0.06, 0.05, stone[2], k=5)
     objs.append(box('ctsill', (0.28, 0.08, 0.04), (0, FY - 0.03, 2.18), m=stone[2], bevel=0.006, segs=1))
     # the clock stage and its four faces
-    objs.append(box('ctstage', (2 * W2, 2 * W2, H2 - H1 - 0.1), (0, 0, (H1 + 0.1 + H2) / 2), m=render, bevel=0.0, segs=1))
+    for side in range(4):
+        a = side * math.pi / 2; n = Vector((math.sin(a), -math.cos(a), 0))
+        objs.append(panel('ctstage', 2 * W2, H2 - H1 - 0.1, 6, 4, tuple(n * W2 + Vector((0, 0, (H1 + 0.1 + H2) / 2))), tuple(n), render))
     for sx in (-1, 1):
         for sy in (-1, 1): objs.append(box('ctpilaster', (0.12, 0.12, H2 - H1 - 0.1), (sx * (W2 - 0.04), sy * (W2 - 0.04), (H1 + 0.1 + H2) / 2), m=stone[0], bevel=0.008, segs=1))
     objs.append(box('ctstagecap', (2 * W2 + 0.14, 2 * W2 + 0.14, 0.1), (0, 0, H2), m=stone[2], bevel=0.012, segs=1))
@@ -1117,4 +1136,101 @@ def clock_tower_dec(seed=151, name='clock_tower', part=None, hands=True):
     return finish(keep, name)
 
 
-GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec, 'dovecote': dovecote_dec, 'tractor': tractor_dec, 'orchard': orchard_dec, 'tree_house': tree_house_dec, 'hot_air_balloon': hot_air_balloon_dec, 'clock_tower': clock_tower_dec}
+def clipped(objs, name, c, r, scale, leaf, seed, ico=3, disp=0.1, leaves=0, sq=1.0):
+    """A clipped shape of box: a smooth green ball (its leafy skin a little bumpy), scaled; leaves: a few small leaves
+    standing out of its skin (it's freshly clipped, not shaggy)."""
+    rnd = random.Random(seed)
+    o = sphere(name, r, tuple(c), scale, m=leaf[0], ico=ico, disp=disp, disp_scale=6.0, seed=seed); objs.append(o)
+    for k in range(leaves):
+        a = rnd.uniform(0, math.tau); el = math.asin(rnd.uniform(-0.4, 1.0))
+        d = Vector((math.cos(a) * math.cos(el), math.sin(a) * math.cos(el), math.sin(el)))
+        p = Vector(c) + Vector((d.x * scale[0], d.y * scale[1], d.z * scale[2])) * r * 0.99
+        q = d.to_track_quat('Z', 'Y') @ Quaternion((0, 0, 1), rnd.uniform(0, math.tau)) @ Quaternion((1, 0, 0), rnd.uniform(0.3, 0.7))
+        objs.append(flat_leaf(name + 'leaf', tuple(p), q, rnd.uniform(0.045, 0.06), rnd.uniform(0.02, 0.026), leaf[1 + (k % 2) + (1 if el > 0.5 else 0)], both=False))
+
+
+def topiary_garden_dec(seed=161, name='topiary_garden'):
+    """A topiary garden: a square of lawn edged by a low clipped box hedge (a gap at the front), gravel paths in a cross
+    to the middle; there, on a round box plinth, a big topiary hen clipped from box (her comb and wattle of red roses, her
+    eye a dark pebble), four lollipop standards in terracotta pots round her; in the four beds a spiral cone, a tiered
+    cake, a ball on a ball and a little topiary chick; a white bench at the back, a watering can and the shears."""
+    random.seed(seed); objs = []
+    leaf = [C('tgleaf%d' % i, h, rough=0.85, var=0.05, hue_var=0.01) for i, h in enumerate(('#3e7a2f', '#4a8a35', '#5a9b3e', '#6aab47'))]
+    lawn = C('tglawn', '#6fa544', rough=0.95, var=0.04); gravel = C('tggravel', '#e2d6bb', rough=0.95, var=0.05)
+    pot = C('tgpot', '#c46a3f', rough=0.8, var=0.05); stem = C('tgstem', '#6b5039', rough=0.9); rose = C('tgrose', '#d8343f', rough=0.6)
+    white = C('tgwhite', '#f4f1ea', rough=0.6); eye = C('tgeye', '#1f1d1c', rough=0.4); zinc = C('tgzinc', '#8f9aa3', rough=0.45, metal=0.5)
+    beak = C('tgbeak', '#e8b84a', rough=0.6)
+    E = 2.0
+    objs.append(box('tglawn', (2 * E, 2 * E, 0.02), (0, 0, 0.01), m=lawn, bevel=0.0, segs=1))
+    for a, b in (((-0.35, -E), (0.35, E)), ((-E, -0.35), (E, 0.35))):            # (the gravel cross)
+        objs.append(box('tggravel', (b[0] - a[0], b[1] - a[1], 0.025), ((a[0] + b[0]) / 2, (a[1] + b[1]) / 2, 0.0125), m=gravel, bevel=0.0, segs=1))
+    objs.append(cyl('tggravelring', 1.0, 0.026, (0, 0, 0.013), m=gravel, verts=32, bevel=0.0))
+    # the hedge round it: clipped lengths with rounded tops (the front's gap for the path)
+    HW, HH = 0.24, 0.38
+    def hedge(a, b, k):                          # (a clipped hedge: a rounded box of box, its leaves on its skin)
+        rnd = random.Random(seed * 100 + k); A, B = Vector((a[0], a[1], 0)), Vector((b[0], b[1], 0)); L = (B - A).length; along = abs(B.x - A.x) > 0.01
+        mid = (A + B) / 2; sz = (L + HW, HW, HH) if along else (HW, L - HW - 0.01, HH)      # (the sides between the front and back: no faces on top of each other at the corners)
+        objs.append(box('tghedge', sz, (mid.x, mid.y, HH / 2 + 0.02), m=leaf[0], bevel=0.07, segs=3))
+        for i in range(int(L * 40)):
+            u = rnd.uniform(-0.5, 0.5); side = rnd.choice((-1, 1, 0, 0)); 
+            if side == 0: p_ = mid + (Vector((u * (L + HW * 0.6), rnd.uniform(-0.4, 0.4) * HW, 0)) if along else Vector((rnd.uniform(-0.4, 0.4) * HW, u * (L + HW * 0.6), 0))) + Vector((0, 0, HH + 0.02)); d = Vector((0, 0, 1))
+            else: d = Vector((0, side, 0)) if along else Vector((side, 0, 0)); p_ = mid + (Vector((u * (L + HW * 0.6), 0, 0)) if along else Vector((0, u * (L + HW * 0.6), 0))) + d * HW / 2 + Vector((0, 0, rnd.uniform(0.08, HH - 0.02)))
+            q = d.to_track_quat('Z', 'Y') @ Quaternion((0, 0, 1), rnd.uniform(0, math.tau)) @ Quaternion((1, 0, 0), rnd.uniform(0.3, 0.7))
+            objs.append(flat_leaf('tghedgeleaf', tuple(p_), q, rnd.uniform(0.04, 0.055), rnd.uniform(0.018, 0.024), leaf[1 + (i % 2) + (1 if side == 0 else 0)], both=False))
+    hedge((-E + 0.12, -E + 0.12), (-0.5, -E + 0.12), 0); hedge((0.5, -E + 0.12), (E - 0.12, -E + 0.12), 1)
+    hedge((E - 0.12, -E + 0.12), (E - 0.12, E - 0.12), 2); hedge((E - 0.12, E - 0.12), (-E + 0.12, E - 0.12), 3); hedge((-E + 0.12, E - 0.12), (-E + 0.12, -E + 0.12), 4)
+    for sx in (-1, 1): clipped(objs, 'tgpost', (sx * 0.58, -E + 0.12, 0.42), 0.17, (1, 1, 1), leaf, seed + 7 + sx, ico=3, disp=0.08)      # (balls either side of the way in)
+    # the hen, on her round plinth
+    objs.append(cyl('tgplinth', 0.55, 0.3, (0, 0, 0.16), m=leaf[0], verts=24, bevel=0.0)); clipped(objs, 'tgplinthtop', (0, 0, 0.3), 0.55, (1, 1, 0.18), leaf, seed + 1, ico=3, disp=0.05)
+    HZ = 0.32
+    clipped(objs, 'tghen', (0.0, 0.05, HZ + 0.5), 0.5, (0.82, 1.0, 0.78), leaf, seed + 2, ico=3, disp=0.08, leaves=60)      # (her body, facing the front)
+    clipped(objs, 'tghen', (0.0, -0.36, HZ + 0.95), 0.22, (0.85, 0.9, 1.05), leaf, seed + 3, ico=3, disp=0.08, leaves=20)    # (her head)
+    clipped(objs, 'tghen', (0.0, -0.25, HZ + 0.72), 0.2, (0.95, 0.9, 1.0), leaf, seed + 4, ico=3, disp=0.08)                # (her neck)
+    for k, (dx, dz, tilt) in enumerate(((0, 0.2, 0.0), (-0.14, 0.1, 0.35), (0.14, 0.1, -0.35))):                            # (her tail: three clipped plumes)
+        o = sphere('tgtail', 0.26, (dx, 0.5, HZ + 0.82 + dz), (0.35, 0.55, 1.0), (math.radians(-25), tilt, 0), m=leaf[0], ico=3, disp=0.08, disp_scale=6.0, seed=seed + 10 + k); objs.append(o)
+    for sx in (-1, 1): objs.append(sphere('tgwing', 0.3, (sx * 0.36, 0.08, HZ + 0.55), (0.25, 0.85, 0.55), (math.radians(-10), 0, 0), m=leaf[1], ico=3, disp=0.07, disp_scale=6.0, seed=seed + 20 + sx))
+    for k in range(5): objs.append(sphere('tgcomb', 0.045, (0.0, -0.4 + k * 0.045, HZ + 1.17 - abs(k - 2) * 0.015), m=rose, ico=1))      # (her comb of red roses)
+    for k in range(2): objs.append(sphere('tgwattle', 0.04, (0.0, -0.53 + k * 0.02, HZ + 0.84 - k * 0.05), m=rose, ico=1))
+    objs.append(cyl('tgbeak', 0.04, 0.09, (0.0, -0.6, HZ + 0.94), (math.radians(90), 0, 0), m=beak, verts=6, r2=0.0, bevel=0.0))
+    for sx in (-1, 1): objs.append(sphere('tgeye', 0.025, (sx * 0.15, -0.5, HZ + 1.0), m=eye, seg=8, rings=6))
+    # four lollipop standards in terracotta pots round her
+    for k in range(4):
+        a = math.pi / 4 + k * math.pi / 2; x, y = math.cos(a) * 0.82, math.sin(a) * 0.82
+        objs.append(cyl('tgpot', 0.12, 0.2, (x, y, 0.1), m=pot, verts=12, r2=0.14, bevel=0.0))
+        objs.append(ring('tgpotrim', 0.13, 0.155, 0.2, 0.03, pot, verts=14)); objs[-1].location = (x, y, 0.2)
+        objs.append(cyl('tgstem', 0.018, 0.55, (x, y, 0.47), m=stem, verts=6, bevel=0.0))
+        clipped(objs, 'tgball', (x, y, 0.85), 0.2, (1, 1, 1), leaf, seed + 30 + k, ico=3, disp=0.08, leaves=14)
+    # in the four beds: a spiral cone, a tiered cake, a ball on a ball, a little topiary chick
+    B = 1.22
+    bx, by = -B, -B + 0.1                                  # (front left: a spiral cone)
+    for i in range(7):
+        z = 0.12 + i * 0.2; r = 0.36 * (1 - i / 7.5)
+        clipped(objs, 'tgspiral', (bx, by, z), r, (1, 1, 0.45), leaf, seed + 40 + i, ico=3, disp=0.05)
+    bx, by = B, -B + 0.1                                   # (front right: a tiered cake)
+    for i, (r, z) in enumerate(((0.38, 0.18), (0.28, 0.5), (0.18, 0.76), (0.1, 0.95))):
+        clipped(objs, 'tgcake', (bx, by, z), r, (1, 1, 0.55 if i < 3 else 1.0), leaf, seed + 50 + i, ico=3, disp=0.05)
+    bx, by = -B, B                                         # (back left: a ball on a ball)
+    clipped(objs, 'tgballs', (bx, by, 0.32), 0.32, (1, 1, 1), leaf, seed + 60, ico=3, disp=0.07, leaves=16)
+    clipped(objs, 'tgballs', (bx, by, 0.82), 0.2, (1, 1, 1), leaf, seed + 61, ico=3, disp=0.07, leaves=10)
+    bx, by = B, B - 0.05                                   # (back right: a little topiary chick, looking up at the hen)
+    clipped(objs, 'tgchick', (bx, by, 0.3), 0.28, (0.9, 1.0, 0.95), leaf, seed + 70, ico=3, disp=0.07)
+    clipped(objs, 'tgchick', (bx - 0.05, by - 0.16, 0.6), 0.16, (1, 1, 1), leaf, seed + 71, ico=3, disp=0.07)
+    objs.append(cyl('tgbeak', 0.03, 0.06, (bx - 0.08, by - 0.31, 0.6), (math.radians(90), 0, math.radians(-15)), m=beak, verts=6, r2=0.0, bevel=0.0))
+    for sx in (-1, 1): objs.append(sphere('tgeye', 0.018, (bx - 0.05 + sx * 0.08, by - 0.27, 0.66), m=eye, seg=8, rings=6))
+    # a white bench at the back, a watering can and the shears
+    objs.append(box('tgbench', (0.9, 0.3, 0.05), (0, E - 0.55, 0.42), m=white, bevel=0.01, segs=1))
+    objs.append(box('tgbenchback', (0.9, 0.04, 0.3), (0, E - 0.42, 0.62), (math.radians(-10), 0, 0), m=white, bevel=0.01, segs=1))
+    for sx in (-1, 1):
+        for sy in (-1, 1): objs.append(box('tgbenchleg', (0.05, 0.05, 0.4), (sx * 0.4, E - 0.55 + sy * 0.12, 0.2), m=white, bevel=0.0, segs=1))
+    WC = Vector((0.75, -E + 0.55, 0))
+    objs.append(cyl('tgcan', 0.1, 0.2, tuple(WC + Vector((0, 0, 0.12))), m=zinc, verts=14, r2=0.09, bevel=0.0))
+    objs.append(cyl('tgspout', 0.015, 0.3, tuple(WC + Vector((-0.16, 0, 0.22))), (0, math.radians(-55), 0), m=zinc, verts=6, r2=0.01, bevel=0.0))
+    objs.append(ring('tghandle', 0.07, 0.085, 0, 0.02, zinc, verts=12)); objs[-1].location = tuple(WC + Vector((0.02, 0, 0.26))); objs[-1].rotation_euler = (math.pi / 2, 0, 0)
+    SH = Vector((-1.1, -E + 0.12, HH + 0.06))              # (the shears left on the hedge)
+    for sd in (-1, 1):
+        objs.append(plank('tgblade', tuple(SH), tuple(SH + Vector((0.22, sd * 0.03, 0.01))), 0.025, 0.008, (0, 0, 1), zinc, jitter=0.0, bevel=0.0))
+        objs.append(plank('tghandle2', tuple(SH), tuple(SH + Vector((-0.2, sd * 0.06, 0.0))), 0.022, 0.02, (0, 0, 1), C('tgred', '#b5312b', rough=0.6), jitter=0.0, bevel=0.0))
+    return finish(objs, name)
+
+
+GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec, 'dovecote': dovecote_dec, 'tractor': tractor_dec, 'orchard': orchard_dec, 'tree_house': tree_house_dec, 'hot_air_balloon': hot_air_balloon_dec, 'clock_tower': clock_tower_dec, 'topiary_garden': topiary_garden_dec}
