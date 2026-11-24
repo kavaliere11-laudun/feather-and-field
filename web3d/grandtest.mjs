@@ -38,6 +38,8 @@ const ALL = {
     life: L => L && L.fountain && L.fountain.some(x => x === 'rim') && L.drops > 0, lifeSays: 'its water moving, little birds drinking at its rim, drops where the water falls in' },
   rose_arbour: { level: 42, price: 45000, name: fr ? /Tonnelle de roses/ : /Rose Arbour/, words: fr ? /pétales/ : /Petals/,
     life: L => L && L.arbour > 0 && L.petals > 0, lifeSays: 'butterflies on its roses, petals drifting down' },
+  dovecote: { level: 43, price: 52000, name: fr ? /Pigeonnier/ : /Dovecote/, words: fr ? /colombes/ : /doves/,
+    life: L => L && L.doves && L.doves.some(x => x === 'circle'), lifeSays: 'its doves off round it' },
 };
 const IDS = process.env.ONLY ? process.env.ONLY.split(',') : Object.keys(ALL);
 const fmt = n => new RegExp(String(Math.floor(n / 1000)) + '\\D?' + String(n % 1000).padStart(3, '0'));

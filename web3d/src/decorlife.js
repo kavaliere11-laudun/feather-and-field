@@ -262,6 +262,81 @@ class BathBirds {
   }
 }
 
+// ------------------------------------------------------------------ the Dovecote's doves (24 Nov 2026, Audrey: "Yes, put it in
+// (Recommended)": "White doves fly round it now and then, land on its ledges"): four white doves on the landing ledges under
+// its pigeon holes (grand.py dovecote_dec: the tower 0.72 round, the ledges 1.72 up and 0.79 out, at its holes, the ones
+// facing the player and its sides; its own four doves sit still on the others and the roof); now and then by day they all
+// take off one after another, circle the tower a lap or two, high and wide, wings beating then gliding, and each comes
+// back down to a free ledge; perched, a look about, now and then a coo (her breast puffed, a bow); at night they're in
+const DOVECOTE = { r: 0.79, y: 1.72, slots: [165, 195, 255, 345, 15, 135].map(d => d * Math.PI / 180) };
+function whiteDove(grade) {
+  const mats = {}; const mat = c => mats[c] || (mats[c] = (m => { if (grade) grade(m); return m; })(new THREE.MeshLambertMaterial({ color: c })));
+  const g = new THREE.Group(), body = new THREE.Group(); g.add(body);
+  const add = (geo, c, x, y, z, sx = 1, sy = 1, sz = 1, to = body) => { const m = new THREE.Mesh(geo, mat(c)); m.position.set(x, y, z); m.scale.set(sx, sy, sz); m.castShadow = true; to.add(m); return m; };
+  const S = new THREE.SphereGeometry(1, 12, 9), W = '#fbf8f1';
+  add(S, W, 0, 0.058, -0.004, 0.04, 0.037, 0.064);
+  const head = new THREE.Group(); head.position.set(0, 0.1, 0.05); body.add(head);
+  add(S, W, 0, 0, 0, 0.026, 0.026, 0.027, head);
+  add(new THREE.ConeGeometry(1, 1, 6).rotateX(Math.PI / 2), '#d99a9a', 0, -0.004, 0.03, 0.0055, 0.0055, 0.016, head);
+  for (const sd of [-1, 1]) add(S, '#1c1a1a', sd * 0.017, 0.006, 0.013, 0.0045, 0.0045, 0.0045, head);
+  const tail = add(new THREE.BoxGeometry(1, 1, 1), '#f2eee4', 0, 0.06, -0.075, 0.05, 0.008, 0.06); tail.rotation.x = -0.25;
+  const wings = [-1, 1].map(sd => { const w = new THREE.Group(); w.position.set(sd * 0.03, 0.075, 0); body.add(w); add(S, '#f6f2e8', sd * 0.06, 0, -0.01, 0.065, 0.007, 0.038, w); return w; });
+  for (const sd of [-1, 1]) add(new THREE.CylinderGeometry(0.003, 0.003, 0.03, 4), '#d98a8a', sd * 0.012, 0.015, 0.005);
+  g.userData = { body, head, tail, wings };
+  g.scale.setScalar(1.3);
+  return g;
+}
+class Doves {
+  constructor(parent, grade, r, n = 4) {
+    this.r = r; this.list = []; this.next = 6 + r() * 8; this.taken = new Set();
+    for (let i = 0; i < n; i++) { const g = whiteDove(grade); parent.add(g); const d = { g, st: 'perch', slot: i, t: r() * 4, ph: r() * 6.28, coo: 2 + r() * 6 }; this.taken.add(i); this.list.push(d); this.sit(d); }
+  }
+  at(k, v = new THREE.Vector3()) { const a = DOVECOTE.slots[k]; return v.set(Math.cos(a) * DOVECOTE.r, DOVECOTE.y, -Math.sin(a) * DOVECOTE.r); }
+  sit(d) { this.at(d.slot, d.g.position); d.g.rotation.set(0, Math.atan2(d.g.position.x, d.g.position.z), 0); }
+  update(dt, day, time) {
+    const L = this.list;
+    if (day < 0.5) {                                                    // (in for the night: on their ledges again by morning)
+      for (const d of L) { d.g.visible = false; if (d.st !== 'perch') { d.st = 'perch'; } }
+      this.taken = new Set(L.map(d => d.slot)); for (const d of L) this.sit(d); this.next = 4 + this.r() * 8; return;
+    }
+    if (L.every(d => d.st === 'perch') && (this.next -= dt) <= 0) {   // (off they go, one after another)
+      this.next = 24 + this.r() * 30; this.taken.clear(); const laps = 1 + this.r() * 1.2;
+      L.forEach((d, i) => { d.st = 'wait'; d.t = i * (0.35 + this.r() * 0.3); d.laps = laps * 6.28 + i * 0.4; d.rc = 1.9 + this.r() * 0.5; d.h = 2.7 + this.r() * 0.6; d.w = 0.85 + this.r() * 0.15; });
+    }
+    for (const d of L) {
+      const U = d.g.userData; d.g.visible = true; d.t -= dt;
+      let flap = 0, bow = 0, look = 0;
+      if (d.st === 'perch') {
+        this.sit(d); d.g.rotation.y += Math.sin(time * 0.7 + d.ph) * 0.4;
+        look = Math.sin(time * 1.9 + d.ph * 2) * 0.5;
+        if ((d.coo -= dt) < 0) { if (d.coo < -1.2) d.coo = 3 + this.r() * 7; else bow = Math.sin((-d.coo / 1.2) * Math.PI); }      // (a coo: a puff and a bow)
+      } else if (d.st === 'wait') {
+        this.sit(d); if (d.t <= 0) { d.st = 'up'; d.t = d.dur = 1.1; d.from = d.g.position.clone(); d.th = Math.atan2(d.from.z, d.from.x); d.went = 0; }
+      } else if (d.st === 'up' || d.st === 'circle') {                 // (up and round the tower, wings beating, then gliding a while)
+        d.th -= d.w * dt; d.went += d.w * dt;
+        const c = new THREE.Vector3(Math.cos(d.th) * d.rc, d.h + Math.sin(time * 1.3 + d.ph) * 0.12, Math.sin(d.th) * d.rc);
+        if (d.st === 'up') { const u = 1 - Math.max(0, d.t) / d.dur, e = u * u * (3 - 2 * u); d.g.position.lerpVectors(d.from, c, e); if (d.t <= 0) d.st = 'circle'; }
+        else d.g.position.copy(c);
+        d.g.rotation.set(0, Math.atan2(Math.sin(d.th), -Math.cos(d.th)), -0.3);      // (heading along the circle, banked into it)
+        flap = (Math.sin(time * 1.1 + d.ph) > -0.2 || d.st === 'up') ? 0.5 + 0.5 * Math.sin(time * 22 + d.ph) : 0.5;
+        if (d.st === 'circle' && d.went >= d.laps) {                    // (back down to a free ledge, the nearest to it)
+          let best = -1, bd = 1e9; const v = new THREE.Vector3();
+          for (let k = 0; k < DOVECOTE.slots.length; k++) if (!this.taken.has(k)) { const dd = this.at(k, v).distanceTo(d.g.position); if (dd < bd) { bd = dd; best = k; } }
+          d.slot = best; this.taken.add(best); d.st = 'down'; d.t = d.dur = 1.6; d.from = d.g.position.clone();
+        }
+      } else if (d.st === 'down') {
+        const u = 1 - Math.max(0, d.t) / d.dur, e = 1 - (1 - u) * (1 - u), to = this.at(d.slot);
+        d.g.position.lerpVectors(d.from, to, e); d.g.position.y += Math.sin(u * Math.PI) * 0.25;
+        d.g.rotation.set(0, Math.atan2(to.x - d.from.x, to.z - d.from.z), 0); flap = u > 0.6 ? 0.5 + 0.5 * Math.sin(time * 26) : 0.5;
+        if (d.t <= 0) { d.st = 'perch'; d.coo = 0.8 + this.r() * 2; }
+      }
+      U.wings.forEach((w, i) => { w.rotation.z = (i ? -1 : 1) * (d.st === 'perch' || d.st === 'wait' ? 1.35 : (flap - 0.5) * 1.4); });      // (folded down her sides; beating, or level gliding)
+      U.head.rotation.set(bow * 0.6, look, 0); U.body.scale.set(1 + bow * 0.12, 1 + bow * 0.08, 1); U.body.rotation.x = bow * 0.25;
+      U.tail.rotation.x = -0.25 + (d.st === 'perch' ? Math.sin(time * 2 + d.ph) * 0.05 : 0.2);
+    }
+  }
+}
+
 // ------------------------------------------------------------------ sprites: a glint of sun, music notes, water drops
 class Floaters {
   constructor(scene, maps, max, grade) { this.scene = scene; this.maps = [].concat(maps); this.pool = []; this.max = max; this.grade = grade; }
@@ -325,6 +400,7 @@ export class DecorLife {
       if (d.model === 'birdbath') { const f = frame(d); this.bath = new BathBirds(f, o.grade, r, (p, n) => this.splash(f.localToWorld(p.clone()), n)); }
       if (d.model === 'fountain') { const f = frame(d); this.fount = { f, birds: new BathBirds(f, o.grade, r, (p, n) => this.splash(f.localToWorld(p.clone()), n), FOUNT), dropIn: 0 }; }
       if (d.model === 'rose_arbour') { const f = frame(d); this.arbour = { f, flies: new Butterflies(f, o.grade, r, 3, ARBOUR.rose), petalIn: 0.5 }; }
+      if (d.model === 'dovecote') this.doves = new Doves(frame(d), o.grade, r);
       if (d.model === 'statue') this.statue = d;
       if (d.model === 'bandstand') this.band = d;
     }
@@ -343,6 +419,7 @@ export class DecorLife {
     if (this.bees) this.bees.update(dt, day, t);
     if (this.flies) this.flies.update(dt, day, t);
     if (this.bath) this.bath.update(dt, day, t);
+    if (this.doves) this.doves.update(dt, day, t);
     if (this.arbour) {                                                    // (the arbour: its butterflies by day; now and then a petal drifting down)
       this.arbour.flies.update(dt, day, t);
       if ((this.arbour.petalIn -= dt) <= 0) {
@@ -386,7 +463,7 @@ export class DecorLife {
   state() {
     return {
       bees: this.bees ? this.bees.out : null, butterflies: this.flies ? this.flies.f.filter(f => f.g.visible).length : null,
-      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, arbour: this.arbour ? this.arbour.flies.f.filter(f => f.g.visible).length : null, petals: this.petals.live, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
+      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, arbour: this.arbour ? this.arbour.flies.f.filter(f => f.g.visible).length : null, doves: this.doves ? this.doves.list.map(d => d.st) : null, petals: this.petals.live, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
     };
   }
 }

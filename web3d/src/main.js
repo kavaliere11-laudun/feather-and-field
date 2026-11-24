@@ -1452,9 +1452,9 @@ const DECOR_NAMES = register('decor', {
   flowers: ['Cottage flower bed', 'Massif de fleurs'], birdbath: ['Bird bath', 'Bain d’oiseaux'], beehives: ['Beehives', 'Ruches'],
   duckhouse: ['Duck house', 'Maison des canards'], greenhouse: ['Greenhouse', 'Serre'], windmill: ['Windmill', 'Moulin à vent'],
   bandstand: ['Bandstand', 'Kiosque à musique'], statue: ['Golden cockerel', 'Coq d’or'], fountain: ['Golden Egg Fountain', 'Fontaine à l’œuf d’or'],
-  rose_arbour: ['Rose Arbour', 'Tonnelle de roses'],
+  rose_arbour: ['Rose Arbour', 'Tonnelle de roses'], dovecote: ['Dovecote', 'Pigeonnier'],
 });
-const DECOR_ROUND = { bandstand: 1.45, windmill: 1.45, flowers: 0.95, birdbath: 0.7, rose_arbour: 1.3 };     // (round ones: their circle)
+const DECOR_ROUND = { bandstand: 1.45, windmill: 1.45, flowers: 0.95, birdbath: 0.7, rose_arbour: 1.3, dovecote: 1.36 };     // (round ones: their circle)
 let DECOR_INFO = null, decorFree = null, decorSpots = null;
 const decorList = [];                                          // { model, pos, deg, box (its own frame), m (world matrix) }
 function placeDecor(info) {
