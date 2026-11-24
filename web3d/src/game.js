@@ -233,6 +233,7 @@ export const TEXT = {
     // My account (release 7: account.js): the farm saved online with a Google account
     acct_t: 'My account', acct_how: 'Sign in with Google to save your farm online too: you won’t lose it if you change phones or clear Safari, and you can play it on another phone.',
     acct_apple: 'Sign in with Apple', acct_how_app: 'Sign in with Apple or Google to save your farm online too: you won’t lose it if you change phones, and you can play it on another phone.', acct_privacy_app: 'Your farm is kept on Google’s Firebase servers in Europe, linked to the account you sign in with. Only you can open it, and the game never sees your password.', acct_who_apple: 'Apple account: {name}', acct_in_apple: 'Signed in with Apple', nudge_how_app: 'Sign in with Apple or Google and your farm is saved online too. You won’t lose it if you change phones, and you can play it on another phone.', acct_other: 'An account with this email was made with the other button: please sign in with that one.',
+    free_t: 'Free coins', free_l: 'Watch a short video: +{n} coins.', free_left: '{n} left today', free_none: 'Come back tomorrow for more', free_btn: '🎬 Watch', free_wait: 'Getting a video…', free_done: '+{n} coins for watching!', free_stop: 'The video stopped before the end: no coins this time.', free_noad: 'No video just now. Please try again in a little while.', ad_choices: 'Ad privacy choices', ad_choices_t: 'Videos for free coins', ad_choices_l: 'Google shows the videos. Contextual only: nothing about you is used to choose them.',
     acct_google: 'Sign in with Google', acct_privacy: 'Your farm is kept on Google’s Firebase servers in Europe, linked to your Google account. Only you can open it, and the game never sees your password.',
     acct_who: 'Google account: {name}', acct_saved: 'Saved online: {when}', acct_saving: 'Saving online…', acct_offline: 'Not saved online just now: no connection. It will be as soon as you’re back online.',
     acct_empty: 'Nothing saved with this account yet: your new farm will be saved online once it’s started.',
@@ -619,6 +620,7 @@ export const TEXT = {
     welcome_first: 'Votre ferme du premier jeu est dans les Réglages.',
     acct_t: 'Mon compte', acct_how: 'Connectez-vous avec Google pour enregistrer aussi votre ferme en ligne : vous ne la perdrez pas en changeant de téléphone ou en vidant Safari, et vous pourrez y jouer sur un autre téléphone.',
     acct_apple: 'Se connecter avec Apple', acct_how_app: 'Connectez-vous avec Apple ou Google pour enregistrer aussi votre ferme en ligne : vous ne la perdrez pas en changeant de téléphone, et vous pourrez y jouer sur un autre téléphone.', acct_privacy_app: 'Votre ferme est conservée sur les serveurs Firebase de Google, en Europe, et liée au compte avec lequel vous vous connectez. Elle n’est accessible qu’à vous, et le jeu ne voit jamais votre mot de passe.', acct_who_apple: 'Compte Apple : {name}', acct_in_apple: 'Compte Apple connecté', nudge_how_app: 'Connectez-vous avec Apple ou Google et votre ferme sera aussi enregistrée en ligne. Vous ne la perdrez pas en changeant de téléphone, et vous pourrez y jouer sur un autre téléphone.', acct_other: 'Un compte avec cette adresse e-mail a été créé avec l’autre bouton : connectez-vous plutôt avec celui-là.',
+    free_t: 'Pièces gratuites', free_l: 'Regardez une courte vidéo : +{n} pièces.', free_left: 'Encore {n} aujourd’hui', free_none: 'Revenez demain pour d’autres', free_btn: '🎬 Regarder', free_wait: 'Une vidéo arrive…', free_done: '+{n} pièces pour avoir regardé !', free_stop: 'La vidéo s’est arrêtée avant la fin : pas de pièces cette fois.', free_noad: 'Pas de vidéo pour le moment. Réessayez dans un petit moment.', ad_choices: 'Vos choix pour les publicités', ad_choices_t: 'Vidéos pour des pièces gratuites', ad_choices_l: 'Google montre les vidéos. Contextuelles uniquement : rien sur vous ne sert à les choisir.',
     acct_google: 'Se connecter avec Google', acct_privacy: 'Votre ferme est conservée sur les serveurs Firebase de Google, en Europe, et liée à votre compte Google. Elle n’est accessible qu’à vous, et le jeu ne voit jamais votre mot de passe.',
     acct_who: 'Compte Google : {name}', acct_saved: 'Enregistrée en ligne : {when}', acct_saving: 'Enregistrement en ligne…', acct_offline: 'Pas encore enregistrée en ligne : pas de connexion. Elle le sera dès votre retour en ligne.',
     acct_empty: 'Rien n’est encore enregistré avec ce compte : votre nouvelle ferme sera enregistrée en ligne dès qu’elle sera commencée.',
@@ -1300,6 +1302,11 @@ export const APPLES = { every: 3 * 3600e3, max: 4, first: 2, perEgg: 2, eggs: 3,
 // A fish caught goes live to the village's aquarium shop (sold there and then, its price a little more the bigger it is);
 // a legendary one has its photo taken and goes back into the water (the village paper buys the photo). XP for each, more
 // for a fish new to you. Your count and your biggest of each kept (the Breed Book's fish pages)
+// free coins for a short video, in the app's shop (24 Nov 2026, Audrey: "Ads before launch"; her 2 Nov choices: "Free coins in
+// the shop (Recommended)", "5 a day (Recommended)", "Contextual for everyone (Recommended)"): only when the player chooses to
+// watch, ADS.coins once a video has played to the end (the ad company says so: ads.js), ADS.day a day (the save's `ads`
+// { d: the day, n: watched that day }, checked)
+export const ADS = { coins: 150, day: 5 };
 export const FISHING = { pond: 2, river: 9, byTrust: [0, 1, 2, 3], oldFree: 4, tin: { n: 10, price: 60 }, box: 12, net: 60, maxWorms: 30, firstXp: 10, gift: 10 };      // (the pond at 2 since 7 Nov 2026, Audrey: "fishing should be quickly available", "Level 2"; gift: a tin of worms to start with, once)
 // (9 Nov 2026 night, Audrey: "It needs to take time to fish all the different species", "Introduce more fish species"; her
 // choices "Time of day + one tin a day", "Keep net, sell at the end"): twenty fish, ten a water: six common, three rare,
@@ -1705,6 +1712,9 @@ export function checkFarm(d, now = Date.now()) {
   const fx = d.fox && typeof d.fox === 'object' ? d.fox : null;
   out.fox = { seen: fx && typeof fx.seen === 'string' && /^\d{8}$/.test(fx.seen) && fx.seen <= nightKey(now + TZ_SLACK) ? fx.seen : foxSeenFrom(now) };      // (a phone taken across time zones: a little slack)
   if (fx && typeof fx.told === 'string' && /^\d{8}$/.test(fx.told) && fx.told <= out.fox.seen) out.fox.told = fx.told;      // (24 Nov 2026: the last night chased off whose card was shown; never ahead of the nights looked at)
+  // the day's free-coins videos (24 Nov 2026): a day never ahead of today, no more than ADS.day
+  const ad = d.ads && typeof d.ads === 'object' ? d.ads : null;
+  if (ad && typeof ad.d === 'string' && /^\d{8}$/.test(ad.d) && ad.d <= dayKey(now + TZ_SLACK) && Number.isInteger(ad.n) && ad.n >= 0 && ad.n <= ADS.day) out.ads = { d: ad.d, n: ad.n };
   const fl = fx && fx.last && typeof fx.last === 'object' ? fx.last : null;
   if (fl && typeof fl.key === 'string' && /^\d{8}$/.test(fl.key) && fl.key <= out.fox.seen && (foxNight(fl.key) || doorStuck(out.coops.find(c => c.id === fl.coop), fl.key)) && Number.isInteger(fl.t) && Math.abs(fl.t - foxAt(fl.key)) <= TZ_SLACK && fl.t <= now + TZ_SLACK && out.coops.some(c => c.id === fl.coop)) {
     const by = ['geese', 'dog', 'team', 'farmer'].includes(fl.by) && fl.open === true && (fl.by === 'farmer' || (fl.by === 'dog' ? out.animals && out.animals.dog : fl.by === 'geese' ? out.animals && out.animals.geese : out.animals && out.animals.geese && out.animals.dog)) ? fl.by : null;
@@ -1893,6 +1903,13 @@ export class Game {
   levelNews() { return this.level > (this.data.lvSeen || 1) || this.data.roadNew ? this.level : 0; }      // (a farm moved onto the road of 50: its card once, even with no new level)
   // seen: the coins for each new level since the last card (levelGift), with it; the coins given
   levelGiftDue() { let c = 0; for (let L = (this.data.lvSeen || 1) + 1; L <= this.level; L++) c += levelGift(L); return c; }
+  // ---- free coins for a short video (ADS): how many are left today; one watched to the end: its coins (false: none left)
+  adsLeft(now = Date.now()) { const a = this.data && this.data.ads; return Math.max(0, ADS.day - (a && a.d === dayKey(now) ? a.n : 0)); }
+  adWatched(now = Date.now()) {
+    if (!this.data || !this.adsLeft(now)) return false;
+    const day = dayKey(now), a = this.data.ads && this.data.ads.d === day ? this.data.ads : { d: day, n: 0 };
+    a.n += 1; this.data.ads = a; this.data.coins += ADS.coins; this.save(); return true;
+  }
   seenLevel() { const c = this.levelGiftDue(); this.data.coins += c; this.data.lvSeen = this.level; delete this.data.roadNew; this.save(); return c; }
   landNext() { const k = this.data.land.length; return k < FIELDS ? { field: k, price: landPrice(k), level: landLevel(k) } : null; }
   landForSale() { const n = this.landNext(); return n && this.level >= n.level ? n : null; }

@@ -10,3 +10,6 @@ web3d/_docs/
 
 # Python bytecode (Blender runs of stylized/: never in the repository)
 __pycache__/
+
+# copies of the project docs made while updating them (never in the repository)
+.*.md.tmp

@@ -35,6 +35,7 @@ import { GameUI } from './gameui.js';
 import { Account } from './account.js';
 import { Notes } from './notify.js';
 import { Store, productOf, setOf, bagOf, trioOf, shelfOf, TRIO_ALL, SHELVES } from './store.js';
+import { Ads } from './ads.js';
 import { Sound, FARM } from './sound.js';
 import { register, tr, urlLang, registered } from './lang.js';
 import { TEXT, TEXT_F, PERS_INFO as PERS_WORDS, MILE_IDS, MOMENTS } from './game.js';
@@ -94,6 +95,8 @@ const payUI = store && store.on ? {
   buy: (k, done) => { if (store.busy) return; hint(game.t('pay_busy')); store.buy(payId(k)).then(st => { payEnd(); if (st === 'bought') { if (done) done(); gameUI.refresh(); } else if (st === 'pending') hint(game.t('pay_wait')); else if (st === 'failed') hint(game.t('pay_fail')); }); },
   restore: () => payRestore(), reload: () => store.load(), diag: () => store.diag || null,
 } : null;
+// free coins for a short video, in the app (ads.js, 24 Nov 2026): the coins said and flown to the purse once given
+const ads = GAME_MODE && !params.has('poster') ? new Ads(game, { done: n => { if (!gameUI) return; gameUI.refresh(); gameUI.bumpCoins(); hint(game.t('free_done', { n })); gameUI.coinFly(); } }) : null;
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
 // the sound (sound.js): the music now and then, from the first tap; the tests' browser hears none unless it asks (?sound)
 const sound = GAME_MODE && !POSTER && !(navigator.webdriver && !params.has('sound')) ? new Sound({ base: 'audio/', hour: () => clockHour(), music: () => game.musicOn(), sounds: () => game.soundsOn(), hens: () => henHeard(), pond: () => pondHeard(), spots: () => spotsHeard() }) : null;
@@ -620,7 +623,7 @@ async function start() {
     retireOldCache();
     loading.querySelector('.msg').textContent = game.t('loading');
     turnSideways();
-    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, pay: payUI, shelf: () => shelfSheet(), busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), soundTest: () => sound ? sound.test() : 'none', soundDiag: () => sound ? sound.diag() : 'off', picDiag: () => `picture ${QUALITY.length - q} of ${QUALITY.length} · ${renderer.getPixelRatio().toFixed(2)}× of ${(window.devicePixelRatio || 1).toFixed(0)}× · ${Math.round(meter.fps || 0)} fps`, music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(true), orders: () => ordersSheet(), shop: () => shopSheet(), pantry: () => pantrySheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
+    gameUI = new GameUI(game, { version: VERSION, bust: BUST, notes, pay: payUI, ads, shelf: () => shelfSheet(), busy: () => farmerBusyText(), reload: () => location.reload(), say: t => hint(t), soundTest: () => sound ? sound.test() : 'none', soundDiag: () => sound ? sound.diag() : 'off', picDiag: () => `picture ${QUALITY.length - q} of ${QUALITY.length} · ${renderer.getPixelRatio().toFixed(2)}× of ${(window.devicePixelRatio || 1).toFixed(0)}× · ${Math.round(meter.fps || 0)} fps`, music: () => { if (sound) sound.musicChanged(); }, sounds: () => { if (sound) sound.soundsChanged(); }, loaded: farmLoaded, account, onClose: gameSheetClosed, coops: () => coopsSheet(), book: () => bookSheet(true), orders: () => ordersSheet(), shop: () => shopSheet(), pantry: () => pantrySheet(), outfit: () => dressFarmer(), shows: () => showsSheet(), jobs: () => jobsSheet(), cuddle: id => gameCuddle(id), askWorms: id => gameWorms(id), treat: id => treatCard(id), cuddleState: () => farmerAsleep() ? 'night' : 'ok', rare: { keep: id => keepRare(id), sell: id => sellRare(id) }, showPond: () => { const D = dockInfo(); if (D) focusOn(D.end[0], D.end[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); }, showRiver: () => { const R = riverInfo(); if (R) focusOn(R.mid[0], R.mid[1], Math.min(view.size, sideways() ? 2.4 : 3.2)); } });
     // (a new farm: grandma's story, then who's farming, while the farm loads; automated checks skip the story unless ?story)
     if (!game.data) welcome = (!navigator.webdriver || params.has('story') ? gameUI.story() : Promise.resolve()).then(() => gameUI.welcome());
   }
@@ -11493,6 +11496,7 @@ window.__farm = {
   bottomWords: () => ({ cuddle: henT('cuddle'), fill: henT('fill').replace('{c}', '120'), dog: dogT('rename', 'Bartholomew'), farmer: nightVisit ? nightVisit.T('send') : '' }),
   accountSync: why => account && (why === 'save' ? account.upNow() : account.sync(why)),
   notes: () => notes,                                       // (the store app's reminders: notetest.mjs)
+  ads: () => ads && { on: ads.on, left: ads.left(), privacy: ads.privacy, busy: ads.busy },
   account: () => account && { on: account.on, user: account.user, status: account.status, savedAt: account.savedAt, st: account.st, info: account.info, nudge: account.nudgeDue() },
   get birds() { return plots[0] ? plots[0].birds : []; }, allBirds, plots, view, renderer, scene, camera, quality: () => q, meter,
   setQuality: (n) => { n = Math.max(0, Math.min(QUALITY.length - 1, n)); if (n > q) slowAt = view.size; wantQ = null; setQuality(n); },      // (tests; it used to wait on stepDown, which only asks for the next frame: it never returned)

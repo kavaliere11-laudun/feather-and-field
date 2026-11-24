@@ -3,7 +3,7 @@
 // in the 2D game's look. Every text goes through game.t() (English and French); names are set as text, never as HTML.
 import { BAG_ART } from './bagart.js';
 import { READY, LANG_NAME } from './lang.js';
-import { BAGS, TRIO_LINES, SHELF, PERS_INFO, MAX_STARS, STAR_EGG, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, THEMES, themeInSeason, BREED_LEVEL, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS, MILES, MILE_IDS, JOBS_BONUS, PANTRY } from './game.js';
+import { ADS, BAGS, TRIO_LINES, SHELF, PERS_INFO, MAX_STARS, STAR_EGG, TRUST_AT, xpFor, TOP_LEVEL, cleanName, SHOWS, SHOW_TIERS, DECOR, decorXp, ANIMALS, animalXp, OUTFITS, outfitXp, WHEAT, HONEY, rarePrice, RARE, FOX, UPGRADES, DRESSES, dressXp, inSeason, THEMES, themeInSeason, BREED_LEVEL, FISHING, FISH_IDS, FISH_RULES, fishPrice, ORDERS, ORDER_ITEMS, HUNT, GARDEN, CROPS, CROP_IDS, MILES, MILE_IDS, JOBS_BONUS, PANTRY } from './game.js';
 
 // the welcome picture (main.js ?poster, posterpic.mjs): its size, and the part of it that must always show, as fractions
 // of it (left, top, right, bottom): from the farmer to the Legbar, from the Silkie on his hat to the hens' feet. It's wide
@@ -1269,7 +1269,7 @@ export class GameUI {
     const pill = el('span', 'gshop-c'); pill.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(g.data.coins))); rail.append(pill);
     if (h.outfits) {
       const tabs = el('div', 'gchips gshop-tabs');
-      for (const [k, label, icon] of [...(IAP_DEMO || this.payOn() ? [['coins', '', '🪙']] : []), ...(g.level >= PAY_LEVEL ? [['hens', 'shop_hens', '🐔']] : []), ...(h.coops ? [['coops', 'shop_coops', themeInSeason('winter') ? '❄️' : '🏠']] : []), ['decor', 'shop_decor', '🌷'], ['animals', 'shop_animals', '🐾'], ['outfits', 'shop_outfits', '👒']]) {
+      for (const [k, label, icon] of [...(IAP_DEMO || this.payOn() || this.adsOn() ? [['coins', '', '🪙']] : []), ...(g.level >= PAY_LEVEL ? [['hens', 'shop_hens', '🐔']] : []), ...(h.coops ? [['coops', 'shop_coops', themeInSeason('winter') ? '❄️' : '🏠']] : []), ['decor', 'shop_decor', '🌷'], ['animals', 'shop_animals', '🐾'], ['outfits', 'shop_outfits', '👒']]) {
         const c = el('button', 'gchip' + (tab === k ? ' on' : ''), icon + ' ' + (k === 'coins' ? this.dt('tab') : this.t(label))); c.type = 'button'; c.dataset.tab = k;
         if (k === 'coins') c.replaceChildren(el('span', 'gcoin gcoin-s'), document.createTextNode(' ' + this.dt('tab')));      // (the game's own gold coin, not the phone's silver one)
         c.addEventListener('click', () => { if (this.shopTab !== k) this.shopSheet(h, k); });
@@ -1280,7 +1280,7 @@ export class GameUI {
     wrap.append(rail, b); body.append(wrap);
     // (a tile's words: shown when its picture is tapped, one at a time)
     b.addEventListener('click', e => { const pic = e.target.closest('.gpage > .gpic'); if (!pic || pic.closest('.gviewable')) return; const card = pic.parentNode, was = card.classList.contains('gsay'); for (const x of b.querySelectorAll('.gsay')) x.classList.remove('gsay'); card.classList.toggle('gsay', !was); });
-    if (tab === 'coins' && (IAP_DEMO || this.payOn())) { this.coinCards(b); return; }
+    if (tab === 'coins' && (IAP_DEMO || this.payOn() || this.adsOn())) { this.coinCards(b); return; }
     if (tab === 'hens' && g.level >= PAY_LEVEL) { this.hensShelf(b, h); return; }
     if (tab === 'coops' && h.coops) { this.coopTiles(b, h); return; }
     if (tab === 'outfits') { this.outfitCards(b, h, fmt); return; }
@@ -1422,13 +1422,16 @@ export class GameUI {
     const fmt = n => n.toLocaleString(this.g.locale());
     if (!again) b.append(el('p', 'gnote', this.dt('note')));
     const PAY = this.o.pay || null;
-    // free coins for a short video (chosen by the player, never forced): AD_DAY a day (the preview only: not built yet)
-    if (!PAY) { const card = el('div', 'gcard gpage gdec giap giap-ad'), info = el('div', 'gpage-i'), pic = el('div', 'gpic giap-adpic', '🎬');
+    // free coins for a short video (24 Nov 2026, Audrey: "Ads before launch"): in the app, the real one (ads.js: Google's
+    // video, chosen by the player, never forced; ADS.day a day); the preview's stand-in otherwise
+    if (this.adsOn()) b.append(this.freeCard());
+    else if (!PAY) { const card = el('div', 'gcard gpage gdec giap giap-ad'), info = el('div', 'gpage-i'), pic = el('div', 'gpic giap-adpic', '🎬');
       info.append(el('span', 'gcard-t', this.dt('ad_t')), el('p', 'gnote gdec-l', this.dt('ad_l', { n: AD_COINS })), el('p', 'gpage-s', adsLeft ? this.dt('ad_left', { n: adsLeft }) : this.dt('ad_none')));
       const go = el('button', 'gbtn gsmallbtn gpage-go giap-watch', this.dt('ad_btn')); go.type = 'button'; go.disabled = !adsLeft; if (!adsLeft) go.classList.add('galt');
       go.addEventListener('click', () => { if (adsLeft) this.adDemo(); });
       info.append(go); card.append(pic, info); b.append(card); }
     for (const B of COIN_BAGS) {
+      if (!PAY && !IAP_DEMO) break;                        // (the app's free-coins videos without Apple's shop: no bags, never the preview's stand-in)
       if (PAY && !PAY.price('bag:' + B.id)) continue;      // (Apple hasn't given its price: not offered)
       const card = el('div', 'gcard gpage gdec giap'); card.dataset.bag = B.id;
       const info = el('div', 'gpage-i'), t = el('span', 'gcard-t', this.dt(B.id));
@@ -1441,12 +1444,38 @@ export class GameUI {
     }
     // (18 Nov 2026, Audrey, the shelf empty in TestFlight: "I thought the game was ready for me to test buying things ?": Apple
     // has given no prices: said, with a way to ask again, in place of an empty shelf)
-    if (PAY && !b.querySelector('.giap')) { const c = el('div', 'gcard giap-off'), go = el('button', 'gbtn gsmallbtn galt', this.t('shop_again')); go.type = 'button'; go.dataset.again = '1';
+    if (PAY && !b.querySelector('.giap:not(.gfree)')) { const c = el('div', 'gcard giap-off'), go = el('button', 'gbtn gsmallbtn galt', this.t('shop_again')); go.type = 'button'; go.dataset.again = '1';
       go.addEventListener('click', () => { go.disabled = true; Promise.resolve(PAY.reload ? PAY.reload() : null).then(() => { if (this.kind === 'shop' && go.isConnected) { c.remove(); this.coinCards(b, true); } }); });
       c.append(el('p', 'gtext', this.t('shop_noapple')), go);
       const D = PAY.diag ? PAY.diag() : null;      // (22 Nov 2026: what Apple answered, small, to find why: "Apple: 0 / 28 · GBR")
       c.append(el('p', 'gnote giap-diag', 'Apple: ' + (!D ? 'not asked' : (D.wait ? 'waiting for an answer…' : D.err ? D.err : D.found + ' / ' + D.asked) + (D.store ? ' · ' + D.store : '') + (D.app ? ' · app ' + D.app : ''))));
       b.append(c); }
+  }
+  coinFly() { this.flyEggs({ x: innerWidth / 2, y: innerHeight * 0.55 }, 6, null, null, 'gcoin giap-fly'); }      // (coins flying up to the purse)
+  adsOn() { const A = this.o.ads; return !!(A && A.on && this.g.level >= PAY_LEVEL); }
+  // the free-coins card (ads.js): how many are left today; Watch (none left: no button, "Come back tomorrow"); while Google
+  // gets a video ready, "Getting a video…"; after: the coins said, or why there were none
+  freeCard() {
+    const A = this.o.ads, card = el('div', 'gcard gpage gdec giap giap-ad gfree'), info = el('div', 'gpage-i'), pic = el('div', 'gpic giap-adpic', '🎬');
+    const left = A.left(), line = el('p', 'gpage-s gfree-left', left ? this.t('free_left', { n: left }) : this.t('free_none'));
+    const amt = el('p', 'gpage-s gdec-p gfree-n'); amt.append(el('span', 'gcoin gcoin-s'), document.createTextNode('+' + ADS.coins.toLocaleString(this.g.locale())));      // (the coins, as a bag's; the words when its picture is tapped)
+    info.append(el('span', 'gcard-t', this.t('free_t')), el('p', 'gnote gdec-l', this.t('free_l', { n: ADS.coins })), amt, line);
+    if (left) {
+      const go = el('button', 'gbtn gsmallbtn gpage-go giap-watch', this.t('free_btn')); go.type = 'button';
+      go.addEventListener('click', async () => {
+        if (go.disabled) return;
+        go.disabled = true; go.textContent = this.t('free_wait');
+        const r = await A.watch();
+        if (r === 'stopped' && this.o.say) this.o.say(this.t('free_stop'));
+        if (r === 'none' && this.o.say) this.o.say(this.t('free_noad'));
+        if (card.isConnected) card.replaceWith(this.freeCard());
+        const pill = this.body && this.body.querySelector('.gshop-c');      // (the shop's own count of coins, beside its shelves)
+        if (pill) pill.replaceChildren(el('span', 'gcoin gcoin-s'), document.createTextNode(this.g.data.coins.toLocaleString(this.g.locale())));
+      });
+      info.append(go);
+    }
+    card.append(pic, info);
+    return card;
   }
   // a purchase: in the store app, Apple's own payment (o.pay.buy: done once Apple confirms it); in the preview, its stand-in
   payOn() { return this.o.pay && this.g.level >= PAY_LEVEL ? this.o.pay : null; }
@@ -2026,6 +2055,12 @@ export class GameUI {
       const dg = el('p', 'gnote gsound-diag'); b.append(tb, tn, dg); }
     if (this.o.notes && this.o.notes.on) b.append(...this.notesRow());      // (the store app: its reminders, notify.js)
     if (IAP_DEMO || this.o.pay) { const c = el('div', 'gcard giap-restore'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🧾'), el('span', 'gcard-t', this.dt('restore_t'))); const r = el('button', 'gbtn galt gsmallbtn', this.dt('restore')); r.type = 'button'; if (this.o.pay) r.addEventListener('click', () => this.o.pay.restore()); c.append(hd, el('p', 'gnote', this.dt(this.o.pay ? 'restore_real' : 'restore_note')), r); b.append(c); }
+    if (this.o.ads && this.o.ads.on && this.o.ads.privacy) {      // (the free-coins videos: Google's ad privacy choices, where the law asks Google to offer them)
+      const c = el('div', 'gcard gadchoices'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🎬'), el('span', 'gcard-t', this.t('ad_choices_t')));
+      const go = el('button', 'gbtn galt gsmallbtn', this.t('ad_choices')); go.type = 'button';
+      go.addEventListener('click', async () => { go.disabled = true; await this.o.ads.choices(); go.disabled = false; });
+      c.append(hd, el('p', 'gnote', this.t('ad_choices_l')), go); b.append(c);
+    }
     if (this.o.account && this.o.account.on) b.append(this.accountCard());
     b.append(el('p', 'gnote', this.t('saved_here')));
     // the farm code: copy it (iPhone only lets a page copy straight from the tap, so the clipboard is handed a promise of

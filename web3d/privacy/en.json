@@ -1,7 +1,7 @@
 {
  "title": "Privacy",
  "updated": "Updated {date}",
- "intro": "Feather & Field is a cosy farm game made by {owner}. This page says simply what the game keeps about you, and why. In short: your farm lives on your phone, and nothing about you leaves it unless you choose to sign in.",
+ "intro": "Feather & Field is a cosy farm game made by {owner}. This page says simply what the game keeps about you, and why. In short: your farm lives on your phone, and nothing about you leaves it unless you choose to sign in, or to watch a video for free coins in the iPhone app.",
  "sections": [
   {
    "h": "On your phone",
@@ -23,6 +23,14 @@
    ]
   },
   {
+   "h": "Videos for free coins (iPhone app, optional)",
+   "p": [
+    "In the iPhone app’s shop you can choose to watch a short video for free coins (five a day). The videos come from Google AdMob, Google’s advertising service. Nothing of Google’s is started until you tap “Watch”.",
+    "The videos are contextual: they’re never chosen from what’s known about you, they’re suitable for everyone, and the app never asks to track you. To show a video, count it and keep it safe from fraud, Google receives what any advertising service does: your device’s internet address, the kind of device and its settings, and how the video was watched. Google uses that data under its own privacy policy. More: <a href=\"https://policies.google.com/technologies/partner-sites\">How Google uses information from apps that use its services</a>.",
+    "In the UK and Europe, Google asks for your consent the first time, and you can change your choices in Settings (“Ad privacy choices”)."
+   ]
+  },
+  {
    "h": "Where the game comes from",
    "p": [
     "The game is served by GitHub Pages (GitHub, Inc.). Like any website, GitHub’s servers see your device’s internet address when the game loads, and GitHub may keep it in its logs for a short time for security. More: <a href=\"https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement\">GitHub’s privacy statement</a>.",
@@ -32,7 +40,7 @@
   {
    "h": "What the game never does",
    "p": [
-    "No adverts, no tracking, no analytics, and your data is never sold or shared. No cookies for tracking or adverts: the only things kept on your device are those the game needs to work.",
+    "No forced adverts (only the videos you choose to watch for free coins, in the iPhone app), no tracking, no analytics, and your data is never sold. No cookies for tracking: the only things kept on your device are those the game needs to work.",
     "In the iPhone app, some things can be bought with real money. Apple takes the payment: the game only learns from Apple what you bought, to give it to you, and never sees your card or payment details. On the website, there’s nothing to buy."
    ]
   },

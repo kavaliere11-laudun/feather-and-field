@@ -1,7 +1,7 @@
 {
  "title": "Privacy",
  "updated": "Ultimo aggiornamento: {date}",
- "intro": "Feather & Field è un rilassante gioco di fattoria creato da {owner}. Questa pagina spiega in modo semplice cosa conserva il gioco su di te, e perché. In breve: la tua fattoria vive sul tuo telefono, e niente che ti riguardi ne esce, a meno che tu non scelga di accedere.",
+ "intro": "Feather & Field è un rilassante gioco di fattoria creato da {owner}. Questa pagina spiega in modo semplice cosa conserva il gioco su di te, e perché. In breve: la tua fattoria vive sul tuo telefono, e niente che ti riguardi ne esce, a meno che tu non scelga di accedere, o di guardare un video per monete gratis nell’app per iPhone.",
  "sections": [
   {
    "h": "Sul tuo telefono",
@@ -23,6 +23,14 @@
    ]
   },
   {
+   "h": "Video per monete gratis (app per iPhone, facoltativo)",
+   "p": [
+    "Nel negozio dell’app per iPhone puoi scegliere di guardare un breve video per monete gratis (cinque al giorno). I video arrivano da Google AdMob, il servizio pubblicitario di Google. Niente di Google viene avviato prima che tu tocchi “Guarda”.",
+    "I video sono contestuali: non vengono mai scelti in base a ciò che si sa di te, sono adatti a tutti e l’app non chiede mai di tracciarti. Per mostrare un video, contarlo e proteggerlo dalle frodi, Google riceve ciò che riceve qualsiasi servizio pubblicitario: l’indirizzo internet del tuo dispositivo, il tipo di dispositivo e le sue impostazioni, e come è stato guardato il video. Google usa questi dati secondo la propria informativa sulla privacy. Per saperne di più: <a href=\"https://policies.google.com/technologies/partner-sites\">Come Google utilizza le informazioni delle app che usano i suoi servizi</a>.",
+    "Nel Regno Unito e in Europa, Google ti chiede il consenso la prima volta, e puoi cambiare le tue scelte nelle Impostazioni (“Le tue scelte sulla pubblicità”)."
+   ]
+  },
+  {
    "h": "Da dove arriva il gioco",
    "p": [
     "Il gioco è ospitato su GitHub Pages (GitHub, Inc.). Come per qualsiasi sito, i server di GitHub vedono l’indirizzo IP del tuo dispositivo quando il gioco si carica, e GitHub può conservarlo per poco tempo nei suoi registri, per motivi di sicurezza. Per saperne di più: <a href=\"https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement\">Informativa sulla privacy di GitHub</a>.",
@@ -32,7 +40,7 @@
   {
    "h": "Cosa il gioco non fa mai",
    "p": [
-    "Niente pubblicità, niente tracciamento, niente statistiche di utilizzo, e i tuoi dati non vengono mai venduti né condivisi. Nessun cookie di tracciamento o pubblicitario: sul tuo dispositivo resta solo ciò che serve al gioco per funzionare.",
+    "Niente pubblicità imposta (solo i video che scegli di guardare per monete gratis, nell’app per iPhone), niente tracciamento, niente statistiche di utilizzo, e i tuoi dati non vengono mai venduti. Nessun cookie di tracciamento: sul tuo dispositivo resta solo ciò che serve al gioco per funzionare.",
     "Nell’app per iPhone alcune cose si possono comprare con soldi veri. Il pagamento lo gestisce Apple: il gioco sa da Apple solo cosa hai comprato, per dartelo, e non vede mai la tua carta né i tuoi dati di pagamento. Sul sito non c’è niente da comprare."
    ]
   },
