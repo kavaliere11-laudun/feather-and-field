@@ -848,4 +848,121 @@ def tree_house_dec(seed=131, name='tree_house', part=None):
     return finish(keep, name)
 
 
-GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec, 'dovecote': dovecote_dec, 'tractor': tractor_dec, 'orchard': orchard_dec, 'tree_house': tree_house_dec}
+def lathe_band(name, prof, a0, a1, m, segs=4):
+    """A piece of a surface of turning (a balloon's gore): the profile prof [(z, r), ...] turned from angle a0 to a1,
+    segs steps across; smooth, both faces wound outwards."""
+    import bmesh
+    me = bpy.data.meshes.new(name); bm = bmesh.new(); rows = []
+    for z, r in prof:
+        row = []
+        for k in range(segs + 1):
+            a = a0 + (a1 - a0) * k / segs; rr = max(r, 1e-4)
+            row.append(bm.verts.new((math.cos(a) * rr, math.sin(a) * rr, z)))
+        rows.append(row)
+    for i in range(len(rows) - 1):
+        for k in range(segs):
+            if prof[i + 1][1] < 1e-3: bm.faces.new((rows[i][k], rows[i][k + 1], rows[i + 1][k]))
+            else: bm.faces.new((rows[i][k], rows[i][k + 1], rows[i + 1][k + 1], rows[i + 1][k]))
+    bm.to_mesh(me); bm.free()
+    o = link(bpy.data.objects.new(name, me)); setmat(o, m)
+    for pl in o.data.polygons: pl.use_smooth = True
+    return o
+
+
+BALLOON_LIFT = 0.32       # (the Hot-Air Balloon: how high its basket floats over the grass; its floating part's origin)
+
+
+def hot_air_balloon_dec(seed=141, name='hot_air_balloon', part=None):
+    """(part: None all of it, as in the pictures; for the game 'ground' what stays on the grass, 'float' the balloon and
+    its basket, about the grass under it: the browser bobs it, main.js balloonBob)
+    A hot-air balloon tethered on the farm, its basket floating a little over the grass as if about to go up: a tall
+    envelope of sixteen gores in red, cream and gold with a sky-blue band round its middle and a scalloped skirt, a crown
+    ring on top; load lines down to a burner on four poles over a wicker basket with a leather rim, sandbags hanging from
+    it, a little pennant; four ropes down to stakes in the grass, a wooden step to climb in by, a coil of rope, two more
+    sandbags and a wicker hamper on the grass."""
+    random.seed(seed); objs = []; flo = []
+    red = C('hbred', '#d8453b', rough=0.55); cream = C('hbcream', '#f4ead2', rough=0.6); gold = C('hbgold', '#f2b84a', rough=0.55)
+    blue = C('hbblue', '#5fa8d3', rough=0.55); white = C('hbwhite', '#fbf7ee', rough=0.6)
+    wicker = [C('hbwicker', '#b98a4e', rough=0.85, var=0.08), C('hbwicker2', '#a77a42', rough=0.85, var=0.08)]
+    leather = C('hbleather', '#6b3f26', rough=0.6); rope = C('hbrope', '#d6c197', rough=0.9); steel = C('hbsteel', '#5a5d63', rough=0.4, metal=0.6)
+    sack = C('hbsack', '#9e8558', rough=0.95, var=0.06); wood = [C('hbwood%d' % i, h, rough=0.85, var=0.1, grain=0.3) for i, h in enumerate(('#9a7650', '#8a6744'))]
+    flame = C('lamp', '#ffb347', rough=0.3, emission=('#ffa030', 1.0))
+    L = BALLOON_LIFT
+    BZ0, BZ1, BW = L, L + 0.62, 0.42             # the basket: its bottom, its rim, half its width
+    BU = BZ1 + 0.62                              # the burner
+    MZ = BU + 0.3                                # the envelope's mouth
+    prof = [(0.0, 0.34), (0.25, 0.48), (0.6, 0.78), (1.0, 1.1), (1.45, 1.38), (1.9, 1.56), (2.35, 1.64), (2.75, 1.6), (3.1, 1.46), (3.4, 1.2), (3.62, 0.86), (3.76, 0.46), (3.82, 0.0)]
+    prof = [(MZ + z, r) for z, r in prof]
+    NG = 16; cols = [red, cream, gold, cream]
+    for g in range(NG):                          # (the gores, up and down, a sky-blue band round the middle)
+        a0, a1 = g / NG * math.tau, (g + 1) / NG * math.tau
+        low = [p for p in prof if p[0] <= MZ + 1.9]; band = [p for p in prof if MZ + 1.9 <= p[0] <= MZ + 2.35]; high = [p for p in prof if p[0] >= MZ + 2.35]
+        flo.append(lathe_band('hbgore', low, a0, a1, cols[g % 4], segs=3))
+        flo.append(lathe_band('hbband', band, a0, a1, blue, segs=3))
+        flo.append(lathe_band('hbgore', high, a0, a1, cols[g % 4], segs=3))
+    skirt = [(MZ - 0.2, 0.3), (MZ - 0.1, 0.31), (MZ + 0.001, 0.34)]
+    for g in range(NG):                          # (a fabric skirt round the mouth, in the gores' colours)
+        flo.append(lathe_band('hbskirt', skirt, g / NG * math.tau, (g + 1) / NG * math.tau, cols[g % 4], segs=2))
+    flo.append(ring('hbcrown', 0.05, 0.18, MZ + 3.81, 0.04, white, verts=20))
+    flo.append(ring('hbmouth', 0.31, 0.37, MZ, 0.03, white, verts=24))
+    # the basket: wicker sides in courses, a leather rim, poles up to the burner, load lines up to the mouth
+    for sd in range(4):
+        ang = sd * math.pi / 2; n = Vector((math.cos(ang), math.sin(ang), 0)); t = Vector((-n.y, n.x, 0))
+        for k in range(12):                      # (woven: thin courses in two shades over upright stakes)
+            z = BZ0 + 0.03 + k * 0.05; off = 0.006 if k % 2 else -0.006
+            flo.append(plank('hbweave', tuple(n * (BW + off) + t * -BW + Vector((0, 0, z))), tuple(n * (BW + off) + t * BW + Vector((0, 0, z))), 0.046, 0.03, tuple(n), wicker[k % 2], jitter=0.4, bevel=0.0))
+        for j in range(7):
+            u = -BW + (j + 0.5) * 2 * BW / 7
+            flo.append(box('hbstake2', (0.018, 0.018, BZ1 - BZ0 - 0.02), tuple(n * (BW + 0.018) + t * u + Vector((0, 0, (BZ0 + BZ1) / 2))), m=C('hbwicker3', '#8c6235', rough=0.85), bevel=0.0, segs=1))
+        A = n * (BW + 0.02) + t * -(BW + 0.04) + Vector((0, 0, BZ1)); B = n * (BW + 0.02) + t * (BW + 0.04) + Vector((0, 0, BZ1))
+        flo.append(cyl('hbrim', 0.04, (B - A).length, tuple((A + B) / 2), (B - A).to_track_quat('Z', 'Y').to_euler(), m=leather, verts=8, bevel=0.0))
+    flo.append(box('hbfloor', (2 * BW, 2 * BW, 0.04), (0, 0, BZ0 + 0.02), m=wicker[1], bevel=0.0, segs=1))
+    for cx in (-1, 1):
+        for cy in (-1, 1):
+            c = Vector((cx * BW * 0.92, cy * BW * 0.92, 0))
+            flo.append(box('hbcorner', (0.05, 0.05, BZ1 - BZ0), tuple(c + Vector((0, 0, (BZ0 + BZ1) / 2))), m=leather, bevel=0.0, segs=1))
+            top = Vector((cx * 0.16, cy * 0.16, BU)); A = c + Vector((0, 0, BZ1))
+            flo.append(cyl('hbpole', 0.014, (top - A).length, tuple((A + top) / 2), (top - A).to_track_quat('Z', 'Y').to_euler(), m=steel, verts=6, bevel=0.0))
+            m0 = Vector((cx * 0.25, cy * 0.25, MZ + 0.02))
+            flo.append(cyl('hbline', 0.006, (m0 - top).length, tuple((top + m0) / 2), (m0 - top).to_track_quat('Z', 'Y').to_euler(), m=rope, verts=4, bevel=0.0))
+    flo.append(box('hbframe', (0.36, 0.36, 0.03), (0, 0, BU), m=steel, bevel=0.0, segs=1))
+    flo.append(cyl('hbburner', 0.09, 0.16, (0, 0, BU + 0.06), m=steel, verts=12, bevel=0.0))
+    flo.append(cyl('hbcoil', 0.065, 0.06, (0, 0, BU + 0.16), m=C('hbcopper', '#b8733a', rough=0.35, metal=0.7), verts=12, bevel=0.0))
+    flo.append(sphere('hbflame', 0.06, (0, 0, BU + 0.26), (1, 1, 1.8), m=flame, seg=10, rings=6))
+    for sd in range(4):                          # (sandbags hanging from the rim)
+        ang = sd * math.pi / 2 + math.pi / 4; n = Vector((math.cos(ang), math.sin(ang), 0))
+        top = n * (BW * 1.42) + Vector((0, 0, BZ1 - 0.02))
+        flo.append(cyl('hbbagrope', 0.005, 0.14, tuple(top - Vector((0, 0, 0.07))), m=rope, verts=4, bevel=0.0))
+        flo.append(sphere('hbbag', 0.07, tuple(top - Vector((0, 0, 0.21))), (1, 1, 1.15), m=sack, seg=10, rings=7))
+        flo.append(cyl('hbbagtie', 0.022, 0.04, tuple(top - Vector((0, 0, 0.13))), m=rope, verts=8, r2=0.03, bevel=0.0))
+    # a little pennant on a pole at a corner
+    P0 = Vector((BW * 0.92, -BW * 0.92, BZ1)); P1 = P0 + Vector((0, 0, 0.55))
+    flo.append(cyl('hbflagpole', 0.01, 0.55, tuple((P0 + P1) / 2), m=wood[0], verts=5, bevel=0.0))
+    flag(flo, tuple(P1), tuple(P1 - Vector((0, 0, 0.16))), tuple(P1 + Vector((0.26, -0.04, -0.08))), red, name='hbpennant')
+    # the tether ropes down to stakes in the grass (with the balloon: they stay taut as it bobs), the stakes on the grass
+    for k in range(4):
+        ang = k * math.pi / 2 + math.pi / 4 + 0.15; d = Vector((math.cos(ang), math.sin(ang), 0))
+        S0 = d * 1.35; A = d * (BW * 1.35) + Vector((0, 0, BZ0 + 0.12)); B = S0 + Vector((0, 0, 0.16))
+        flo.append(cyl('hbtether', 0.009, (B - A).length, tuple((A + B) / 2), (B - A).to_track_quat('Z', 'Y').to_euler(), m=rope, verts=5, bevel=0.0))
+        objs.append(cyl('hbstake', 0.03, 0.22, tuple(S0 + Vector((0, 0, 0.08))), (random.uniform(-0.15, 0.15), random.uniform(-0.15, 0.15), 0), m=wood[k % 2], verts=6, r2=0.02, bevel=0.0))
+    # on the grass: a wooden step, a coil of rope, two sandbags, a wicker hamper
+    objs.append(box('hbstep', (0.42, 0.26, 0.04), (0.0, -0.78, 0.2), m=wood[0], bevel=0.006, segs=1))
+    for sx in (-1, 1): objs.append(box('hbstepleg', (0.04, 0.24, 0.18), (sx * 0.17, -0.78, 0.09), m=wood[1], bevel=0.0, segs=1))
+    for k in range(3): objs.append(ring('hbcoilrope', 0.08 - k * 0.012, 0.12 - k * 0.012, 0.02 + k * 0.025, 0.025, rope, verts=16)); objs[-1].location = (0.78, -0.72, 0.02 + k * 0.025)
+    for x, y in ((-0.8, -0.62), (-0.62, -0.82)):
+        r_ = random.uniform(0, 3); objs.append(sphere('hbbag', 0.09, (x, y, 0.065), (1.25, 0.85, 0.72), (0, 0, r_), m=sack, seg=10, rings=7))
+        objs.append(cyl('hbbagtie', 0.025, 0.05, (x + math.cos(r_) * 0.11, y + math.sin(r_) * 0.11, 0.06), (0, math.pi / 2, r_), m=rope, verts=8, r2=0.035, bevel=0.0))
+    for k in range(4): objs.append(box('hbhamper', (0.34, 0.24, 0.05), (-0.95, 0.55, 0.027 + k * 0.05), (0, 0, 0.3), m=wicker[k % 2], bevel=0.006, segs=1))
+    objs.append(box('hbhamperlid', (0.36, 0.26, 0.035), (-0.95, 0.55, 0.215), (0, 0, 0.3), m=leather, bevel=0.008, segs=1))
+    objs.append(ring('hbhandle', 0.07, 0.085, 0, 0.02, leather, verts=12)); objs[-1].location = (-0.95, 0.55, 0.24); objs[-1].rotation_euler = (math.pi / 2, 0, 0.3)
+    if part == 'float':
+        for o in flo: o.matrix_basis = Matrix.Translation((0, 0, -L)) @ o.matrix_basis
+        keep = flo
+    else:
+        keep = objs + (flo if part is None else [])
+    for o in objs + flo:
+        if not any(o is k for k in keep): bpy.data.objects.remove(o, do_unlink=True)
+    return finish(keep, name)
+
+
+GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec, 'dovecote': dovecote_dec, 'tractor': tractor_dec, 'orchard': orchard_dec, 'tree_house': tree_house_dec, 'hot_air_balloon': hot_air_balloon_dec}
