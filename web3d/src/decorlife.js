@@ -517,7 +517,7 @@ export function balloonSway(t) { return { y: Math.sin(t * 0.9) * 0.035 + Math.si
 const BALLOON_BURNER = 1.75;
 class BalloonLife {
   constructor(parent, r) {
-    this.r = r; this.t = r() * 20; this.next = 4 + r() * 6; this.on = 0; this.s = balloonSway(this.t);
+    this.r = r; this.t = r() * 20; this.next = 4 + r() * 6; this.on = 0; this.k = 0; this.s = balloonSway(this.t);
     const outer = new THREE.MeshBasicMaterial({ color: '#ff9a2e', transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false });
     const inner = new THREE.MeshBasicMaterial({ color: '#fff0a8', transparent: true, opacity: 0.95, blending: THREE.AdditiveBlending, depthWrite: false });
     this.flame = new THREE.Group(); this.flame.visible = false; parent.add(this.flame);
@@ -529,7 +529,7 @@ class BalloonLife {
     this.t += dt; this.s = balloonSway(this.t);
     if (this.on > 0) this.on -= dt;
     else if ((this.next -= dt) <= 0) { this.next = 10 + this.r() * 14; this.on = 1.1 + this.r() * 0.6; }
-    const k = this.on > 0 ? Math.min(1, this.on / 0.25, (1.6 - this.on) / 0.12) : 0, F = this.flame;
+    const k = this.on > 0 ? Math.min(1, this.on / 0.25, (1.6 - this.on) / 0.12) : 0, F = this.flame; this.k = k * (0.9 + Math.sin(this.t * 29) * 0.1);      // (k: main.js lights the envelope by it)
     F.visible = k > 0.02;
     if (F.visible) {
       F.position.set(0, BALLOON_BURNER + this.s.y, 0); F.rotation.set(this.s.rx, 0, this.s.rz);

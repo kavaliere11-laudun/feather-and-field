@@ -1555,7 +1555,7 @@ function tickDecor(dt) {
   if (decorLife) decorLife.update(dt);
   if (DEC.items.fountain) FOUNTAIN_T.value = (FOUNTAIN_T.value + dt) % 3600;      // (its water: fountainMat)
   if (DEC.items.tree_house) swingSway(DEC.items.tree_house.group.userData.swing, (SWING_T += dt));      // (the Tree House's swing in the breeze)
-  if (DEC.items.hot_air_balloon && decorLife && decorLife.balloon) balloonMove(DEC.items.hot_air_balloon.group.userData.balloon, decorLife.balloon.s);      // (the Hot-Air Balloon bobbing: decorlife.js)
+  if (DEC.items.hot_air_balloon && decorLife && decorLife.balloon) balloonMove(DEC.items.hot_air_balloon.group.userData.balloon, decorLife.balloon.s, decorLife.balloon.k);      // (the Hot-Air Balloon bobbing: decorlife.js)
   const tr = DEC.items.tractor;                              // (the Red Tractor: a little shake while its engine putters, decorlife.js)
   if (tr && decorLife && decorLife.tractor && DMOVE.id !== 'tractor') {
     const j = decorLife.tractor.jig;
@@ -8774,10 +8774,14 @@ function balloonParts(g, grade) {
   if (!parts.hot_air_balloon_float) return null;
   const up = new THREE.Group(), b = part('hot_air_balloon_float'); up.add(b); up.position.y = BALLOON_AT;
   const fl = new THREE.Group(); if (parts.hot_air_balloon_flag) fl.add(part('hot_air_balloon_flag')); fl.position.fromArray(BALLOON_FLAG); up.add(fl);
-  up.traverse(o => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; if (grade) grade(o.material); } });
-  g.add(up); return { up, fl };
+  let env = null;      // (its envelope's own material: it glows warm from inside while the burner's lit, seen from above as the flame isn't)
+  up.traverse(o => { if (o.isMesh) { if (o.material && o.material.name === 'satin' && o.material.emissive) { o.material = env = o.material.clone(); } o.castShadow = true; o.receiveShadow = true; if (grade) grade(o.material); } });
+  g.add(up); return { up, fl, env };
 }
-function balloonMove(B, s) { if (!B) return; B.up.position.y = BALLOON_AT + s.y; B.up.rotation.set(s.rx, 0, s.rz); B.fl.rotation.y = s.flag; }
+function balloonMove(B, s, k = 0) {
+  if (!B) return; B.up.position.y = BALLOON_AT + s.y; B.up.rotation.set(s.rx, 0, s.rz); B.fl.rotation.y = s.flag;
+  if (B.env) { B.env.emissive.setRGB(1, 0.55, 0.22); B.env.emissiveIntensity = k * (0.22 + 1.25 * DAY.glow.value); }
+}
 function swingSway(w, t) { if (w) w.rotation.x = Math.sin(t * 1.7) * (0.07 + 0.05 * Math.max(0, Math.sin(t * 0.23))) + Math.sin(t * 0.61) * 0.025; }
 // one on the farm: drawn, in everyone's way (V.props), and tappable (decorList); its life is made again with the rest's
 function addDecor(id, x, z, deg = 45) {
