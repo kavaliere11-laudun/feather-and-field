@@ -606,7 +606,7 @@ def orchard_dec(seed=121, name='orchard'):
     pear = [C('orpear', '#c9cf4a', rough=0.55), C('orpear2', '#b9c23e', rough=0.55)]
     plum = [C('orplum', '#6b2f6e', rough=0.45), C('orplum2', '#5a2860', rough=0.45)]
     meadow = C('ormeadow', '#78a845', rough=0.95, var=0.05); grass = [C('orgrass%d' % i, h, rough=0.85, var=0.06) for i, h in enumerate(('#5f9a3a', '#6fab42', '#86bb50'))]
-    stoneM = [C('orstone%d' % i, h, rough=0.85, var=0.05) for i, h in enumerate(('#c9c0ac', '#bdb39d'))]
+    stoneM = [C('orstone%d' % i, h, rough=0.85, var=0.05) for i, h in enumerate(('#8f8a7c', '#7f7a6d'))]
     wicker = C('orwicker', '#b98a4e', rough=0.85, var=0.08); fl = [C('orfl', '#fbf6ee', rough=0.6), C('orfl2', '#f4d03c', rough=0.6), C('orfl3', '#c9a0e0', rough=0.6)]
     X2, Y0, Y1 = 1.95, -1.7, 1.75
     objs.append(box('ormeadow', (2 * X2, Y1 - Y0, 0.02), (0, (Y0 + Y1) / 2, 0.01), m=meadow, bevel=0.0))
@@ -625,8 +625,8 @@ def orchard_dec(seed=121, name='orchard'):
         tuft(objs, x, y, 6, 0.08, random.uniform(0.12, 0.2), grass, z0=0.02, width=0.015)
         if k % 3 == 0:
             for j in range(3): objs.append(sphere('orflower', 0.018, (x + random.uniform(-0.06, 0.06), y + random.uniform(-0.06, 0.06), random.uniform(0.12, 0.2)), (1, 1, 0.6), m=fl[k % 3], ico=1))
-    for k, y in enumerate((-1.42, -1.05, -0.7, -0.35)):            # (stepping stones in from the gate to the middle tree)
-        objs.append(cyl('orstep', random.uniform(0.15, 0.18), 0.04, (random.uniform(-0.05, 0.05), y, 0.03), (0, 0, random.uniform(0, 3)), m=stoneM[k % 2], verts=9, bevel=0.012))
+    for k, (x, y) in enumerate(((0.03, -1.4), (-0.08, -0.98), (0.06, -0.55))):      # (grey stepping stones in from the gate, set low in the grass)
+        objs.append(cyl('orstep', random.uniform(0.11, 0.13), 0.025, (x, y, 0.02), (0, 0, random.uniform(0, 3)), m=stoneM[k % 2], verts=9, bevel=0.008))
     # the fence: posts and two rails round it, a gap at the front for the gate
     def rails(a, b):
         A, B = Vector((a[0], a[1], 0)), Vector((b[0], b[1], 0)); L = (B - A).length; n = max(1, round(L / 0.6))

@@ -113,8 +113,8 @@ for (const id of IDS) {
     const out = await p.evaluate(([x, z]) => { const f = window.__farm, b = f.moment.bird(); const L = f.farmer(); return { b, seq: f.moment.seq(), d: b ? Math.hypot(b.at[0] - x, b.at[1] - z) : null, coins: f.game().data.coins, m: f.game().data.moment, farmer: L && { home: L.home, running: L.running, task: L.task && L.task.name, pos: [L.pos.x, L.pos.z] } }; }, [at.x, at.z]);
     ok('tapped: off she runs out of its gate (or over its fence where he can get to her), the farmer running after her; paid', tapped && fl && fl.flee && out.b && !out.b.flee && out.d > 2.1 && out.seq && out.coins > hen.coins && !out.m, { fl, out });
     await shot(id + '_5_chase');
-    let home = null; for (let k = 0; k < 40 && !home; k++) { await run(1); home = await p.evaluate(id => { const f = window.__farm; return !f.moment.bird() && f.coopPlots().some(P => P.birds.some(b => b.gid === id)) ? true : null; }, hen.id); }
-    ok('…he catches her out on the grass and carries her home', !!home, home);
+    let home = null, dodged = false; for (let k = 0; k < 40 && !home; k++) { await run(1); const h = await p.evaluate(id => { const f = window.__farm, b = f.moment.bird(); return { d: !!(b && b.dodged), home: !b && f.coopPlots().some(P => P.birds.some(x => x.gid === id)) }; }, hen.id); dodged = dodged || h.d; home = h.home || null; }
+    ok('…he runs up to her, she darts off again ("Come back here!"), he catches her and carries her home', !!home && dodged, { home, dodged });
   }
 }
 // a reload: all still there

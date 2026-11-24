@@ -9919,7 +9919,7 @@ function strayStep(b, dt) {
     if (d > 1e-4) { b.root.rotation.y = Math.atan2(dx, dz); const st = Math.min(d, b.speed * 2.6 * dt); p.x += dx / d * st; p.z += dz / d * st; }
     const hop = S.hop ? Math.sin(Math.PI * Math.min(1, Math.max(0, 1 - Math.hypot(q[0] - p.x, q[1] - p.z) / S.hop))) * 0.72 : 0;
     o.walking = !hop; o.flap = hop ? 1 : 0.5 + 0.5 * Math.sin(S.ft * 17); p.y = 0.015 + groundY(p.x, p.z) + (hop || Math.abs(Math.sin(S.ft * 9)) * 0.03);
-    if (d < 0.06) { S.flee.shift(); S.hop = 0; if (!S.flee.length) { S.flee = null; S.called = true; S.lift = 0; strayFetch(); } }
+    if (d < 0.06) { S.flee.shift(); S.hop = 0; if (!S.flee.length) { S.flee = null; S.called = true; S.lift = 0; if (!S.dodged) strayFetch(); else if (STRAY.seq) b.root.rotation.y = Math.atan2(farmLife.pos.x - p.x, farmLife.pos.z - p.z); } }      // (after her dodge: facing him, he's on his way)
     return o;
   }
   if (S.called) {
@@ -10042,9 +10042,27 @@ function strayFetch() {
   let at = null;
   for (const da of [0, 0.5, -0.5, 1, -1, 1.6, -1.6, 2.4, -2.4, 3.14]) { const q = [p.x + Math.sin(a0 + da) * off, p.z + Math.cos(a0 + da) * off]; if (nav.nearestIn(reach, q[0], q[1], 0)) { at = q; break; } }
   if (!at) at = nav.nearestIn(reach, p.x, p.z, 1.0);
-  const seq = at && farmLife.bringHome({ P, at, hen: b, pace: b.stray.orchard ? 'run' : undefined, say: b.stray.orchard ? 'caught' : undefined, face: () => Math.atan2(b.root.position.x - at[0], b.root.position.z - at[1]), lift: (k, Lf) => strayLift(k, Lf), down: () => strayPut(), heart: () => { if (STRAY.bird) heartOver(STRAY.bird); } });
+  // (the apple thief: he runs up to a step short of her first; she darts off, he after her: strayDodge)
+  let chase = null;
+  if (at && b.stray.orchard && !b.stray.dodged) for (const da of [0, 0.4, -0.4, 0.8, -0.8]) { const q = nav.nearestIn(reach, p.x + Math.sin(a0 + da) * 1.0, p.z + Math.cos(a0 + da) * 1.0, 0.2); if (q && Math.hypot(q[0] - p.x, q[1] - p.z) > 0.7) { chase = q; break; } }
+  const seq = at && farmLife.bringHome({ P, at, atNow: () => at, hen: b, chase, dodge: () => { const d = strayDodge(); if (d) at = d; }, pace: b.stray.orchard ? 'dash' : undefined, say: b.stray.orchard ? 'caught' : undefined, face: () => Math.atan2(b.root.position.x - at[0], b.root.position.z - at[1]), lift: (k, Lf) => strayLift(k, Lf), down: () => strayPut(), heart: () => { if (STRAY.bird) heartOver(STRAY.bird); } });
   if (!seq) { STRAY.why = at ? 'seq' : 'at'; strayFade(); return; }
   STRAY.seq = seq; STRAY.why = 'ok'; wake(1500);
+}
+// the apple thief, the farmer a step from her: off she darts again, a squawk and her wings going, a metre and a half away
+// from him (where he can still get to her); where he'll pick her up there, or null (nowhere to go: she stays put)
+function strayDodge() {
+  const b = STRAY.bird; if (!b || !farmLife) return null;
+  const p = b.root.position, F = farmLife.pos, nav = navGrid(), reach = farmReach(), a0 = Math.atan2(p.x - F.x, p.z - F.z), side = Math.random() < 0.5 ? 1 : -1;
+  for (const da of [0.7, -0.7, 0.35, -0.35, 1.2, -1.2, 0]) {
+    const a = a0 + da * side, q = [p.x + Math.sin(a) * 1.5, p.z + Math.cos(a) * 1.5];
+    if (!nav.nearestIn(reach, q[0], q[1], 0) || !nav.freeAt(q[0], q[1])) continue;
+    const back = Math.atan2(F.x - q[0], F.z - q[1]), at = nav.nearestIn(reach, q[0] + Math.sin(back) * 0.42, q[1] + Math.cos(back) * 0.42, 0.3); if (!at) continue;
+    b.stray.dodged = true; b.stray.flee = [q]; b.stray.act = null; b.stray.lift = 0;
+    farmSound('mum', p.x, p.z, 1.3); wake(1500);
+    return at;
+  }
+  return null;
 }
 // a tap on the farm: on her, or near her (a thumb's width)
 function strayHit(rr, x, y) {
@@ -11368,7 +11386,7 @@ window.__farm = {
     way: () => VISIT.way, card: () => visitCard(), give: () => visitGive(), no: () => visitNo(), tap: () => { const f = VISIT.f; if (!f) return null; bubV.set(f.pos.x, f.pos.y + 0.7, f.pos.z).project(camera); return { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight }; } },
   snow: { start: () => snowStart(), state: () => ({ on: SNOWF.on, k: +SNOWF.k.toFixed(2), cover: +SNOW_U.value.toFixed(2), flakes: !!(SNOWF.pts && SNOWF.pts.visible), prints: gamePlots().filter(p => p.snowP).length, steps: gamePlots().reduce((a, p) => a + (p.snowP ? p.snowP.live : 0), 0) }) },
   rain: { start: () => rainStart(), penWorm: () => { const pen = penWormSpot(); if (!pen) return null; const W = makeWorm(pen.at[0], pen.at[1], 0); W.pen = pen; W.turn = 0; W.still = true; W.henIn = 1.3; RAIN.worms.push(W); RAIN.spawned++; return pen.q; }, state: () => ({ on: RAIN.on, k: +RAIN.k.toFixed(2), wet: +RAIN.wet.toFixed(2), pud: RAIN.pud.length, worms: RAIN.worms.filter(W => !W.pop && !W.eaten && W.t < W.life).map(W => { W.g.updateMatrixWorld(true); const w = W.segs[5].getWorldPosition(new THREE.Vector3()), q = w.clone().project(camera); return { at: [w.x, w.z], x: (q.x + 1) / 2 * canvas.clientWidth, y: (1 - q.y) / 2 * canvas.clientHeight, t: W.t, pen: !!W.pen, hen: W.hen ? W.hen.gid || W.hen.name : null }; }), spawned: RAIN.spawned, eaten: RAIN.eaten || 0, lines: !!(RAIN.lines && RAIN.lines.visible) }), fieldOf: (x, z) => fieldAt(x, z) },
-  moment: { seat: STRAY_SEAT, start: id => startHenOut(id), orchard: id => startOrchardThief(id), orchAt: (lx, lz) => orchardAt(lx, lz), reach: (x, z, r) => navGrid().nearestIn(farmReach(), x, z, r), free: (x, z) => navGrid().freeAt(x, z), chick: coopId => startChickOut(coopId), roll: () => { STRAY.roll = true; }, why: () => ({ roll: STRAY.roll, open: gameUI.isOpen, kind: gameUI.kind, inside: inside.open, guide: GUIDE_UI.on, intro: GUIDE_UI.intro, hint: hintLeft, news: performance.now() - newsFrom, home: farmLife && farmLife.home, run: farmLife && farmLife.running, show: !!SHOWDAY }), bird: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); return { gid: b.gid, name: b.name, at: [w.x, w.z], y: w.y, why: STRAY.why || null, orchard: !!b.stray.orchard, flee: !!b.stray.flee, called: b.stray.called, fade: b.stray.fade, carry: b.stray.carry ? b.stray.carry.k : 0, spot: b.stray.at, chick: !!b.stray.chick, kidI: b.kidI, peeps: b.stray.peeps || 0, mum: b.mum && b.mum.worry ? (() => { const q = b.mum.root.getWorldPosition(new THREE.Vector3()), c = b.mum.plot.frame.localToWorld(new THREE.Vector3((penOf(b.mum.plot).yard.min[0] + penOf(b.mum.plot).yard.max[0]) / 2, 0, (penOf(b.mum.plot).yard.min[2] + penOf(b.mum.plot).yard.max[2]) / 2)); return { calls: b.mum.worry.calls || 0, at: [q.x, q.z], mid: [c.x, c.z] }; })() : null }; },
+  moment: { seat: STRAY_SEAT, start: id => startHenOut(id), orchard: id => startOrchardThief(id), orchAt: (lx, lz) => orchardAt(lx, lz), reach: (x, z, r) => navGrid().nearestIn(farmReach(), x, z, r), free: (x, z) => navGrid().freeAt(x, z), chick: coopId => startChickOut(coopId), roll: () => { STRAY.roll = true; }, why: () => ({ roll: STRAY.roll, open: gameUI.isOpen, kind: gameUI.kind, inside: inside.open, guide: GUIDE_UI.on, intro: GUIDE_UI.intro, hint: hintLeft, news: performance.now() - newsFrom, home: farmLife && farmLife.home, run: farmLife && farmLife.running, show: !!SHOWDAY }), bird: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); return { gid: b.gid, name: b.name, at: [w.x, w.z], y: w.y, why: STRAY.why || null, orchard: !!b.stray.orchard, flee: !!b.stray.flee, dodged: !!b.stray.dodged, called: b.stray.called, fade: b.stray.fade, carry: b.stray.carry ? b.stray.carry.k : 0, spot: b.stray.at, chick: !!b.stray.chick, kidI: b.kidI, peeps: b.stray.peeps || 0, mum: b.mum && b.mum.worry ? (() => { const q = b.mum.root.getWorldPosition(new THREE.Vector3()), c = b.mum.plot.frame.localToWorld(new THREE.Vector3((penOf(b.mum.plot).yard.min[0] + penOf(b.mum.plot).yard.max[0]) / 2, 0, (penOf(b.mum.plot).yard.min[2] + penOf(b.mum.plot).yard.max[2]) / 2)); return { calls: b.mum.worry.calls || 0, at: [q.x, q.z], mid: [c.x, c.z] }; })() : null }; },
     screen: () => { const b = STRAY.bird; if (!b) return null; const w = b.root.getWorldPosition(new THREE.Vector3()); bubV.set(w.x, w.y + b.hitY, w.z).project(camera); return { x: (bubV.x + 1) / 2 * canvas.clientWidth, y: (1 - bubV.y) / 2 * canvas.clientHeight, z: bubV.z }; },
     tap: () => strayTap(), seq: () => !!STRAY.seq, pill: () => { const e = document.querySelector('.gmom'); return e && !e.hidden ? e.textContent : null; }, bub: () => STRAY.bub && !STRAY.bub.hidden ? STRAY.bub.textContent : null, spot: id => { const b = allBirds.find(x => x.gid === id && x.plot && x.plot.kind === 'coop'); return b ? straySpot(b.plot, rng(5)) : null; } },
   hunt: { at: () => HUNT_UI.mesh && HUNT_UI.mesh.visible ? HUNT_UI.at : null, tap: () => { const e = HUNT_UI.mesh; if (!e || !e.visible) return false; bubV.set(e.position.x, e.position.y + 0.06, e.position.z).project(camera); return huntTap((bubV.x + 1) / 2 * canvas.clientWidth, (1 - bubV.y) / 2 * canvas.clientHeight); }, tick: dt => tickHunt(dt || 0.03) },      // (tests: the golden egg)
