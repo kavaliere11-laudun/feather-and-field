@@ -310,4 +310,139 @@ def rose_arbour_dec(seed=91, name='rose_arbour'):
     return finish(objs, name)
 
 
-GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec}
+# ------------------------------------------------------------------ level 43: the Dovecote
+def flat(o):
+    """Flat faces (a disc's sides and ends shaded apart)."""
+    for md in [m for m in o.modifiers if m.type == 'WEIGHTED_NORMAL']: o.modifiers.remove(md)
+    for pl in o.data.polygons: pl.use_smooth = False
+    return o
+
+
+def dove(objs, p, yaw, m, beak, eye, s=1.0, look=0.0):
+    """A white dove sitting (p: where her feet are; yaw: which way she faces, in Blender's x-y plane)."""
+    f = Vector((math.cos(yaw), math.sin(yaw), 0)); P = Vector(p)
+    objs.append(sphere('ddbody', 0.05 * s, tuple(P + Vector((0, 0, 0.045 * s))), (1.45, 1.0, 0.95), (0, math.radians(-10), yaw), m=m, seg=12, rings=7))
+    objs.append(box('ddtail', (0.075 * s, 0.05 * s, 0.012 * s), tuple(P - f * 0.075 * s + Vector((0, 0, 0.05 * s))), (0, math.radians(-18), yaw), m=m, bevel=0.004, segs=1))
+    h = P + f * 0.06 * s + Vector((0, 0, 0.1 * s)); fh = Vector((math.cos(yaw + look), math.sin(yaw + look), 0))
+    objs.append(sphere('ddhead', 0.028 * s, tuple(h), m=m, seg=10, rings=6))
+    objs.append(cyl('ddbeak', 0.008 * s, 0.022 * s, tuple(h + fh * 0.032 * s - Vector((0, 0, 0.004 * s))), (0, math.radians(90), yaw + look), m=beak, verts=6, r2=0.002 * s, bevel=0.0))
+    for sd in (-1, 1):
+        e = h + fh * 0.016 * s + Vector((-fh.y, fh.x, 0)) * sd * 0.02 * s + Vector((0, 0, 0.008 * s))
+        objs.append(sphere('ddeye', 0.0045 * s, tuple(e), m=eye, seg=6, rings=4))
+
+
+def dovecote_dec(seed=101, name='dovecote'):
+    """A round dovecote tower in the French way (a pigeonnier): limewashed walls on a stone footing, a projecting stone
+    ledge round it, a row of arched pigeon holes under the eaves, each with its little landing ledge; a cone of round
+    clay tiles in courses, an open lantern on top with a gold ball and a dove weathervane; a green arched door with a
+    stone surround and two steps, a sack of grain by it; ivy climbing one side, hollyhocks by the door; a stone basin of
+    water for the doves; a ring of flagstones round it all; white doves on the ledges and the roof."""
+    random.seed(seed); objs = []
+    lime = C('dclime', '#f1eadb', rough=0.85, var=0.03); lime2 = C('dclime2', '#e8dfcb', rough=0.85, var=0.03)
+    stone = [C('dcstone%d' % i, h, rough=0.85, var=0.06) for i, h in enumerate(('#c9bea6', '#bfb39a', '#d2c8b2'))]
+    tiles = [C('dctile%d' % i, h, rough=0.75, var=0.08, hue_var=0.012) for i, h in enumerate(('#c2603f', '#b55639', '#cc6c48'))]
+    dark = C('dcdark', '#3a302a', rough=0.9); green = C('dcdoor', '#4d7a5a', rough=0.6, var=0.04)
+    gold = C('dcgold', '#f2c14e', rough=0.25, metal=1.0); iron = C('dciron', '#2b2f2f', rough=0.45)
+    wood = C('dcwood', '#8a6a4a', rough=0.8, var=0.08)
+    doveW = C('dcdove', '#fbf8f1', rough=0.6); doveB = C('dcbeak', '#e8a0a0', rough=0.6); eyeM = C('dceye', '#1c1a1a', rough=0.4)
+    ivy = [C('dcivy%d' % i, h, rough=0.75, var=0.08) for i, h in enumerate(('#2f6b34', '#3d7a3a', '#4f8a40'))]
+    leaf = C('dcleaf', '#4a8a38', rough=0.8, var=0.06); holly = [C('dchol', '#e88aa8', rough=0.6), C('dchol2', '#f4c0cf', rough=0.6), C('dchol3', '#c84a6a', rough=0.6)]
+    sack = C('dcsack', '#cdb48a', rough=0.95, var=0.05); grain = C('dcgrain', '#e2c56a', rough=0.8)
+    water = C('dcwater', '#6fb0d4', rough=0.08, spec=0.9)
+    R, WALL = 0.72, 2.15                                         # (the tower's radius, its walls' height)
+    # the flagstones round it, and the grass between them
+    for ring_r, n in ((R + 0.22, 18), (R + 0.5, 26)):
+        for k in range(n):
+            a = 2 * math.pi * (k + random.uniform(0.35, 0.65)) / n; L = 2 * math.pi * ring_r / n - 0.03
+            objs.append(box('dcflag', (L * random.uniform(0.85, 0.98), 0.25, 0.04), (math.cos(a) * ring_r, math.sin(a) * ring_r, 0.02), (0, 0, a + math.pi / 2 + random.uniform(-0.06, 0.06)), m=random.choice(stone), bevel=0.012, segs=1, jitter=0.004))
+    # the tower: a stone footing, the limewashed wall, the ledge, the pigeon holes, the cornice
+    objs.append(cyl('dcfoot', R + 0.05, 0.4, (0, 0, 0.2), m=stone[1], verts=32, bevel=0.015))
+    for k in range(22):                                          # (the footing's stones showing)
+        a = 2 * math.pi * k / 22 + (0.07 if k % 2 else 0)
+        objs.append(box('dcfstone', (0.2, 0.06, 0.13), (math.cos(a) * (R + 0.06), math.sin(a) * (R + 0.06), 0.1 + (k % 2) * 0.16), (0, 0, a + math.pi / 2), m=random.choice(stone), bevel=0.01, segs=1))
+    wall = tube('dcwall', R, R, WALL, 0.38, lime, verts=40)                  # (no ends: smooth all round, its light true)
+    for pl in wall.data.polygons: pl.use_smooth = True
+    objs.append(wall)
+    objs.append(ring('dcledge', R - 0.02, R + 0.08, 1.45, 0.07, stone[2]))      # (the ledge round it: no rat gets past)
+    HZ = 1.78; NH = 12
+    for k in range(NH):                                          # the pigeon holes, each with its landing ledge
+        a = 2 * math.pi * (k + 0.5) / NH; c, s_ = math.cos(a), math.sin(a)
+        objs.append(box('dchole', (0.1, 0.04, 0.13), (c * (R - 0.005), s_ * (R - 0.005), HZ), (0, 0, a + math.pi / 2), m=dark, bevel=0.0))
+        objs.append(cyl('dcholetop', 0.05, 0.04, (c * (R - 0.005), s_ * (R - 0.005), HZ + 0.065), (math.pi / 2, 0, a + math.pi / 2), m=dark, verts=10, bevel=0.0))
+        objs.append(box('dcperch', (0.16, 0.09, 0.025), (c * (R + 0.035), s_ * (R + 0.035), HZ - 0.075), (0, 0, a + math.pi / 2), m=stone[2], bevel=0.006, segs=1))
+        objs.append(box('dcsurround', (0.16, 0.03, 0.02), (c * (R + 0.005), s_ * (R + 0.005), HZ + 0.115), (0, 0, a + math.pi / 2), m=stone[0], bevel=0.004, segs=1))
+    objs.append(ring('dccornice', R - 0.02, R + 0.1, WALL - 0.02, 0.08, stone[2]))
+    # the roof: courses of round tiles (open cones, each overlapping the one below), the lantern, the ball and the vane
+    RR, RH, NC = R + 0.22, 0.95, 7
+    for i in range(NC):
+        u0, u1 = i / NC, (i + 1.25) / NC
+        r0, r1 = RR * (1 - u0), RR * (1 - min(1, u1)) + 0.01; z0, z1 = WALL + 0.02 + RH * u0, WALL + 0.02 + RH * min(1, u1)
+        objs.append(tube('dctiles', r1, r0, z1, z0 - 0.02, tiles[i % 3], verts=36))
+        for k in range(int(36 * (1 - u0)) + 6):                     # (the round tiles' ridges down each course)
+            a = 2 * math.pi * k / (int(36 * (1 - u0)) + 6) + i * 0.13
+            objs.append(cyl('dcrib', 0.018, math.hypot(r0 - r1, z1 - z0) * 0.8, ((r0 + r1) / 2 * math.cos(a), (r0 + r1) / 2 * math.sin(a), (z0 + z1) / 2 - 0.005),
+                            (0, -math.atan2(r0 - r1, z1 - z0), a), m=tiles[(i + k) % 3], verts=5, bevel=0.0))
+    objs.append(cyl('dcroofcap', 0.03, 0.04, (0, 0, WALL + RH), m=tiles[1], verts=12, bevel=0.0))
+    LZ = WALL + RH - 0.05
+    objs.append(cyl('dclantbase', 0.17, 0.05, (0, 0, LZ), m=lime2, verts=6, bevel=0.006))
+    for k in range(6):                                           # (its six little posts, open between)
+        a = 2 * math.pi * k / 6
+        objs.append(box('dclantpost', (0.03, 0.03, 0.2), (math.cos(a) * 0.14, math.sin(a) * 0.14, LZ + 0.12), (0, 0, a), m=lime2, bevel=0.004, segs=1))
+    objs.append(cyl('dclantroof', 0.2, 0.17, (0, 0, LZ + 0.3), m=tiles[0], verts=6, r2=0.01, bevel=0.006))
+    objs.append(sphere('dcball', 0.04, (0, 0, LZ + 0.42), m=gold, seg=12, rings=8))
+    objs.append(cyl('dcvanerod', 0.007, 0.34, (0, 0, LZ + 0.58), m=iron, verts=5, bevel=0.0))
+    objs.append(box('dcvanearrow', (0.36, 0.012, 0.012), (0, 0, LZ + 0.62), m=iron, bevel=0.0))
+    objs.append(box('dcvanetail', (0.06, 0.008, 0.06), (-0.17, 0, LZ + 0.62), (0, math.radians(45), 0), m=iron, bevel=0.0))
+    vd = Vector((0.02, 0, LZ + 0.68))                            # (the vane's own dove, gold, flying)
+    objs.append(sphere('dcvanedove', 0.045, tuple(vd), (1.5, 0.45, 0.7), m=gold, seg=10, rings=6))
+    objs.append(sphere('dcvanedove', 0.022, tuple(vd + Vector((0.065, 0, 0.022))), m=gold, seg=8, rings=5))
+    for sd in (-1, 1): objs.append(box('dcvanewing', (0.05, 0.11, 0.008), tuple(vd + Vector((-0.005, sd * 0.05, 0.02))), (sd * math.radians(25), 0, 0), m=gold, bevel=0.0))
+    # the door at the front: an arch of stones round it, green boards, two steps; a sack of grain by it
+    DW, DH = 0.46, 0.92; fy = -R
+    objs.append(box('dcdoor', (DW, 0.05, DH), (0, fy - 0.005, 0.4 + DH / 2), m=green, bevel=0.008, segs=1))
+    for k in range(6):                                           # (its round top: slabs, narrower as they go up)
+        z0 = k / 6 * DW / 2; w = 2 * math.sqrt(max(0.0, (DW / 2) ** 2 - (z0 + DW / 24) ** 2))
+        objs.append(box('dcdoortop', (w, 0.05, DW / 12 + 0.002), (0, fy - 0.005, 0.4 + DH + z0 + DW / 24), m=green, bevel=0.0))
+    for k in range(4):                                           # (the gaps between its boards, up into the round top)
+        x = -DW / 2 + (k + 1) * DW / 5; top = DH + math.sqrt(max(0.0, (DW / 2) ** 2 - x * x)) - 0.03
+        objs.append(box('dcboard', (0.008, 0.055, top), (x, fy - 0.01, 0.4 + top / 2), m=C('dcdoor2', '#416b4d', rough=0.6), bevel=0.0))
+    objs.append(sphere('dcknob', 0.018, (0.15, fy - 0.045, 0.4 + DH * 0.48), m=iron, seg=8, rings=5))
+    for k in range(9):                                           # (the arch of stones)
+        a = math.pi * k / 8; rr = DW / 2 + 0.06
+        objs.append(box('dcarch', (0.09, 0.07, 0.07), (math.cos(a) * rr, fy - 0.02, 0.4 + DH + math.sin(a) * rr), (0, -a + math.pi / 2, 0), m=random.choice(stone), bevel=0.008, segs=1))
+    for sx in (-1, 1): objs.append(box('dcjamb', (0.09, 0.07, DH), (sx * (DW / 2 + 0.06), fy - 0.02, 0.4 + DH / 2), m=stone[k % 3 if sx > 0 else 1], bevel=0.008, segs=1))
+    objs.append(box('dcstep', (0.7, 0.3, 0.2), (0, fy - 0.17, 0.1), m=stone[0], bevel=0.015, segs=1))
+    objs.append(box('dcstep', (0.62, 0.22, 0.2), (0, fy - 0.08, 0.3), m=stone[2], bevel=0.015, segs=1))
+    objs.append(sphere('dcsack', 0.13, (0.5, fy - 0.12, 0.13), (0.9, 0.8, 1.15), m=sack, seg=14, rings=9))
+    objs.append(cyl('dcsacktop', 0.07, 0.06, (0.5, fy - 0.12, 0.29), m=sack, verts=10, r2=0.05, bevel=0.0))
+    for k in range(14):                                          # (grain spilled on the step)
+        objs.append(sphere('dcgrain', 0.008, (0.32 + random.uniform(-0.15, 0.15), fy - 0.2 + random.uniform(-0.12, 0.1), 0.205), (1, 1, 0.6), m=grain, seg=5, rings=3))
+    # ivy up the left side
+    for k in range(70):
+        a = math.radians(random.uniform(150, 215)); z = random.uniform(0.35, 1.9) ** 1.0
+        if z > 1.4 and random.random() < 0.6: continue
+        d = Vector((math.cos(a), math.sin(a), random.uniform(-0.3, 0.5))).normalized()
+        q = d.to_track_quat('Z', 'Y') @ Quaternion((0, 0, 1), random.uniform(0, 2 * math.pi))
+        objs.append(flat_leaf('dcivy', (math.cos(a) * (R + 0.012), math.sin(a) * (R + 0.012), z), q, random.uniform(0.07, 0.1), random.uniform(0.04, 0.055), random.choice(ivy), shape='heart', both=False, fold=0.004))
+    # hollyhocks by the door (on the right), tall stems with flowers up them
+    for j, (hx, hy, hh) in enumerate(((0.62, -0.62, 1.25), (0.78, -0.48, 1.05), (0.5, -0.78, 0.9))):
+        objs.append(cyl('dcstem', 0.012, hh, (hx, hy, hh / 2), m=leaf, verts=5, bevel=0.0))
+        for k in range(5):
+            objs.append(sphere('dchleaf', 0.06, (hx + random.uniform(-0.05, 0.05), hy + random.uniform(-0.05, 0.05), 0.1 + k * 0.08), (1.2, 1.2, 0.4), m=leaf, ico=1, disp=0.2, seed=j * 10 + k))
+        for k in range(8):
+            z = hh * (0.45 + 0.55 * k / 8); a = k * 2.4
+            objs.append(sphere('dchflower', 0.035 - k * 0.002, (hx + math.cos(a) * 0.03, hy + math.sin(a) * 0.03, z), (1, 1, 0.55), m=holly[(j + k) % 3], seg=8, rings=5))
+    # the doves' basin of water, on the right
+    BX, BY = 0.95, 0.35
+    objs.append(cyl('dcbasinfoot', 0.08, 0.35, (BX, BY, 0.175), m=stone[1], verts=12, r2=0.06, bevel=0.01))
+    objs.append(cyl('dcbasin', 0.22, 0.08, (BX, BY, 0.39), m=stone[2], verts=20, r2=0.16, bevel=0.012))
+    objs.append(cyl('dcbasinw', 0.19, 0.01, (BX, BY, 0.43), m=water, verts=20, bevel=0.0))
+    # the doves: two on the ledges by the holes, one on the roof's edge, one on the basin's rim
+    for a, z, look in ((math.radians(-60), HZ - 0.062, 0.4), (math.radians(-130), HZ - 0.062, -0.5)):
+        p = (math.cos(a) * (R + 0.05), math.sin(a) * (R + 0.05), z); dove(objs, p, a, doveW, doveB, eyeM, look=look)
+    a = math.radians(-100); dove(objs, (math.cos(a) * (RR - 0.05), math.sin(a) * (RR - 0.05), WALL + 0.06), a, doveW, doveB, eyeM, look=0.6)
+    dove(objs, (BX - 0.2, BY - 0.02, 0.43), math.radians(170), doveW, doveB, eyeM, look=-0.3)
+    return finish(objs, name)
+
+
+GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec, 'dovecote': dovecote_dec}
