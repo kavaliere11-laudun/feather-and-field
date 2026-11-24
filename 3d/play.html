@@ -41,7 +41,7 @@
   #findfarmer { position: fixed; z-index: 6; right: max(14px, calc(env(safe-area-inset-right) + 8px)); bottom: max(14px, calc(env(safe-area-inset-bottom) + 10px)); width: 50px; height: 50px; font-size: 24px; line-height: 1; padding: 0; }
   .gnightbub { background: #2f3f6b; color: #fff; } .gnightbub::after { border-top-color: #2f3f6b; }
   .gbooktabs .gdot { top: 3px; right: 5px; }
-  .gbooktabs { gap: 6px; } .gbooktabs .gbtn { position: relative; min-width: 0; padding: 11px 4px; font-size: 14.500px; white-space: nowrap; letter-spacing: -0.1px; }      /* (three tabs side by side, upright too: none cut, none on two lines) */
+  .gbooktabs { gap: 6px; } .gbooktabs .gchip { position: relative; padding: 7px 9px; font-size: 14.5px; white-space: nowrap; letter-spacing: -0.1px; }      /* (three tabs side by side, upright too: none cut, none on two lines) */
   .gshelf { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; margin: 4px 0 10px; padding: 8px 8px 10px; border-radius: 12px; background: linear-gradient(#f3e3c4, #e9d3a8); border-bottom: 5px solid #b98a52; }
   .gkeep { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 20px; background: rgba(255, 255, 255, 0.35); border: 1.5px dashed rgba(120, 85, 40, 0.35); }
   .gkeep:not(.on) { filter: grayscale(1) opacity(0.42); }
@@ -74,8 +74,8 @@
      wide sideways, placed just as the iPhone app's launch screen shows it (app/icons.py crops the same part), so the app
      opens on the picture and the name, the words and the bar come on over it; the farm fades in from it */
   body.game #loading { justify-content: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 34px); box-sizing: border-box;
-                       background: #5d8fb6 url("welcome-tall.jpg?v=1795534059") 34% 50% / cover no-repeat; }
-  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1795534059") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
+                       background: #5d8fb6 url("welcome-tall.jpg?v=1795542683") 34% 50% / cover no-repeat; }
+  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1795542683") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
   body.game #loading::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                                font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
   body.game #loading::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 34%; z-index: 0;
@@ -126,7 +126,7 @@
   #sideways { display: none; }
   @media (orientation: portrait) and (pointer: coarse) {
     body.game:not(.gsideways-off) #sideways { position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 18px;
-      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1795534059") 34% 50% / cover no-repeat; }
+      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1795542683") 34% 50% / cover no-repeat; }
   }
   #sideways::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                       font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
@@ -380,7 +380,7 @@
   .gupd-tn { margin: 0; font-weight: 800; font-size: 14px; line-height: 1.2; } .gupd-tl { margin: 3px 0 0; font-size: 12.5px; line-height: 1.25; color: #5b5546; }
   .gsheet .gupd-toys + .gbtn { margin-top: 10px; }
   .gcoop-ts { min-width: 0; display: flex; flex-direction: column; gap: 4px; align-items: flex-start; } .gcoop-ts .gtheme-n { margin: 0; font: 600 17px/1.1 var(--display); } .gcoop-fx { margin: 0; font-size: 12.5px; font-weight: 800; color: #3c6b3f; line-height: 1.2; }
-  .gcoop-ts .gbtn { margin: 0; white-space: nowrap; } .gcoop-ts .gtheme-b { gap: 5px; } .gcoop-ts .gtheme-b .gbtn { padding: 7px 10px; font-size: 14px; } .gcoop-tile .gtheme-pic, .gcoop-tile .gtheme-pic img { width: 88px; height: 88px; } .gcoop-ts .gbtn:disabled { background: #dfe5d2; color: #8b977f; box-shadow: none; }
+  .gcoop-ts .gbtn { margin: 0; white-space: nowrap; } .gcoop-ts .gtheme-b { gap: 5px; } .gcoop-ts .gtheme-b .gbtn { padding: 7px 10px; font-size: 14px; } .gcoop-tile .gtheme-pic, .gcoop-tile .gtheme-pic img { width: 88px; height: 88px; } 
   .gcoop-notes { display: flex; flex-direction: column; gap: 4px; } .gcoop-notes:empty { display: none; } .gcoop-notes .gnote { margin: 0; } .gcoop-why { display: flex; align-items: center; gap: 8px; } .gcoop-why[hidden] { display: none; }
   .gcoop-extra { display: flex; flex-wrap: wrap; gap: 6px; } .gcoop-extra .gbtn { margin: 0; }
   .gcoop-acts.gstick .gbtn { font-size: 16px; padding: 11px 8px; flex: 1; } .gcoop-wait { flex: 1; margin: 0; align-self: center; text-align: center; font: 600 15px var(--display); color: var(--ink-2); } .gcoop-wait.ghappy { color: #d9537a; }
@@ -476,7 +476,7 @@
   /* rare babies (release 2 step 2): keep or sell, side by side under her row; her card's line */
   .grow.grare-row { justify-content: flex-start; flex-wrap: nowrap; padding: 2px 0 4px; } .gkids .grow.grare-row { padding: 2px 0 8px 34px; }
   .grare-row .gbtn, .gsheet.gcongrats .grare-row .gbtn { position: static; box-shadow: none; margin: 0; padding: 8px 14px; font-size: 15px; flex: none; }
-  .grare-row .gbtn.galt { background: #fff; border: 1.5px solid var(--line); }
+  
   .gkid-rare .gkid-t { color: #8a5a00; }
   .gkid-n { margin: 0 0 6px 34px; }
   .grare { color: #8a5a00; font-weight: 700; }
@@ -511,8 +511,8 @@
   .gpage-c { width: 15px; height: 15px; flex: none; margin-top: 1px; color: var(--ink-2); }
   .gpage-c svg { width: 15px; height: 15px; display: block; }
   .gpage-go { align-self: flex-start; margin-top: 4px; }
-  .gbooktabs { display: flex; gap: 8px; margin: 0 0 4px; }
-  .gbooktabs .gbtn { flex: 1 1 auto; margin: 0; }      /* (four tabs since the collector's shelf, 21 Nov 2026: each as wide as its words, so a long one (Meilensteine) isn't cut) */
+  .gbooktabs { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 4px; }      /* (24 Nov 2026, the tabs as the shop's: on a small phone in French a second row rather than words cut) */
+  .gbooktabs .gchip { flex: 1 1 auto; margin: 0; }      /* (four tabs since the collector's shelf, 21 Nov 2026: each as wide as its words, so a long one (Meilensteine) isn't cut) */
   .gbookwater { margin: 10px 2px 0; }
   .gfishpage .gpic { background: radial-gradient(circle at 50% 60%, #fbf7ec 0, #eef0e4 100%); padding: 4px; box-sizing: border-box; }
   .gfishrare { color: var(--ink-2); font-weight: 700; }
@@ -528,7 +528,7 @@
   .gdec .gpage-go { margin-top: 6px; }
   .gani-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
   .gfox-row { display: flex; gap: 10px; margin-top: 14px; } .gfox-row .gbtn { flex: 1; margin: 0; }
-  .gbtn.gdec-broke, .gbtn.gdec-broke:disabled { background: #e9ecdf; color: var(--ink-2); box-shadow: none; opacity: 1; }
+  
   .gdecnew .gdec-i { width: 40px; height: 40px; object-fit: contain; flex: none; }
   /* the shop, rethought (23 Nov 2026, Audrey: "Everything is a bit bulky in this popup can you rethink it for better
      navigation. Also we need to add the coops"): the shelves down the left, always in sight, your coins at their top; the
@@ -688,7 +688,7 @@
   .gguide-row button { font: 700 14px var(--body); border: 0; background: none; color: var(--ink-2); padding: 4px 0; cursor: pointer; }
   .gguide-row .gguide-show { background: #f2c94c; color: #3b2a00; border-radius: 999px; padding: 6px 14px; }
   .gguide-row .gguide-skip { margin-left: auto; text-decoration: underline; }
-  @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gguide { left: calc(env(safe-area-inset-left, 0px) + 12px); transform: none; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); width: min(42vw, 340px); } }      /* (sideways: the bottom left corner, off the Red Barn in the middle; Audrey's play-through, 1 Nov) */
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gguide { left: calc(max(14px, calc(env(safe-area-inset-left) + 8px)) + 74px); transform: none; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); width: min(42vw, 340px); } }      /* (24 Nov 2026, the play-through: beside the Shop, Pantry and Book buttons, not over them) */      /* (sideways: the bottom left corner, off the Red Barn in the middle; Audrey's play-through, 1 Nov) */
   .garrow { position: fixed; z-index: 40; left: 0; top: 0; width: 34px; height: 40px; margin: -46px 0 0 -17px; pointer-events: none; animation: garrowb 0.9s ease-in-out infinite; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.3)); }
   .garrow[hidden] { display: none; }
   @keyframes garrowb { 0%, 100% { translate: 0 0; } 50% { translate: 0 -9px; } }
@@ -711,7 +711,7 @@
   .gcode .gsmallbtn { align-self: flex-start; margin: 4px 0 2px; }
   .gcodebox { width: 100%; box-sizing: border-box; font: 12px/1.35 ui-monospace, Menlo, monospace; border: 2px solid var(--line); border-radius: 12px; padding: 8px 10px; background: #fff; color: var(--ink); resize: none; word-break: break-all; }
   .gcodebox[hidden] { display: none; }
-  .gcode .gcode-load { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 2px var(--line); }
+  .gcode .gcode-load { background: var(--sage); color: var(--ink); box-shadow: none; font-size: 16px; }
   .gcode .gcode-load.gdanger { background: var(--barn); color: #fff; box-shadow: none; }
   .gcodebox::placeholder { font-family: inherit; color: var(--ink-2); }
   .gdecnew .gnote { margin: 4px 0 0; }
@@ -722,7 +722,7 @@
   .gbirdstars { display: flex; align-items: center; gap: 10px; margin: 2px 0 8px; }
   .gbirdstars .gstarbar { flex: 1; min-width: 60px; max-width: 220px; height: 9px; margin: 0; }
   .gbirdstars .gstarbar .gbar-fill { background: var(--yolk); }
-  .gbirdstars .gstarnum { margin: 0; white-space: nowrap; }
+  .gbirdstars .gstarnum { margin: 0; white-space: nowrap; }      @media (max-width: 700px) { .gbirdstars { flex-wrap: wrap; } .gbirdstars .gstarnum { flex-basis: 100%; } }      /* (24 Nov 2026, the card check on the smallest phone sideways: "0 / 100 to the next star" was cut at the side: under the bar there) */
   .gstarup { position: fixed; z-index: 40; left: 50%; top: 34%; transform: translate(-50%, -50%); pointer-events: none; text-align: center; padding: 14px 26px 16px; border-radius: 26px;
              background: var(--glass-top, rgba(255, 253, 247, 0.96)); box-shadow: 0 8px 30px rgba(30, 52, 38, 0.28); font-family: Fredoka, Nunito, system-ui, sans-serif; color: var(--ink); max-width: calc(100vw - 40px); }
   .gstarup[hidden] { display: none; }
@@ -887,7 +887,7 @@
     body.gopen #hint { opacity: 0; }                        /* (a card open: the hint would sit under it) */
     body.game.gopen #hint.gover.on { opacity: 1; top: calc(env(safe-area-inset-top) + 8px); bottom: auto; z-index: 30; max-width: min(56vw, 520px); }      /* (but one said while the card is open: over it, at the top, between the coins and the gear) */
     body.game #hint { top: auto; bottom: calc(env(safe-area-inset-bottom) + 14px); }       /* (sideways: along the bottom, clear of the coop and its bubbles) */
-    body.game:has(.gguide:not([hidden])) #hint { left: calc((100vw + min(42vw, 340px) + 24px) / 2); max-width: calc(100vw - min(42vw, 340px) - 48px); }      /* (the first day's guide in the bottom left corner: the hint in the room beside it) */
+    body.game:has(.gguide:not([hidden])) #hint { left: calc((100vw + min(42vw, 340px) + 112px) / 2); max-width: calc(100vw - min(42vw, 340px) - 136px); }      /* (the first day's guide in the bottom left corner: the hint in the room beside it) */
   }
   /* sideways (a phone on its side, a tablet, a computer): the welcome as a card on the right, the picture beside it */
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) {
@@ -938,7 +938,7 @@
   @media (min-width: 700px) and (min-height: 700px) { body.game .gturn { zoom: 1.3; } }
   .gbar-xp { height: 12px; border-radius: 99px; background: var(--sage); overflow: hidden; }
   .gfeedbar { height: 14px; } .gfeedbar.low .gbar-fill { background: #e8913a; }
-  .gbtn:disabled { opacity: 0.75; cursor: default; }
+  .gbtn:disabled { opacity: 1; cursor: default; background: #eef1e6; color: var(--ink-2); box-shadow: inset 0 0 0 1.5px #dde3d0; }      /* (24 Nov 2026, Audrey: "Can you check the consistency of the CTa design and colours please": every button that can't be used just now the same quiet one, short of coins or not) */
   /* (one job at a time: what the farmer's doing, over the buttons that wait for him) */
   .gnote.gbusy { background: #fff3d6; border-radius: 12px; padding: 8px 12px; margin: 4px 0; color: var(--ink); }
   .gbtn.gwait { opacity: 0.5; }
@@ -985,6 +985,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1795534059"></script>
+<script src="app.js?v=1795542683"></script>
 </body>
 </html>
