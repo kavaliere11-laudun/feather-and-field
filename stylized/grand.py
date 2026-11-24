@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *
 from coop import plank
 from coops import C, finish
-from village3d import stone_row, polyline, flat_leaf, bale, straw_ms
+from village3d import stone_row, polyline, flat_leaf, bale, straw_ms, tuft
 from mathutils import Vector, Quaternion, Matrix
 
 
@@ -557,4 +557,110 @@ def tractor_dec(seed=111, name='tractor'):
     return finish(objs, name)
 
 
-GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec, 'dovecote': dovecote_dec, 'tractor': tractor_dec}
+# ------------------------------------------------------------------ level 45: the Little Orchard
+def fruit_tree(objs, x, y, h, kind, leaf, bark, fruit, seed):
+    """A little fruit tree: a crooked trunk splitting into branches, a round crown of leaves over dark leafy cores (lighter
+    on top), its fruit hanging round the outside of the crown: 'apple', 'pear' or 'plum'."""
+    rnd = random.Random(seed)
+    C0 = Vector((x, y, h * 0.7)); RC = h * 0.27
+    T0, T1 = Vector((x, y, 0)), Vector((x + rnd.uniform(-0.05, 0.05), y + rnd.uniform(-0.05, 0.05), h * 0.42))
+    objs.append(cyl('ortrunk', 0.075, (T1 - T0).length, tuple((T0 + T1) / 2), (T1 - T0).to_track_quat('Z', 'Y').to_euler(), m=bark, verts=8, r2=0.055, bevel=0.0))
+    for k in range(4):                                            # (its branches, up and out into the crown)
+        a = k / 4 * math.tau + rnd.uniform(-0.3, 0.3); B = C0 + Vector((math.cos(a) * RC * 0.55, math.sin(a) * RC * 0.55, rnd.uniform(-0.05, 0.12)))
+        objs.append(cyl('orbranch', 0.04, (B - T1).length, tuple((T1 + B) / 2), (B - T1).to_track_quat('Z', 'Y').to_euler(), m=bark, verts=6, r2=0.022, bevel=0.0))
+    cores = [(C0, RC * 0.72)]
+    for k in range(7):
+        a = k / 7 * math.tau + rnd.uniform(-0.3, 0.3); el = rnd.uniform(-0.25, 0.6)
+        cores.append((C0 + Vector((math.cos(a) * math.cos(el), math.sin(a) * math.cos(el), math.sin(el) * 0.85)) * RC * 0.5, RC * rnd.uniform(0.42, 0.55)))
+    for i, (c, r) in enumerate(cores):
+        objs.append(sphere('orcore', r, tuple(c), (1, 1, 0.9), (0, 0, rnd.uniform(0, 3)), m=leaf[0], ico=1, disp=0.3, disp_scale=4.0, seed=seed * 10 + i))
+    for k in range(560):                                          # (leaves all over the crown's outside, lighter where the sun is)
+        a = rnd.uniform(0, math.tau); el = math.asin(rnd.uniform(-0.55, 1.0))
+        d = Vector((math.cos(a) * math.cos(el), math.sin(a) * math.cos(el), math.sin(el)))
+        p = C0 + Vector((d.x, d.y, d.z * 0.85)) * RC * rnd.uniform(0.92, 1.04)
+        q = d.to_track_quat('Z', 'Y') @ Quaternion((0, 0, 1), rnd.uniform(0, math.tau)) @ Quaternion((1, 0, 0), rnd.uniform(0.25, 0.6))
+        objs.append(flat_leaf('orleaf', tuple(p), q, rnd.uniform(0.075, 0.1), rnd.uniform(0.028, 0.036), leaf[min(3, 1 + (k % 2) + (1 if el > 0.5 else 0))], both=False, fold=0.005))
+    for k in range(20 if kind != 'plum' else 26):                 # its fruit, round the outside, mostly from the middle down
+        a = rnd.uniform(0, math.tau); el = rnd.uniform(-0.6, 0.45)
+        d = Vector((math.cos(a) * math.cos(el), math.sin(a) * math.cos(el), math.sin(el)))
+        p = C0 + Vector((d.x, d.y, d.z * 0.85)) * RC * 1.03
+        if kind == 'apple':
+            r = rnd.uniform(0.05, 0.058); objs.append(sphere('orfruit', r, tuple(p), (1, 1, 0.92), m=fruit[k % len(fruit)], seg=7, rings=5))
+        elif kind == 'pear':
+            r = rnd.uniform(0.045, 0.052); objs.append(sphere('orfruit', r, tuple(p - Vector((0, 0, r * 0.3))), m=fruit[k % 2], seg=7, rings=5))
+            objs.append(sphere('orfruit', r * 0.62, tuple(p + Vector((0, 0, r * 0.55))), m=fruit[k % 2], seg=6, rings=4))
+        else:
+            objs.append(sphere('orfruit', rnd.uniform(0.034, 0.04), tuple(p), (1, 1, 1.12), m=fruit[k % 2], seg=7, rings=5))
+
+
+def orchard_dec(seed=121, name='orchard'):
+    """A little orchard: five fruit trees in a square of meadow (three apples, red and rosy; a pear; a plum), a rustic
+    fence of posts and two rails round it with a little gate open at the front, stepping stones in to the middle tree,
+    long grass and wildflowers about the trunks, fallen apples in the grass; a ladder leaning into a front tree, a wicker
+    basket of apples and a crate of them by the gate."""
+    random.seed(seed); objs = []
+    leaf = [C('orleaf%d' % i, h, rough=0.8, var=0.06, hue_var=0.012) for i, h in enumerate(('#2c5f24', '#3a7429', '#4a8731', '#5d9b3a'))]
+    bark = C('orbark', '#6b5039', rough=0.9, var=0.1); wood = [C('orwood%d' % i, h, rough=0.85, var=0.1, grain=0.3) for i, h in enumerate(('#9a7650', '#8a6744', '#a8845c'))]
+    red = [C('orred', '#c9302c', rough=0.5), C('orred2', '#b5262a', rough=0.5), C('orcheek', '#e9b44c', rough=0.5)]
+    rosy = [C('orrosy', '#e0583e', rough=0.5), C('orrosy2', '#d84b37', rough=0.5), C('orcheek2', '#f1d064', rough=0.5)]
+    pear = [C('orpear', '#c9cf4a', rough=0.55), C('orpear2', '#b9c23e', rough=0.55)]
+    plum = [C('orplum', '#6b2f6e', rough=0.45), C('orplum2', '#5a2860', rough=0.45)]
+    meadow = C('ormeadow', '#78a845', rough=0.95, var=0.05); grass = [C('orgrass%d' % i, h, rough=0.85, var=0.06) for i, h in enumerate(('#5f9a3a', '#6fab42', '#86bb50'))]
+    stoneM = [C('orstone%d' % i, h, rough=0.85, var=0.05) for i, h in enumerate(('#c9c0ac', '#bdb39d'))]
+    wicker = C('orwicker', '#b98a4e', rough=0.85, var=0.08); fl = [C('orfl', '#fbf6ee', rough=0.6), C('orfl2', '#f4d03c', rough=0.6), C('orfl3', '#c9a0e0', rough=0.6)]
+    X2, Y0, Y1 = 1.95, -1.7, 1.75
+    objs.append(box('ormeadow', (2 * X2, Y1 - Y0, 0.02), (0, (Y0 + Y1) / 2, 0.01), m=meadow, bevel=0.0))
+    # the trees: two at the front, one in the middle, two at the back
+    TREES = [(-1.05, -0.8, 2.0, 'apple', red), (1.05, -0.75, 1.95, 'apple', rosy), (0.0, 0.3, 2.2, 'pear', pear), (-1.05, 1.15, 2.05, 'plum', plum), (1.05, 1.2, 2.1, 'apple', red)]
+    for i, (x, y, h, kind, fr) in enumerate(TREES):
+        fruit_tree(objs, x, y, h, kind, leaf, bark, fr, seed * 10 + i)
+        for k in range(5): tuft(objs, x + math.cos(k * 1.3) * 0.25, y + math.sin(k * 1.3) * 0.25, 7, 0.1, 0.22, grass, z0=0.02, width=0.018)
+        if kind == 'apple':                                       # (fallen apples in the grass under it)
+            for k in range(3):
+                a = random.uniform(0, math.tau); r = random.uniform(0.3, 0.55)
+                objs.append(sphere('orfallen', 0.05, (x + math.cos(a) * r, y + math.sin(a) * r, 0.06), m=fr[k % 2], seg=7, rings=5))
+    for k in range(34):                                           # (long grass and wildflowers about the meadow)
+        x, y = random.uniform(-X2 + 0.15, X2 - 0.15), random.uniform(Y0 + 0.15, Y1 - 0.15)
+        if abs(x) < 0.3 and y < 0.0: continue                     # (not on the stepping stones)
+        tuft(objs, x, y, 6, 0.08, random.uniform(0.12, 0.2), grass, z0=0.02, width=0.015)
+        if k % 3 == 0:
+            for j in range(3): objs.append(sphere('orflower', 0.018, (x + random.uniform(-0.06, 0.06), y + random.uniform(-0.06, 0.06), random.uniform(0.12, 0.2)), (1, 1, 0.6), m=fl[k % 3], ico=1))
+    for k, y in enumerate((-1.42, -1.05, -0.7, -0.35)):            # (stepping stones in from the gate to the middle tree)
+        objs.append(cyl('orstep', random.uniform(0.15, 0.18), 0.04, (random.uniform(-0.05, 0.05), y, 0.03), (0, 0, random.uniform(0, 3)), m=stoneM[k % 2], verts=9, bevel=0.012))
+    # the fence: posts and two rails round it, a gap at the front for the gate
+    def rails(a, b):
+        A, B = Vector((a[0], a[1], 0)), Vector((b[0], b[1], 0)); L = (B - A).length; n = max(1, round(L / 0.6))
+        for k in range(n + 1):
+            p = A + (B - A) * k / n; objs.append(box('orpost', (0.08, 0.08, 0.62), (p.x, p.y, 0.31), (0, 0, random.uniform(-0.05, 0.05)), m=random.choice(wood), bevel=0.012, segs=1, jitter=0.005))
+        for z in (0.24, 0.5):
+            objs.append(plank('orrail', (A.x, A.y, z), (B.x, B.y, z), 0.07, 0.04, (0, 0, 1), random.choice(wood), jitter=0.4, bevel=0.006))
+    rails((-X2, Y0), (-0.42, Y0)); rails((0.42, Y0), (X2, Y0)); rails((X2, Y0), (X2, Y1)); rails((X2, Y1), (-X2, Y1)); rails((-X2, Y1), (-X2, Y0))
+    # the little gate, open inwards on its post at the right
+    hinge = Vector((0.42, Y0, 0)); ga = math.radians(115); gd = Vector((math.cos(ga), math.sin(ga), 0)); GW = 0.8
+    for z in (0.16, 0.44): objs.append(plank('orgate', tuple(hinge + Vector((0, 0, z))), tuple(hinge + gd * GW + Vector((0, 0, z))), 0.07, 0.035, (0, 0, 1), wood[2], jitter=0.0, bevel=0.006))
+    for u in (0.03, GW - 0.03): objs.append(box('orgatestile', (0.06, 0.04, 0.42), tuple(hinge + gd * u + Vector((0, 0, 0.3))), (0, 0, ga), m=wood[2], bevel=0.006, segs=1))
+    objs.append(plank('orgatebrace', tuple(hinge + gd * 0.05 + Vector((0, 0, 0.18))), tuple(hinge + gd * (GW - 0.05) + Vector((0, 0, 0.42))), 0.05, 0.03, (-gd.y, gd.x, 0), wood[1], jitter=0.0, bevel=0.0))
+    # a ladder leaning into the front right tree
+    L0, L1 = Vector((0.62, -1.2, 0.0)), Vector((0.95, -0.92, 1.55)); side = Vector((0.8, -0.6, 0)).normalized() * 0.17
+    for sd in (-1, 1): objs.append(plank('orladder', tuple(L0 + side * sd), tuple(L1 + side * sd), 0.045, 0.03, (0.6, 0.8, 0), wood[0], jitter=0.0, bevel=0.0))
+    for k in range(1, 7):
+        p = L0 + (L1 - L0) * k / 7.2; objs.append(plank('orrung', tuple(p - side), tuple(p + side), 0.03, 0.025, (0, 0, 1), wood[1], jitter=0.0, bevel=0.0))
+    # a wicker basket of apples and a crate of them by the gate
+    BK = Vector((-0.8, -1.32, 0))
+    objs.append(cyl('orbasket', 0.17, 0.2, tuple(BK + Vector((0, 0, 0.12))), m=wicker, verts=18, r2=0.2, bevel=0.01))
+    objs.append(ring('orbasketrim', 0.18, 0.215, 0.225, 0.03, wicker, verts=24)); objs[-1].location = tuple(BK + Vector((0, 0, 0.225)))
+    for k in range(6): objs.append(plank('orweave', tuple(BK + Vector((math.cos(k * 1.05) * 0.18, math.sin(k * 1.05) * 0.18, 0.03))), tuple(BK + Vector((math.cos(k * 1.05) * 0.205, math.sin(k * 1.05) * 0.205, 0.21))), 0.015, 0.012, (math.cos(k * 1.05), math.sin(k * 1.05), 0), C('orwicker2', '#a17543', rough=0.85), jitter=0.0, bevel=0.0))
+    for k in range(7):
+        a = k / 7 * math.tau; r = 0.09 if k else 0.0
+        objs.append(sphere('orbasketapple', 0.05, tuple(BK + Vector((math.cos(a) * r, math.sin(a) * r, 0.24 + (0.04 if not k else 0)))), m=red[k % 2], seg=7, rings=5))
+    CR = Vector((-1.35, -1.25, 0))
+    for z in (0.05, 0.15, 0.25):
+        for sd in (-1, 1):
+            objs.append(box('orcrate', (0.46, 0.02, 0.07), tuple(CR + Vector((0, sd * 0.16, z))), m=random.choice(wood), bevel=0.004, segs=1))
+            objs.append(box('orcrate', (0.02, 0.32, 0.07), tuple(CR + Vector((sd * 0.22, 0, z))), m=random.choice(wood), bevel=0.004, segs=1))
+    for i in range(4):
+        for j in range(3): objs.append(sphere('orcrateapple', 0.048, tuple(CR + Vector((-0.15 + i * 0.1, -0.1 + j * 0.1, 0.28))), m=rosy[(i + j) % 2], seg=7, rings=5))
+    return finish(objs, name)
+
+
+GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec, 'dovecote': dovecote_dec, 'tractor': tractor_dec, 'orchard': orchard_dec}
