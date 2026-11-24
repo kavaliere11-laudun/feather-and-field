@@ -281,8 +281,8 @@ def rose_arbour_dec(seed=91, name='rose_arbour'):
         d = (out * 1.2 + Vector((random.uniform(-0.8, 0.8), random.uniform(-0.8, 0.8), random.uniform(-0.4, 0.9)))).normalized()
         p = c + d * r * 0.98; i = random.choice((0, 0, 0, 1, 1, 2, 3)); s = random.uniform(0.03, 0.04)
         e = d.to_track_quat('Z', 'Y').to_euler()
-        objs.append(sphere('rarose', s, tuple(p), (1, 1, 0.62), e, m=roses[i], seg=8, rings=5))
-        objs.append(sphere('raheart', s * 0.5, tuple(p + d * s * 0.42), (1, 1, 0.7), e, m=heart[i], ico=0))
+        objs.append(sphere('rarose', s, tuple(p), (1, 1, 0.62), e, m=roses[i], seg=7, rings=4))
+        objs.append(sphere('raheart', s * 0.5, tuple(p + d * s * 0.42), (1, 1, 0.7), e, m=heart[i], ico=1))
     # two standard roses in pots either side of the way in
     for sx in (-1, 1):
         x, y = sx * 0.88, -0.62
@@ -301,8 +301,8 @@ def rose_arbour_dec(seed=91, name='rose_arbour'):
             a = random.uniform(0, 2 * math.pi); el = math.asin(random.uniform(-0.3, 0.95))
             d = Vector((math.cos(a) * math.cos(el), math.sin(a) * math.cos(el), math.sin(el)))
             i = 0 if sx < 0 else 2; s = random.uniform(0.028, 0.034); e = d.to_track_quat('Z', 'Y').to_euler()
-            objs.append(sphere('rarose', s, tuple(hc + d * 0.215), (1, 1, 0.62), e, m=roses[i if k % 4 else 1], seg=8, rings=5))
-            objs.append(sphere('raheart', s * 0.5, tuple(hc + d * (0.215 + s * 0.42)), (1, 1, 0.7), e, m=heart[i if k % 4 else 1], ico=0))
+            objs.append(sphere('rarose', s, tuple(hc + d * 0.215), (1, 1, 0.62), e, m=roses[i if k % 4 else 1], seg=7, rings=4))
+            objs.append(sphere('raheart', s * 0.5, tuple(hc + d * (0.215 + s * 0.42)), (1, 1, 0.7), e, m=heart[i if k % 4 else 1], ico=1))
     # a few fallen petals on the bricks
     for k in range(18):
         x, y = random.uniform(-0.6, 0.6), random.uniform(-0.5, 0.25)

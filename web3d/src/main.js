@@ -1452,8 +1452,9 @@ const DECOR_NAMES = register('decor', {
   flowers: ['Cottage flower bed', 'Massif de fleurs'], birdbath: ['Bird bath', 'Bain d’oiseaux'], beehives: ['Beehives', 'Ruches'],
   duckhouse: ['Duck house', 'Maison des canards'], greenhouse: ['Greenhouse', 'Serre'], windmill: ['Windmill', 'Moulin à vent'],
   bandstand: ['Bandstand', 'Kiosque à musique'], statue: ['Golden cockerel', 'Coq d’or'], fountain: ['Golden Egg Fountain', 'Fontaine à l’œuf d’or'],
+  rose_arbour: ['Rose Arbour', 'Tonnelle de roses'],
 });
-const DECOR_ROUND = { bandstand: 1.45, windmill: 1.45, flowers: 0.95, birdbath: 0.7 };     // (round ones: their circle)
+const DECOR_ROUND = { bandstand: 1.45, windmill: 1.45, flowers: 0.95, birdbath: 0.7, rose_arbour: 1.3 };     // (round ones: their circle)
 let DECOR_INFO = null, decorFree = null, decorSpots = null;
 const decorList = [];                                          // { model, pos, deg, box (its own frame), m (world matrix) }
 function placeDecor(info) {
@@ -7690,7 +7691,7 @@ function placeCoop() {
     MOVE.spot = { ok: false, why: 'move_gate', clear: [] }; MOVE.foot.material.color.set(FOOT_NO); gameUI.moveStatus(game.t('move_gate'), false);
     return false;
   }
-  let said = game.t('moved');
+  let said = game.t('moved'), after = null;
   if (p.draft) {                                            // a new breed's coop: on the farm now, its trio with it
     const c = game.placeCoop(p.draft, at, [...ids]);
     if (!c) { [V.trees, V.bushes, V.rocks] = keep; endMove(false); return false; }
@@ -7698,10 +7699,13 @@ function placeCoop() {
     const names = joinNames(game.birdsIn(c.id).sort((a, b) => (b.sex === 'r') - (a.sex === 'r')).map(b => b.name));
     said = game.t(rare ? 'rare_home' : 'welcome_trio', { names });      // (a rare colour's: its birds from the basket, home at last)
     gameUI.refresh(); if (rare) gameUI.bumpCoins();
+    // (24 Nov 2026, Audrey: "Is it on purpose that some coop come without the apple tree?" → "Keep it as it is but make it
+    // clear as of why when you receive the new coop": a hen coop with no Glutton hen says so; one with her, its tree's word)
+    if (!game.gluttons(c).length && !game.kindOf(c.breed)) after = game.t('apple_none');
   } else game.moveCoop(p.gc.id, at.x, at.z, at.deg, [...ids]);
   for (const o of clear) clearAway(o);
   endMove(true);
-  hint(said);
+  hint(said); if (after) hintNext(after);
   return true;
 }
 function endMove(placed) {

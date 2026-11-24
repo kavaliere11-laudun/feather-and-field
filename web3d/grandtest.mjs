@@ -1,0 +1,104 @@
+// The grand decorations (24 Nov 2026, Audrey: "Grand decorations (Recommended)", one for each level from 41 to 49, each
+// "Yes, put it in (Recommended)" once its picture's seen): node grandtest.mjs   (LANG=fr; W, H: the screen, sideways
+// 874x402 by default; SHOTS=folder for pictures; ONLY=fountain,rose_arbour: just those)
+// For each, in level order on one farm: the level before, its tile in the shop greyed with its level; at its level, its
+// picture, price and button; its page in 3D (the view still); bought and put down: its coins and XP (a fiftieth), on the
+// farm, in everyone's way; its life by day (the fountain: its water moving, birds drinking at its rim, drops where the
+// water falls in; the Rose Arbour: butterflies on its roses, petals drifting down). A reload: all where they were. A save
+// changed outside to have them before their level: flagged, not kept. No page errors.
+import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
+import fs from 'fs';
+const fr = process.env.LANG === 'fr', W = +(process.env.W || 874), H = +(process.env.H || 402), SHOTS = process.env.SHOTS;
+if (SHOTS) fs.mkdirSync(SHOTS, { recursive: true });
+const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
+const ctx = await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: SHOTS ? 2 : 1, hasTouch: true, isMobile: true, locale: fr ? 'fr-FR' : 'en-GB', timezoneId: 'Europe/London' });
+ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);
+const T0 = new Date('2026-10-26T10:00:00Z').getTime();
+await ctx.addInitScript(t0 => { let t = null; try { t = sessionStorage.getItem('__T'); } catch (e) { /* */ } window.__T = +(t || t0); Date.now = () => window.__T; }, T0);
+const p = await ctx.newPage();
+const errs = []; p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n').slice(0, 2).join(' / ')));
+let fails = 0;
+const ok = (name, cond, info) => { console.log((cond ? 'PASS ' : 'FAIL ') + name + (info !== undefined ? ' · ' + JSON.stringify(info) : '')); if (!cond) fails++; };
+const URL = `http://localhost:${process.env.PORT || 8770}/play.html?q=0`;
+const run = (secs) => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < s * 30; i++) { window.__T = Math.round(window.__T + 1000 / 30); f.step(1 / 30, 1); f.gameTick(window.__T, false); } sessionStorage.setItem('__T', window.__T); f.draw(); }, secs);
+const load = async () => {
+  await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
+  await p.evaluate(() => { const f = window.__farm; f.pause(true); f.step(1 / 30, 20); f.gameTick(window.__T); f.draw(); });
+  await p.waitForTimeout(2500); await run(0.5);
+};
+const shot = async name => { if (SHOTS) { await p.evaluate(() => window.__farm.draw()); await p.screenshot({ path: `${SHOTS}/grand_${fr ? 'fr' : 'en'}_${name}.png`, timeout: 180000 }); } };
+const money = () => p.evaluate(() => { const g = window.__farm.game(); return { coins: g.data.coins, xp: g.data.xp, decor: JSON.parse(JSON.stringify(g.data.decor || [])) }; });
+const setLevel = (L, coins) => p.evaluate(([L, coins]) => { const f = window.__farm, g = f.game(); g.data.guide = { step: 5, done: true }; g.data.first = null; g.fishBag().gift = true; g.data.xp = f.xpFor(L) + 5; g.data.lvSeen = L; g.data.coins = coins; g.save(); }, [L, coins]);
+const openTab = async k => { await p.evaluate(k => { const f = window.__farm; f.gameUI().close(); f.deco.shop(); const t = document.querySelector(`.gsheet:not([hidden]) .gchip[data-tab="${k}"]`); if (t) t.click(); }, k); await p.waitForTimeout(500); };
+const tile = id => p.evaluate(id => { const c = document.querySelector(`.gsheet:not([hidden]) .gpage[data-decor="${id}"]`); if (!c) return null; const im = c.querySelector('img');
+  return { text: c.innerText.replace(/\s+/g, ' '), btn: !!c.querySelector('.gbtn:not([disabled])'), pic: !!(im && im.complete && im.naturalWidth > 0) }; }, id);
+
+const ALL = {
+  fountain: { level: 41, price: 40000, name: fr ? /Fontaine à l’œuf d’or/ : /Golden Egg Fountain/, words: fr ? /boire/ : /drink/,
+    life: L => L && L.fountain && L.fountain.some(x => x === 'rim') && L.drops > 0, lifeSays: 'its water moving, little birds drinking at its rim, drops where the water falls in' },
+  rose_arbour: { level: 42, price: 45000, name: fr ? /Tonnelle de roses/ : /Rose Arbour/, words: fr ? /pétales/ : /Petals/,
+    life: L => L && L.arbour > 0 && L.petals > 0, lifeSays: 'butterflies on its roses, petals drifting down' },
+};
+const IDS = process.env.ONLY ? process.env.ONLY.split(',') : Object.keys(ALL);
+const fmt = n => new RegExp(String(Math.floor(n / 1000)) + '\\D?' + String(n % 1000).padStart(3, '0'));
+await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
+await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
+await p.tap('.gsheet .gbtn');
+await load();
+await p.evaluate(() => window.__farm.gameUI().close());
+const placed = {};
+for (const id of IDS) {
+  const G = ALL[id];
+  // the level before: greyed, its level
+  await setLevel(G.level - 1, G.price + 10000); await openTab('decor');
+  await p.waitForFunction(id => { const i = document.querySelector(`.gpage[data-decor="${id}"] img`); return i && i.complete; }, id, { timeout: 30000 }).catch(() => {});
+  let t = await tile(id);
+  ok(`${id}, level ${G.level - 1}: on the decorations shelf, its picture, "level ${G.level}", no button`, t && G.name.test(t.text) && new RegExp(String(G.level)).test(t.text) && !t.btn && t.pic, t);
+  // its level: its price and button; its page in 3D
+  await setLevel(G.level, G.price + 10000); await openTab('decor');
+  await p.waitForFunction(id => { const i = document.querySelector(`.gpage[data-decor="${id}"] img`); return i && i.complete; }, id, { timeout: 30000 }).catch(() => {});
+  t = await tile(id);
+  ok(`${id}, level ${G.level}: its price and its button`, t && fmt(G.price).test(t.text) && t.btn && t.pic, t);
+  await shot(id + '_1_shelf');
+  await p.evaluate(id => document.querySelector(`.gsheet:not([hidden]) .gpage[data-decor="${id}"] .gcard-t`).click(), id);
+  await p.waitForFunction(() => { const v = window.__farm.gameUI().preview; return v && v.state().frames > 0; }, null, { timeout: 90000 }).catch(() => {});
+  const pv0 = await p.evaluate(() => { const v = window.__farm.gameUI().preview; return v ? v.state() : null; });
+  await p.waitForTimeout(2500);
+  const pg = await p.evaluate(() => { const S = document.querySelector('.gsheet:not([hidden])'), v = window.__farm.gameUI().preview; return { pv: v ? v.state() : null, name: (S.querySelector('.gprev-n') || {}).textContent || '', words: (S.querySelector('.gprev-l') || {}).textContent || '', btn: (S.querySelector('.gprev-b .gbtn') || {}).textContent || '' }; });
+  ok(`${id}: its page in 3D (${id === 'fountain' ? 'its water moving, ' : ''}the view still), its name, its words, its button`, pv0 && pg.pv && pg.pv.frames > 0 && (id !== 'fountain' || (pg.pv.live && pg.pv.frames > pv0.frames)) && pg.pv.yaw === pv0.yaw && pg.pv.zoom === pv0.zoom
+    && G.name.test(pg.name) && G.words.test(pg.words) && fmt(G.price).test(pg.btn), { pv0, pg });
+  await shot(id + '_2_page');
+  // bought and put down
+  const m0 = await money();
+  await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gprev-b .gbtn').click()); await run(0.5);
+  const s = await p.evaluate(() => window.__farm.deco.state());
+  ok(`${id}: Buy and place: near the view to put down, nothing paid yet`, s.on === id && (await money()).coins === m0.coins, s);
+  if (!s.ok) { const f = await p.evaluate(id => { const f = window.__farm, v = f.view.target; return f.deco.free(id, v.x, v.z); }, id); if (f) await p.evaluate(([x, z]) => window.__farm.deco.to(x, z), [f.x, f.z]); await run(0.3); }
+  await p.evaluate(() => document.querySelector('.gmove-go').click()); await run(1.5);
+  const m = await money(), at = m.decor.find(d => d.id === id); placed[id] = at;
+  const water = id === 'fountain' ? await p.evaluate(() => window.__farm.deco.fountainWater()) : ['fountain_pool', 'fountain_fall'];
+  const blocked = at && await p.evaluate(([x, z]) => window.__farm.deco.blocked(x, z), [at.x, at.z]);
+  ok(`${id}: Put it here: ${G.price} coins and +${G.price / 50} XP, on the farm${id === 'fountain' ? ' with its water' : ''}, in everyone's way`,
+    m.coins === m0.coins - G.price && m.xp === m0.xp + G.price / 50 && at && water.includes('fountain_pool') && water.includes('fountain_fall') && blocked, { m: { coins: m.coins, xp: m.xp, c0: m0.coins, x0: m0.xp }, at, water, blocked });
+  // its life by day
+  await p.evaluate(([x, z]) => window.__farm.focus(x, z, 2.4), [at.x, at.z]);
+  const ft0 = await p.evaluate(() => window.__farm.deco.fountainT()); await run(0.2);
+  const ft1 = await p.evaluate(() => window.__farm.deco.fountainT());
+  let seen = false, L = null;
+  for (let k = 0; k < 16 && !seen; k++) { await run(3); L = await p.evaluate(() => window.__farm.deco.life()); seen = G.life(L); }
+  ok(`${id}: by day ${G.lifeSays}`, seen && (id !== 'fountain' || ft1 > ft0), { ft0, ft1, L });
+  await shot(id + '_3_farm');
+}
+// a reload: all still there
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
+const after = await p.evaluate(() => ({ items: window.__farm.deco.items(), water: window.__farm.deco.fountainWater(), flag: window.__farm.game().edited }));
+ok('a reload: each where it was (the fountain with its water), nothing flagged', IDS.every(id => after.items.some(i => i.id === id && i.at[0] === placed[id].x && i.at[1] === placed[id].z)) && (!IDS.includes('fountain') || after.water.length === 2) && !after.flag, after);
+// a save that has them before their level: checked
+await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')), d = raw.d; d.xp = window.__farm.xpFor(30) + 5; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
+await p.reload({ waitUntil: 'domcontentloaded', timeout: 120000 }); await load();
+const chk = await p.evaluate(ids => { const g = window.__farm.game(); return { edited: g.edited, has: g.data.decor.filter(x => ids.includes(x.id)).map(x => x.id), items: window.__farm.deco.items().filter(i => ids.includes(i.id)).length }; }, IDS);
+ok('a save changed outside to have them before their level: checked and flagged, not kept', chk.edited && !chk.has.length && !chk.items, chk);
+ok('no page errors', errs.length === 0, errs.slice(0, 3));
+await b.close();
+console.log(fails ? `${fails} FAILED` : 'ALL PASS');
+process.exit(fails ? 1 : 0);

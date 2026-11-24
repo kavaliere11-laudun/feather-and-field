@@ -69,6 +69,12 @@ s = await st();
 const after = await p.evaluate(() => { const f = window.__farm, g = f.game(), c = g.data.coops.find(x => x.breed === 'orp'); return { hint: document.getElementById('hint').textContent, models: f.coopModels(), feed: +g.feedLeft(c).toFixed(2), trio: g.birdsIn(c.id).map(b => b.sex).sort().join(), tier: c.tier }; });
 ok('put down: on the farm for good with its trio, the red dot gone, "Welcome, ...!", its rustic house, a full feeder',
   !s.move && s.coops === 'rir,orp' && s.birds === 6 && s.plots === 2 && !s.dot && s.waiting === '' && T.welcome.test(after.hint) && after.models.includes('box_orp') && after.feed === 1 && after.trio === 'h,h,r' && after.tier === 0, { s, after });
+// (24 Nov 2026) then a word on its apple tree: planted for a Glutton hen, or why there's none
+const glut = await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops.find(x => x.breed === 'orp'); return g.gluttons(c).length > 0; });
+const appleWord = glut ? (fr ? /Un pommier pour/ : /An apple tree for/) : (fr ? /Pas de pommier ici/ : /No apple tree here/);
+let seenApple = '';
+for (let k = 0; k < 14 && !appleWord.test(seenApple); k++) { await run(1); seenApple = await p.evaluate(() => document.getElementById('hint').textContent); }
+ok('…then a word on its apple tree: planted for its Glutton hen, or why there is none', appleWord.test(seenApple), { glut, seenApple });
 await p.evaluate(() => { const f = window.__farm, i = f.coopPlots().findIndex(q => q.breed === 'orp'); f.coopCard(i); }); await run(0.3);
 t = await sheet();
 ok('its coop card: the Thatched Cottage, rustic, who lives there', T.thatched.test(t) && (fr ? /rustique/i : /rustic/i).test(t), t);

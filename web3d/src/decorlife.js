@@ -91,8 +91,8 @@ class Bees {
 // ------------------------------------------------------------------ butterflies over the flower bed: a flutter from flower to
 // flower, settling a moment with the wings slowly opening and closing, now and then a little wander out and back
 export class Butterflies {
-  constructor(parent, grade, r, n = 4) {
-    this.r = r; this.f = [];
+  constructor(parent, grade, r, n = 4, land = null) {
+    this.r = r; this.f = []; this.land = land;          // (land: where they settle, if not the flower bed: the Rose Arbour's roses)
     const COL = [['#fbf6e9', '#3a3a3a'], ['#f2c84b', '#6a4a12'], ['#ee8a3c', '#3a1d0e'], ['#8fbdf0', '#21364f']];
     for (let i = 0; i < n; i++) {
       const [c, edge] = COL[i % COL.length];
@@ -110,13 +110,16 @@ export class Butterflies {
       const bodyM = new THREE.MeshLambertMaterial({ color: '#2b2118' }); if (grade) grade(bodyM);
       g.add(new THREE.Mesh(new THREE.CylinderGeometry(0.004, 0.005, 0.05, 5).rotateX(Math.PI / 2), bodyM));
       parent.add(g);
-      const f = { g, wings, st: 'fly', t: 0, p: new THREE.Vector3((r() - 0.5) * 0.8, 0.4, (r() - 0.5) * 0.8), to: new THREE.Vector3(), from: new THREE.Vector3(), dur: 1, h: 0, phase: r() * 6 };
+      const f = { g, wings, st: 'fly', t: 0, p: land ? land(r) : new THREE.Vector3((r() - 0.5) * 0.8, 0.4, (r() - 0.5) * 0.8), to: new THREE.Vector3(), from: new THREE.Vector3(), dur: 1, h: 0, phase: r() * 6 };
       this.f.push(f); this.pick(f);
     }
   }
   pick(f) {
     f.from.copy(f.p); const a = this.r() * 6.28;
-    if (this.r() < 0.2) { const d = 1.0 + this.r() * 1.1; f.to.set(Math.cos(a) * d, 0.55 + this.r() * 0.55, Math.sin(a) * d); f.land = false; }     // (a little wander)
+    if (this.land) {                                                     // (the arbour: from rose to rose, now and then a wander round it)
+      if (this.r() < 0.25) { const d = 1.3 + this.r() * 0.8; f.to.set(Math.cos(a) * d, 0.9 + this.r() * 1.2, Math.sin(a) * d); f.land = false; }
+      else { f.to.copy(this.land(this.r)); f.land = true; }
+    } else if (this.r() < 0.2) { const d = 1.0 + this.r() * 1.1; f.to.set(Math.cos(a) * d, 0.55 + this.r() * 0.55, Math.sin(a) * d); f.land = false; }     // (a little wander)
     else { const d = Math.sqrt(this.r()) * 0.6; f.to.set(Math.cos(a) * d, 0.33 + this.r() * 0.05, Math.sin(a) * d); f.land = true; }
     f.st = 'fly'; f.dur = 0.9 + f.from.distanceTo(f.to) / 0.4; f.t = 0;
   }
@@ -150,6 +153,18 @@ export class Butterflies {
 const BATH = { rim: 0.705, R: 0.47, water: 0.671, tit: Math.atan2(0.3, 0.36), bath: true, kinds: ['robin', 'chaffinch'] };
 // (the Golden Egg Fountain, 24 Nov 2026: three little birds come to drink from its basin's rim, 0.375 up and 1.02 out, between
 // the four bronze frogs, mostly at its sides; no bath, the basin's deep; grand.py fountain_dec)
+// (the Rose Arbour, 24 Nov 2026: grand.py rose_arbour_dec in the game's frame, its front towards +z: the roses along the
+// front of its arch, up its two front posts, on the two standard roses' heads; where the butterflies settle and the petals
+// fall from)
+const ARBOUR = {
+  rose(r) {
+    const k = r();
+    if (k < 0.45) { const t = Math.PI * (0.12 + 0.76 * r()); return new THREE.Vector3(0.78 * Math.cos(t), 1.86 + 0.53 * Math.sin(t), 0.08 + r() * 0.05); }
+    if (k < 0.75) { const s = r() < 0.5 ? -1 : 1; return new THREE.Vector3(s * (0.8 + r() * 0.04), 0.7 + r() * 1.0, 0.07); }
+    const s = r() < 0.5 ? -1 : 1, a = r() * 6.28, e = 0.3 + r() * 0.9;
+    return new THREE.Vector3(s * 0.88 + Math.cos(a) * Math.cos(e) * 0.22, 1.02 + Math.sin(e) * 0.21, 0.62 + Math.sin(a) * Math.cos(e) * 0.22);
+  },
+};
 const FOUNT = { rim: 0.375, R: 1.02, water: 0.28, frogs: [1, 3, 5, 7].map(k => k * Math.PI / 4), bath: false, kinds: ['chaffinch', 'robin', 'chaffinch'] };
 function smallBird(kind, grade) {
   const C = kind === 'robin' ? { back: '#7d6248', belly: '#ea6a32', head: '#7d6248', cap: '#7d6248', face: '#ea6a32', wing: '#6e5540' }
@@ -299,11 +314,17 @@ export class DecorLife {
     }));
     const drop = tex(c => { const g = c.createRadialGradient(32, 28, 0, 32, 32, 28); g.addColorStop(0, 'rgba(255,255,255,1)'); g.addColorStop(0.5, 'rgba(210,235,255,0.85)'); g.addColorStop(1, 'rgba(190,225,255,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); });
     this.glints = new Floaters(scene, glint, 4); this.notes = new Floaters(scene, notes, 20, o.grade); this.drops = new Floaters(scene, drop, 40, o.grade);
+    const petal = ['#e0507a', '#f4b8c6', '#c22a44'].map(col => tex(c => {          // (a rose petal: a rounded teardrop, a paler edge)
+      c.beginPath(); c.moveTo(32, 58); c.bezierCurveTo(6, 40, 10, 8, 32, 6); c.bezierCurveTo(54, 8, 58, 40, 32, 58); c.closePath();
+      c.fillStyle = col; c.fill(); c.lineWidth = 3; c.strokeStyle = 'rgba(255,240,245,0.55)'; c.stroke();
+    }));
+    this.petals = new Floaters(scene, petal, 14, o.grade);
     for (const d of decor) {
       if (d.model === 'beehives') this.bees = new Bees(frame(d), o.grade, r);
       if (d.model === 'flowers') this.flies = new Butterflies(frame(d), o.grade, r);
       if (d.model === 'birdbath') { const f = frame(d); this.bath = new BathBirds(f, o.grade, r, (p, n) => this.splash(f.localToWorld(p.clone()), n)); }
       if (d.model === 'fountain') { const f = frame(d); this.fount = { f, birds: new BathBirds(f, o.grade, r, (p, n) => this.splash(f.localToWorld(p.clone()), n), FOUNT), dropIn: 0 }; }
+      if (d.model === 'rose_arbour') { const f = frame(d); this.arbour = { f, flies: new Butterflies(f, o.grade, r, 3, ARBOUR.rose), petalIn: 0.5 }; }
       if (d.model === 'statue') this.statue = d;
       if (d.model === 'bandstand') this.band = d;
     }
@@ -322,6 +343,14 @@ export class DecorLife {
     if (this.bees) this.bees.update(dt, day, t);
     if (this.flies) this.flies.update(dt, day, t);
     if (this.bath) this.bath.update(dt, day, t);
+    if (this.arbour) {                                                    // (the arbour: its butterflies by day; now and then a petal drifting down)
+      this.arbour.flies.update(dt, day, t);
+      if ((this.arbour.petalIn -= dt) <= 0) {
+        this.arbour.petalIn = 1.1 + this.r() * 2.2;
+        const p = this.arbour.f.localToWorld(ARBOUR.rose(this.r)), fall = 0.16 + this.r() * 0.08, a = this.r() * 6.28, s = 0.05 + this.r() * 0.06;
+        this.petals.spawn(p, 0.045 + this.r() * 0.015, Math.max(1.5, (p.y - this.arbour.f.matrixWorld.elements[13] - 0.06) / fall), this._d.set(Math.cos(a) * s, -fall, Math.sin(a) * s), { map: Math.floor(this.r() * 3), spin: this.r() * 6 });
+      }
+    }
     if (this.fount) {                                                     // (the fountain: its birds; now and then a drop jumping up where its water falls in)
       this.fount.birds.update(dt, day, t);
       if ((this.fount.dropIn -= dt) <= 0) {
@@ -351,13 +380,13 @@ export class DecorLife {
         this.notes.spawn(p, 0.3 + this.r() * 0.1, 3.4, dir, { map: Math.floor(this.r() * 4), spin: this.r() * 6 });
       }
     }
-    this.glints.update(dt); this.notes.update(dt); this.drops.update(dt);
+    this.glints.update(dt); this.notes.update(dt); this.drops.update(dt); this.petals.update(dt);
   }
   // for the tests: what's going on
   state() {
     return {
       bees: this.bees ? this.bees.out : null, butterflies: this.flies ? this.flies.f.filter(f => f.g.visible).length : null,
-      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
+      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, arbour: this.arbour ? this.arbour.flies.f.filter(f => f.g.visible).length : null, petals: this.petals.live, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
     };
   }
 }
