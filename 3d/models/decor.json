@@ -94,6 +94,12 @@
    -1.42,
    1.42,
    1.42
+  ],
+  "clock_tower": [
+   -1.6,
+   -1.6,
+   1.6,
+   1.6
   ]
  },
  "stats": {
@@ -201,6 +207,16 @@
    "tris": 2,
    "verts": 6,
    "prims": 1
+  },
+  "clock_tower": {
+   "tris": 13190,
+   "verts": 8688,
+   "prims": 5
+  },
+  "clock_tower_bell": {
+   "tris": 612,
+   "verts": 596,
+   "prims": 2
   }
  }
 }
