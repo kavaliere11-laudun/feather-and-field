@@ -52,11 +52,23 @@ for (const loc of LOCALES) {
   try { await upsert('appInfoLocalizations', infoLocs, loc, { name: v.name, subtitle: v.subtitle, privacyPolicyUrl: `${PRIVACY}?lang=${lang}` }, { appInfo: { data: { type: 'appInfos', id: info.id } } }); console.log(loc, 'name, subtitle, privacy page: done'); }
   catch (e) { console.log(loc, 'name, subtitle, privacy page: NOT done:', e.message); }
 }
+// ---- the app's category (listing.json _app: Games, Simulation)
+const A = L._app || {};
+if (A.category) {
+  const rel = { primaryCategory: { data: { type: 'appCategories', id: A.category } } };
+  if (A.subcategory) rel.primarySubcategoryOne = { data: { type: 'appCategories', id: A.subcategory } };
+  try { await api('PATCH', `/v1/appInfos/${info.id}`, { data: { type: 'appInfos', id: info.id, relationships: rel } }); console.log('category:', A.category, A.subcategory || '', 'done'); }
+  catch (e) { console.log('category: NOT done:', e.message); }
+}
 // ---- the version waiting to be prepared: its words and its pictures
 const vers = await all(`/v1/apps/${app.id}/appStoreVersions?filter[platform]=IOS`);
 for (const v of vers) console.log('version', v.attributes.versionString, '|', v.attributes.appVersionState || v.attributes.appStoreState);
 const ver = vers.find(v => /PREPARE_FOR_SUBMISSION|DEVELOPER_REJECTED|REJECTED|METADATA_REJECTED/.test(v.attributes.appVersionState || v.attributes.appStoreState || ''));
 if (!ver) { console.log('no version waiting to be prepared: nothing more done'); process.exit(0); }
+if (A.copyright) {                                                // (the line under the game: "2026 Audrey Bellegarde")
+  try { await api('PATCH', `/v1/appStoreVersions/${ver.id}`, { data: { type: 'appStoreVersions', id: ver.id, attributes: { copyright: A.copyright } } }); console.log('copyright:', A.copyright, 'done'); }
+  catch (e) { console.log('copyright: NOT done:', e.message); }
+}
 const vlocs = await all(`/v1/appStoreVersions/${ver.id}/appStoreVersionLocalizations`);
 for (const loc of LOCALES) {
   const v = L[loc];

@@ -1,4 +1,5 @@
 {
+  "_app": { "category": "GAMES", "subcategory": "GAMES_SIMULATION", "copyright": "2026 Audrey Bellegarde", "_why": "24 Nov 2026, Audrey: \"Games › Simulation (Recommended)\", \"2026 Audrey Bellegarde (Recommended)\"" },
   "_about": "The App Store page in each language (24 Nov 2026, Audrey: \"App Store ready (Recommended)\"). Each language's support page: the game's help page, support.html?lang=xx (asc-listing.mjs). name and subtitle: 30 characters at most; promo: 170; keywords: 100, commas, no spaces after them; description: 4000. app/tools/asc-listing.mjs puts them into App Store Connect (never submits). Drafts until Audrey says yes.",
   "en-GB": {
     "name": "Feather & Field",
