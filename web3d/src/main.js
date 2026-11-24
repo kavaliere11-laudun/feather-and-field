@@ -1452,7 +1452,7 @@ const DECOR_NAMES = register('decor', {
   flowers: ['Cottage flower bed', 'Massif de fleurs'], birdbath: ['Bird bath', 'Bain d’oiseaux'], beehives: ['Beehives', 'Ruches'],
   duckhouse: ['Duck house', 'Maison des canards'], greenhouse: ['Greenhouse', 'Serre'], windmill: ['Windmill', 'Moulin à vent'],
   bandstand: ['Bandstand', 'Kiosque à musique'], statue: ['Golden cockerel', 'Coq d’or'], fountain: ['Golden Egg Fountain', 'Fontaine à l’œuf d’or'],
-  rose_arbour: ['Rose Arbour', 'Tonnelle de roses'], dovecote: ['Dovecote', 'Pigeonnier'],
+  rose_arbour: ['Rose Arbour', 'Tonnelle de roses'], dovecote: ['Dovecote', 'Pigeonnier'], tractor: ['Red Tractor', 'Tracteur rouge'],
 });
 const DECOR_ROUND = { bandstand: 1.45, windmill: 1.45, flowers: 0.95, birdbath: 0.7, rose_arbour: 1.3, dovecote: 1.36 };     // (round ones: their circle)
 let DECOR_INFO = null, decorFree = null, decorSpots = null;
@@ -1545,10 +1545,16 @@ function buildDecor() {
   }
   if (decorList.length && !params.has('nolife')) decorLife = new DecorLife(scene, decorList, { grade: nightGrade, hour: () => DAY.hour, toCam: VIEW_DIR }, rng(91));
 }
+const _jig = new THREE.Matrix4();
 function tickDecor(dt) {
   if (sails) sails.children[0].rotation.z -= dt * (Math.PI * 2 / 14) * (0.8 + 0.4 * Math.sin(WIND.time.value * 0.31));
   if (decorLife) decorLife.update(dt);
   if (DEC.items.fountain) FOUNTAIN_T.value = (FOUNTAIN_T.value + dt) % 3600;      // (its water: fountainMat)
+  const tr = DEC.items.tractor;                              // (the Red Tractor: a little shake while its engine putters, decorlife.js)
+  if (tr && decorLife && decorLife.tractor && DMOVE.id !== 'tractor') {
+    const j = decorLife.tractor.jig;
+    if (j.on || tr.shook) { tr.group.matrix.copy(tr.d.m); if (j.on) tr.group.matrix.multiply(_jig.makeRotationZ(j.roll).setPosition(j.x, j.y, 0)); tr.group.matrixWorldNeedsUpdate = true; tr.shook = j.on; }
+  }
   if (GAME_MODE) { tickBits(dt); tickHoneyFrame(); }
   if (GAME_MODE && STORY_LOOK) tickMeadowLife(dt);
 }

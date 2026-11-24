@@ -546,8 +546,10 @@ def tractor_dec(seed=111, name='tractor'):
         if (x / 2.0) ** 2 + (y / 1.1) ** 2 > 1: continue
         objs.append(plank('rtstraw', (x, y, 0.016), (x + random.uniform(-0.09, 0.09), y + random.uniform(-0.09, 0.09), 0.016), 0.01, 0.003, (0, 0, 1), random.choice(ms[1:]), jitter=0.0, bevel=0.0))
     bale(objs, (-1.05, -0.78, 0.14), (0.62, 0.34, 0.28), 0.35, ms, twine)
-    objs.append(plank('rtforkshaft', (-0.72, -0.62, 0.05), (-1.05, -0.62, 1.15), 0.035, 0.035, (0, -1, 0), wood[2], jitter=0.0, bevel=0.0))
-    for k in range(3): objs.append(plank('rtfork', (-0.71 + 0.01 * k, -0.62 + (k - 1) * 0.035, 0.05), (-0.62 + 0.01 * k, -0.62 + (k - 1) * 0.035, -0.12), 0.01, 0.01, (0, -1, 0), silver, jitter=0.0, bevel=0.0))
+    a0, a1 = Vector((-0.7, -0.62, 0.02)), Vector((-0.95, -0.62, 0.95)); dv = (a1 - a0).normalized()      # (the pitchfork leaning on the bale, its tines up)
+    objs.append(plank('rtforkshaft', tuple(a0), tuple(a1), 0.035, 0.035, (0, -1, 0), wood[2], jitter=0.0, bevel=0.0))
+    objs.append(plank('rtforkbar', tuple(a1 + Vector((0, -0.07, 0))), tuple(a1 + Vector((0, 0.07, 0))), 0.02, 0.02, (0, 0, 1), silver, jitter=0.0, bevel=0.0))
+    for k in range(3): objs.append(plank('rtfork', tuple(a1 + Vector((0, (k - 1) * 0.06, 0))), tuple(a1 + Vector((0, (k - 1) * 0.06, 0)) + dv * 0.26), 0.012, 0.012, (0, -1, 0), silver, jitter=0.0, bevel=0.0))
     churn = Vector((0.78, -1.02, 0))
     objs.append(cyl('rtchurn', 0.14, 0.42, tuple(churn + Vector((0, 0, 0.21))), m=silver, verts=16, r2=0.12, bevel=0.01))
     objs.append(cyl('rtchurnneck', 0.07, 0.12, tuple(churn + Vector((0, 0, 0.47))), m=silver, verts=12, r2=0.09, bevel=0.006))

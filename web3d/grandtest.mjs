@@ -40,6 +40,8 @@ const ALL = {
     life: L => L && L.arbour > 0 && L.petals > 0, lifeSays: 'butterflies on its roses, petals drifting down' },
   dovecote: { level: 43, price: 52000, name: fr ? /Pigeonnier/ : /Dovecote/, words: fr ? /colombes/ : /doves/,
     life: L => L && L.doves && L.doves.some(x => x === 'circle'), lifeSays: 'its doves off round it' },
+  tractor: { level: 44, price: 60000, name: fr ? /Tracteur rouge/ : /Red Tractor/, words: fr ? /fumée/ : /smoke/,
+    life: L => L && L.tractor && L.tractor.on && L.smoke > 0, lifeSays: 'its engine puttering, puffs of smoke' },
 };
 const IDS = process.env.ONLY ? process.env.ONLY.split(',') : Object.keys(ALL);
 const fmt = n => new RegExp(String(Math.floor(n / 1000)) + '\\D?' + String(n % 1000).padStart(3, '0'));

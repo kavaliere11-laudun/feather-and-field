@@ -268,6 +268,7 @@ class BathBirds {
 // facing the player and its sides; its own four doves sit still on the others and the roof); now and then by day they all
 // take off one after another, circle the tower a lap or two, high and wide, wings beating then gliding, and each comes
 // back down to a free ledge; perched, a look about, now and then a coo (her breast puffed, a bow); at night they're in
+const TRACTOR_EXHAUST = [1.52, 1.6, 0.256];                       // (the top of its exhaust, in its own frame)
 const DOVECOTE = { r: 0.79, y: 1.72, slots: [165, 195, 255, 345, 15, 135].map(d => d * Math.PI / 180) };
 function whiteDove(grade) {
   const mats = {}; const mat = c => mats[c] || (mats[c] = (m => { if (grade) grade(m); return m; })(new THREE.MeshLambertMaterial({ color: c })));
@@ -349,7 +350,7 @@ class Floaters {
       n.sp.renderOrder = 4; this.scene.add(n.sp); this.pool.push(n);
     }
     n.sp.material.map = this.maps[o.map || 0]; n.sp.material.needsUpdate = true;
-    n.sp.position.copy(at); n.size = size; n.life = n.full = life; n.v.copy(drift); n.fall = o.fall || 0; n.pulse = !!o.pulse; n.spin = o.spin || 0;
+    n.sp.position.copy(at); n.size = size; n.life = n.full = life; n.v.copy(drift); n.fall = o.fall || 0; n.pulse = !!o.pulse; n.spin = o.spin || 0; n.grow = o.grow || 0;
     n.sp.visible = true; n.sp.scale.setScalar(1e-4); return n;
   }
   update(dt) {
@@ -358,7 +359,7 @@ class Floaters {
       n.life -= dt; if (n.life <= 0) { n.sp.visible = false; continue; }
       const t = 1 - n.life / n.full;
       n.v.y -= n.fall * dt; n.sp.position.addScaledVector(n.v, dt);
-      const s = n.size * (n.pulse ? Math.sin(t * Math.PI) : Math.min(1, t * 6)); n.sp.scale.set(s, s, s);
+      const s = n.size * (n.pulse ? Math.sin(t * Math.PI) : Math.min(1, t * 6)) * (1 + n.grow * t); n.sp.scale.set(s, s, s);
       n.sp.material.opacity = n.pulse ? 1 : Math.min(1, (1 - t) * 2.5);
       n.sp.material.rotation = n.pulse ? t * 1.4 : Math.sin(t * 5 + n.spin) * 0.25;
     }
@@ -394,6 +395,8 @@ export class DecorLife {
       c.fillStyle = col; c.fill(); c.lineWidth = 3; c.strokeStyle = 'rgba(255,240,245,0.55)'; c.stroke();
     }));
     this.petals = new Floaters(scene, petal, 14, o.grade);
+    const smoke = tex(c => { const g = c.createRadialGradient(32, 32, 0, 32, 32, 30); g.addColorStop(0, 'rgba(120,120,124,0.85)'); g.addColorStop(0.55, 'rgba(150,150,154,0.5)'); g.addColorStop(1, 'rgba(170,170,174,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); });
+    this.smoke = new Floaters(scene, smoke, 16, o.grade);
     for (const d of decor) {
       if (d.model === 'beehives') this.bees = new Bees(frame(d), o.grade, r);
       if (d.model === 'flowers') this.flies = new Butterflies(frame(d), o.grade, r);
@@ -401,6 +404,7 @@ export class DecorLife {
       if (d.model === 'fountain') { const f = frame(d); this.fount = { f, birds: new BathBirds(f, o.grade, r, (p, n) => this.splash(f.localToWorld(p.clone()), n), FOUNT), dropIn: 0 }; }
       if (d.model === 'rose_arbour') { const f = frame(d); this.arbour = { f, flies: new Butterflies(f, o.grade, r, 3, ARBOUR.rose), petalIn: 0.5 }; }
       if (d.model === 'dovecote') this.doves = new Doves(frame(d), o.grade, r);
+      if (d.model === 'tractor') this.tractor = { f: frame(d), next: 8 + r() * 10, run: 0, puffIn: 0, jig: { on: false, x: 0, y: 0, roll: 0 } };
       if (d.model === 'statue') this.statue = d;
       if (d.model === 'bandstand') this.band = d;
     }
@@ -420,6 +424,21 @@ export class DecorLife {
     if (this.flies) this.flies.update(dt, day, t);
     if (this.bath) this.bath.update(dt, day, t);
     if (this.doves) this.doves.update(dt, day, t);
+    // (the Red Tractor, 24 Nov 2026: now and then by day its engine putters for a few seconds: a little shake (main.js moves
+    // it by jig), puffs of smoke from its exhaust, its top at TRACTOR_EXHAUST in its own frame (grand.py tractor_dec))
+    if (this.tractor) {
+      const T = this.tractor, J = T.jig;
+      if (T.run > 0) {
+        T.run -= dt; const k = Math.min(1, T.run / 0.6, (5.5 - T.run) / 0.3);
+        J.on = T.run > 0; J.x = Math.sin(t * 61) * 0.006 * k; J.y = Math.abs(Math.sin(t * 47)) * 0.008 * k; J.roll = Math.sin(t * 53) * 0.004 * k;
+        if ((T.puffIn -= dt) <= 0) {
+          T.puffIn = 0.16 + this.r() * 0.12;
+          const p = T.f.localToWorld(this._v.set(TRACTOR_EXHAUST[0], TRACTOR_EXHAUST[1] + 0.03, TRACTOR_EXHAUST[2]));
+          this.smoke.spawn(p, 0.09 + this.r() * 0.04, 1.4 + this.r() * 0.6, this._d.set((this.r() - 0.5) * 0.12 + 0.08, 0.55 + this.r() * 0.25, (this.r() - 0.5) * 0.12), { spin: this.r() * 6, grow: 2.2 });
+        }
+      } else if (J.on) { J.on = false; J.x = J.y = J.roll = 0; }
+      else if (day > 0.6 && (T.next -= dt) <= 0) { T.next = 22 + this.r() * 30; T.run = 5.5; T.puffIn = 0; }
+    }
     if (this.arbour) {                                                    // (the arbour: its butterflies by day; now and then a petal drifting down)
       this.arbour.flies.update(dt, day, t);
       if ((this.arbour.petalIn -= dt) <= 0) {
@@ -457,13 +476,13 @@ export class DecorLife {
         this.notes.spawn(p, 0.3 + this.r() * 0.1, 3.4, dir, { map: Math.floor(this.r() * 4), spin: this.r() * 6 });
       }
     }
-    this.glints.update(dt); this.notes.update(dt); this.drops.update(dt); this.petals.update(dt);
+    this.glints.update(dt); this.notes.update(dt); this.drops.update(dt); this.petals.update(dt); this.smoke.update(dt);
   }
   // for the tests: what's going on
   state() {
     return {
       bees: this.bees ? this.bees.out : null, butterflies: this.flies ? this.flies.f.filter(f => f.g.visible).length : null,
-      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, arbour: this.arbour ? this.arbour.flies.f.filter(f => f.g.visible).length : null, doves: this.doves ? this.doves.list.map(d => d.st) : null, petals: this.petals.live, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
+      bath: this.bath ? this.bath.list.map(b => b.st) : null, fountain: this.fount ? this.fount.birds.list.map(b => b.st) : null, arbour: this.arbour ? this.arbour.flies.f.filter(f => f.g.visible).length : null, doves: this.doves ? this.doves.list.map(d => d.st) : null, tractor: this.tractor ? { on: this.tractor.jig.on, next: +this.tractor.next.toFixed(1) } : null, smoke: this.smoke.live, petals: this.petals.live, glints: this.glints.live, notes: this.notes.live, drops: this.drops.live,
     };
   }
 }
