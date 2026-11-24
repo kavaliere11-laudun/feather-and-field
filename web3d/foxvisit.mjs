@@ -1,5 +1,5 @@
 // Release 3 step 3 (Rusty's night visits in the game): node foxvisit.mjs   (LANG=fr; W, H: the screen; SHOTS: a folder)
-// A farm at level 3: no visits, the nights go by. Level 4: its card says Rusty may come at night. A night he visits with
+// A farm at level 4: no visits, the nights go by. Level 5 (the road of 50 levels): its card says Rusty may come at night. A night he visits with
 // the farm shut and a coop's door left open: in the morning "Last night on the farm": he took the nest's eggs (the eggs
 // gone, a tip to shut the doors or get the geese), "Watch it": the old film, his head in at the pop door and out with an
 // egg, "The End" with "The eggs, not so much"; the film's button gone once watched. A night with every door shut (the
@@ -41,21 +41,21 @@ await p.goto(URL, { waitUntil: 'domcontentloaded' });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
-// level 3: no visits
-await p.evaluate(L3 => { const g = window.__farm.game(); g.data.xp = L3; g.data.lvSeen = 3; g.data.coins = 500; g.data.land = [0, 1, 2]; g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(3));
+// level 4: no visits (the road of 50 levels, 22 Nov 2026: Rusty from level 5)
+await p.evaluate(L3 => { const g = window.__farm.game(); g.data.xp = L3; g.data.lvSeen = 4; g.data.coins = 500; g.data.land = [0, 1, 2, 3]; g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(4));
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await p.evaluate(() => window.__farm.gameUI().close());
 let nights = await p.evaluate(() => window.__farm.foxGame.nights(window.__T, 30));
 const visit0 = nights[0];
 await jump(visit0.t + 9 * 3600e3); await run(1);
 let s = await st();
-ok('level 3: a night he\'d have come goes by with no visit', s.seen >= visit0.key && !s.last && s.card !== 'fox', { s, visit0 });
-// level 4: its card (any card up first, the account's suggestion a few days in, closed)
+ok('level 4: a night he\'d have come goes by with no visit', s.seen >= visit0.key && !s.last && s.card !== 'fox', { s, visit0 });
+// level 5: its card (any card up first, the account's suggestion a few days in, closed)
 await p.evaluate(() => window.__farm.gameUI().close()); await run(0.3);
-await p.evaluate(L4 => { const g = window.__farm.game(); g.data.xp = L4; g.data.land.push(3); g.save(); }, xpAt(4)); await run(1.6);
+await p.evaluate(L4 => { const g = window.__farm.game(); g.data.xp = L4; g.data.land.push(4); g.save(); }, xpAt(5)); await run(1.6);
 s = await st();
 await shot('1_level4');
-ok('level 4: its card says Rusty may come at night from now on', s.level === 4 && s.card === 'levelup' && T.lvl4.test(s.text), s.text.slice(0, 500));
+ok('level 5: its card says Rusty may come at night from now on', s.level === 5 && s.card === 'levelup' && T.lvl4.test(s.text), s.text.slice(0, 500));
 await p.evaluate(() => window.__farm.gameUI().close());
 // a night he comes, the farm shut, the door open, eggs in the nest: in the morning, what he took
 const upcoming = async () => p.evaluate(() => window.__farm.foxGame.nights(window.__T, 40).filter(v => v.t > window.__T + 3600e3));
@@ -128,6 +128,24 @@ await shot('3_geese');
 ok('a night with the geese: they chased him home, the eggs kept', s.last.key === v.key && s.last.open && s.last.by === 'geese' && s.last.eggs === 0 && T.geese.test(s.text) && s.eggs.split(',').every(n => +n >= 2), s);
 const gfilm = await watch(); await run(0.5);
 ok('its film: the geese raise the alarm and Rusty runs for home, no egg', gfilm.on && gfilm.chased && !gfilm.egg && gfilm.steps.includes('geese') && gfilm.steps.includes('card:run') && !gfilm.stillOn, gfilm);
+// (24 Nov 2026, Audrey: "Card now and then (Recommended)"): chased off again within the week: no card in the morning, the
+// night seen quietly, its film still under Last night; a week on, the card again
+const told0 = await p.evaluate(() => window.__farm.game().fox().told);
+await p.evaluate(() => window.__farm.gameUI().close());
+const quietNight = async () => {
+  const v2 = (await upcoming())[0];
+  await jump(v2.t - 2 * 3600e3); await run(1);
+  await p.evaluate(() => { const g = window.__farm.game(); for (const c of g.data.coops) { c.eggs = 2; c.lt = [window.__T - 3600e3, window.__T - 3500e3]; } g.save(); });
+  await jump(v2.t + 8 * 3600e3); await run(1.2);
+  return { v2, s: await st(), told: await p.evaluate(() => window.__farm.game().fox().told), film: await p.evaluate(() => window.__farm.game().foxFilmable()) };
+};
+const days = (a, b) => (Date.UTC(+b.slice(0, 4), +b.slice(4, 6) - 1, +b.slice(6, 8)) - Date.UTC(+a.slice(0, 4), +a.slice(4, 6) - 1, +a.slice(6, 8))) / 86400e3;
+let q = await quietNight();
+ok('the geese night\'s card remembered (told)', told0 === v.key, { told0, v: v.key });
+ok('chased off again within the week: no card, the night seen quietly, its film still under Last night', q.s.last.key === q.v2.key && q.s.last.by === 'geese' && q.s.last.seen && q.s.card !== 'fox' && q.film && q.told === told0 && days(told0, q.v2.key) < 7, { last: q.s.last, card: q.s.card, film: q.film, told: q.told, d: days(told0, q.v2.key) });
+for (let i = 0; i < 6 && days(told0, q.v2.key) < 7; i++) { await p.evaluate(() => window.__farm.gameUI().close()); q = await quietNight(); }
+ok('a week on: the card again', days(told0, q.v2.key) >= 7 && q.s.card === 'fox' && T.geese.test(q.s.text) && q.told === q.v2.key, { card: q.s.card, told: q.told, d: days(told0, q.v2.key) });
+await p.evaluate(() => window.__farm.gameUI().close());
 // saves changed outside
 await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.fox.last.eggs = 99; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
@@ -138,6 +156,9 @@ await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 s = await st();
 const shut0 = await p.evaluate(() => window.__farm.game().data.coops[0].shut);
 ok('a save changed outside (chased by a dog the farm hasn\'t, a door shut for a night to come): checked and flagged', s.edited && s.last && s.last.by === null && shut0 === undefined, { s, shut0 });
+await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.fox.told = '29991231'; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); });
+await p.reload({ waitUntil: 'domcontentloaded' }); await load();
+ok('a save changed outside (the card told for a night to come): not kept', !(await p.evaluate(() => window.__farm.game().fox().told)));
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();

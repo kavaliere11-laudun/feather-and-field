@@ -2,7 +2,7 @@
 // shop. And I don't think we should grey things not available yet in the shop as it needs a certain level. Because it can
 // make people excited to progress"): ./withserver.sh node shophenstest.mjs [OUT]   (LANG=fr; W, H; PORT)
 // A level-9 farm in the app (Apple stood in for, its prices): the farm shop has a Chickens tab after Coins: the collector's
-// shelf (the Buff Silkie for 🪙 5,000 or £2.99, the others in colour with "🔒 Level N", no button) and the rare Silkie trios
+// shelf (the Buff Silkie for 🪙 3,000 or £2.99, the others in colour with "🔒 Level N", no button) and the rare Silkie trios
 // (each £6.99, all four £19.99); the Buff Silkies bought there with coins: their coop to place. The Decorations, Animals and
 // Outfits tabs: what's to come in colour (its picture, no dark shape), "🔒" and its level, no button. Below level 3: no
 // Chickens tab. The shop rethought (23 Nov 2026, Audrey: "Everything is a bit bulky in this popup can you rethink it for
@@ -47,7 +47,7 @@ ok('level 9: a Chickens tab, right after Coins', t[0] === 'coins' && t[1] === 'h
 const shelf = await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([hidden]) .gshelf-t[data-shelf]')].map(c => { const im = c.querySelector('img'), s = getComputedStyle(im);
   return { b: c.dataset.shelf, btns: [...c.querySelectorAll('button.gbtn')].map(x => x.textContent), lv: (c.querySelector('.gshelf-lv') || {}).textContent || '', opacity: +s.opacity, filter: s.filter }; }));
 const buff = shelf.find(x => x.b === 'sil_buff'), rest = shelf.filter(x => x.b !== 'sil_buff');
-ok('its collector\'s shelf: the Buff Silkie for 🪙 5,000 or £2.99', buff && buff.btns.length === 2 && /5[,.\s  ]?000/.test(buff.btns[0]) && buff.btns[1] === '£2.99', buff);
+ok('its collector\'s shelf: the Buff Silkie for 🪙 3,000 or £2.99', buff && buff.btns.length === 2 && /3[,.\s  ]?000/.test(buff.btns[0]) && buff.btns[1] === '£2.99', buff);
 ok('…the others in colour (not faded), "🔒" and their level, no button', rest.length === 7 && rest.every(x => !x.btns.length && /🔒/.test(x.lv) && /\d/.test(x.lv) && x.opacity === 1 && (x.filter === 'none' || !x.filter)), rest);
 const rare = await p.evaluate(() => ({ tiles: [...document.querySelectorAll('.gsheet:not([hidden]) .grare-tiles .gshelf-t')].map(c => [c.dataset.rare, (c.querySelector('button') || {}).textContent || '']), all: (document.querySelector('.gsheet:not([hidden]) .giap-adopt-all') || {}).textContent || '' }));
 ok('the rare Silkie trios: each £6.99, all four £19.99', rare.tiles.length === 4 && rare.tiles.every(x => x[1] === '£6.99') && /19\.99/.test(rare.all), rare);
@@ -71,7 +71,7 @@ await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .ghens-pill
 await openTab('hens');
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gshelf-t[data-shelf="sil_buff"] button[data-shelfgo="coins"]').click()); await p.waitForTimeout(1500);
 const s = await p.evaluate(() => { const g = window.__farm.game(); return { shelf: (g.data.shelf || []).join(), coins: g.data.coins, move: !!window.__farm.move.state().on }; });
-ok('the Buff Silkies bought here with coins: 1,000 left, their coop to place', s.shelf === 'sil_buff' && s.coins === 1000 && s.move, s);
+ok('the Buff Silkies bought here with coins: 3,000 left (the shelf’s first at 3,000 since 24 Nov 2026), their coop to place', s.shelf === 'sil_buff' && s.coins === 3000 && s.move, s);
 await p.evaluate(() => { const f = window.__farm; if (f.move.state().on) f.move.cancel(); });
 // things to come, in colour
 for (const [k, sel] of [['decor', '.gdec'], ['animals', '.gani'], ['outfits', '.gout']]) {

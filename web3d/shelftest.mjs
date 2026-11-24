@@ -2,7 +2,7 @@
 // (LANG=fr; W, H: the screen, sideways as she plays: W=874 H=402; SHOTS=dir for pictures)
 // A farm at level 7: no Buff or Partridge Silkie on the level path (the Book's breeds, Your coops' next breed); the shelf's
 // tab shows both, each with its level and no button. Level 8: its card says the Buff Silkies are on the shelf, "See the
-// shelf" opens it; the Buff Silkies for 5,000 coins: paid, theirs for good, their coop straight to place, a buff trio in a
+// shelf" opens it; the Buff Silkies for 3,000 coins (5,000 until 24 Nov 2026): paid, theirs for good, their coop straight to place, a buff trio in a
 // rustic buff Pagoda; the tile then "On your farm"; a reload keeps it, unflagged. Level 12: the Partridge Silkies at 9,000,
 // greyed with too few coins; in the app (Apple stood in for) £2.99: bought, kept from Apple's record, placed. Saves changed
 // outside (a shelf breed before its level, a shelf breed's coop not had): checked and flagged. Farms from before the shelf:
@@ -46,8 +46,8 @@ const shelfTab = async () => { await close(); await p.evaluate(() => { const f =
 const tile = br => p.evaluate(br => { const t = document.querySelector(`.gsheet .gshelf-t[data-shelf="${br}"]`); if (!t) return null; const bs = [...t.querySelectorAll('button.gbtn')];
   return { text: t.innerText.replace(/\s+/g, ' '), btns: bs.map(x => ({ t: x.textContent, off: x.disabled, go: x.dataset.shelfgo || (x.dataset.place ? 'place' : '') })), img: !!t.querySelector('img') }; }, br);
 const reload = async () => { await p.reload({ waitUntil: 'domcontentloaded' }); await load(); await close(); await run(0.3); };
-const T = fr ? { buff: 'Poule soie fauve', part: 'Poule soie perdrix', l8: /Niveau 9/, l12: /Niveau 15/, had: /Dans votre ferme/, news: /Dans la vitrine du collectionneur\s*:\s*Poule soie fauve/, see: /Voir la vitrine/, got: /Poule soie fauve\s*: à vous pour toujours · −5\s000 pièces/, paid: /Poule soie perdrix\s*: à vous pour toujours\. Merci/, next: /Au niveau 10 : Canards/ }
-  : { buff: 'Buff Silkie', part: 'Partridge Silkie', l8: /Level 9/, l12: /Level 15/, had: /On your farm/, news: /On the collector’s shelf: Buff Silkie/, see: /See the shelf/, got: /Buff Silkie: yours for good · −5,000 coins/, paid: /Partridge Silkie: yours for good\. Thank you/, next: /At level 10: Call/ };
+const T = fr ? { buff: 'Poule soie fauve', part: 'Poule soie perdrix', l8: /Niveau 9/, l12: /Niveau 15/, had: /Dans votre ferme/, news: /Dans la vitrine du collectionneur\s*:\s*Poule soie fauve/, see: /Voir la vitrine/, got: /Poule soie fauve\s*: à vous pour toujours · −3\s000 pièces/, paid: /Poule soie perdrix\s*: à vous pour toujours\. Merci/, next: /Au niveau 10 : Canards/ }
+  : { buff: 'Buff Silkie', part: 'Partridge Silkie', l8: /Level 9/, l12: /Level 15/, had: /On your farm/, news: /On the collector’s shelf: Buff Silkie/, see: /See the shelf/, got: /Buff Silkie: yours for good · −3,000 coins/, paid: /Partridge Silkie: yours for good\. Thank you/, next: /At level 10: Call/ };
 
 await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
@@ -71,13 +71,13 @@ await shot('2_level8');
 ok('level 9: its card says the Buff Silkies are on the shelf, with "See the shelf"', s.level === 9 && s.card === 'levelup' && T.news.test(t) && T.see.test(t), { s, t: t.slice(0, 400) });
 await p.evaluate(() => document.querySelector('.gsheet [data-shelfsee]').click()); await run(0.4);
 s = await st(); tb = await tile('sil_buff');
-ok('"See the shelf": the Book opens on the shelf; the Buff Silkies "🪙 5,000", ready', s.card === 'book' && tb && tb.btns.length === 1 && tb.btns[0].go === 'coins' && !tb.btns[0].off && /5[\s,.  ]?000/.test(tb.btns[0].t), { s, tb });
+ok('"See the shelf": the Book opens on the shelf; the Buff Silkies "🪙 3,000", ready', s.card === 'book' && tb && tb.btns.length === 1 && tb.btns[0].go === 'coins' && !tb.btns[0].off && /3[\s,.  ]?000/.test(tb.btns[0].t), { s, tb });
 // bought with coins: their coop straight to place
 const c0 = (await st()).coins;
 await p.evaluate(() => document.querySelector('.gsheet .gshelf-t[data-shelf="sil_buff"] [data-shelfgo="coins"]').click());
 await p.waitForFunction(() => window.__farm.move.state().on, null, { timeout: 15000 }).catch(() => {}); await run(0.4);
 s = await st(); const h1 = await p.evaluate(() => document.getElementById('hint').textContent);
-ok('bought: 5,000 coins paid, theirs, said; their coop to place at once', s.coins === c0 - 5000 && s.shelf === 'sil_buff' && s.move && T.got.test(h1), { s, c0, h1 });
+ok('bought: 3,000 coins paid, theirs, said; their coop to place at once', s.coins === c0 - 3000 && s.shelf === 'sil_buff' && s.move && T.got.test(h1), { s, c0, h1 });
 await p.tap('.gmove-go'); await run(1.5);
 s = await st();
 const bfc = await p.evaluate(() => { const f = window.__farm, g = f.game(), P = f.coopPlots().find(q => q.line === 'sil_buff'), c = g.data.coops.find(x => x.breed === 'sil_buff');
@@ -90,7 +90,7 @@ ok('the shelf: the Buff Silkies "On your farm", no button; the Partridge still "
 pages = await p.evaluate(() => window.__farm.game().bookPages().filter(x => x.breed === 'sil_buff').map(x => ({ found: x.found, n: x.names.length })));
 ok('the Book\'s breeds: the Buff Silkies\' page, found, three names', pages.length === 1 && pages[0].found && pages[0].n === 3, pages);
 await reload(); s = await st();
-ok('a reload keeps it all, unflagged', s.shelf === 'sil_buff' && /sil_buff/.test(s.coops) && !s.edited && s.coins === c0 - 5000, s);
+ok('a reload keeps it all, unflagged', s.shelf === 'sil_buff' && /sil_buff/.test(s.coops) && !s.edited && s.coins === c0 - 3000, s);
 // level 10: the Lavender Araucana comes onto the shelf (its card); bought for 8,000 coins, its Mountain Hut placed, a lavender trio
 await close();
 await p.evaluate(L => { const g = window.__farm.game(); g.data.xp = L; g.data.coins = 9000; g.data.land = Array.from({ length: 12 }, (_, i) => i); g.save(); }, xpAt(12)); await run(1.6);

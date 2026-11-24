@@ -6365,7 +6365,8 @@ function showNews() {
     if (sum.items.length || sum.paused) { holdBird(null); henOff(); gameUI.awayCard(sum, { collectAll: () => collectAll() }); return; }
   }
   const fl = game.foxLast();                                                // (last night's visit: what happened, the film)
-  if (fl && !fl.seen && !FOXLIVE) { holdBird(null); henOff(); game.foxSeen(); gameUI.foxCard(fl, { watch: () => startReplay() }); return; }
+  if (fl && !fl.seen && !FOXLIVE && game.foxQuiet(fl)) game.foxSeen(false);      // (chased off again within the week: no card; its film still in Last night)
+  else if (fl && !fl.seen && !FOXLIVE) { holdBird(null); henOff(); game.foxSeen(); gameUI.foxCard(fl, { watch: () => startReplay() }); return; }
   const n = game.unseenNews().find(n => !gamePlots().some(p => p.fw && p.gc.id === n.coop));
   if (n) { holdBird(null); gameUI.congratsCard(n, n.t < openedAt - 2000); return; }
   const sr = game.unseenShows();                                           // (the show results: the show day first, by day)
@@ -7468,12 +7469,18 @@ function themeCoop(p, t, buy) {
   if (t && !gc.theme && gc.tier < 4) {               // (it comes with the Deluxe garden: room for it here, as for an upgrade)
     if (p.farmer || DMOVE.id || (inside.open && inside.plot === p)) { hint(game.t('up_busy', { farmer: farmerName() })); return false; }
     if (buy === true && game.data.coins < ((game.themesFor(gc).find(x => x.id === t) || {}).price || 0)) { hint(game.t('dec_broke')); return false; }
-    let S = coopSpot(spotOf(gc), { ...gc, tier: 4 });
-    if (!S.ok && gc.ap && gc.ap.side) {
-      const other = gc.ap.side === 'l' ? 'r' : 'l', S1 = coopSpot(spotOf(gc), { ...gc, tier: 4, ap: { ...gc.ap, side: other } });
-      if (S1.ok) { S = S1; flip = other; }
-      else { const S2 = coopSpot(spotOf(gc), { ...gc, tier: 4, ap: { ...gc.ap, side: null } }); if (S2.ok) { S = S2; off = true; } }
-    }
+    const room = () => {
+      let S = coopSpot(spotOf(gc), { ...gc, tier: 4 }), fl = null, of = false;
+      if (!S.ok && gc.ap && gc.ap.side) {
+        const other = gc.ap.side === 'l' ? 'r' : 'l', S1 = coopSpot(spotOf(gc), { ...gc, tier: 4, ap: { ...gc.ap, side: other } });
+        if (S1.ok) { S = S1; fl = other; }
+        else { const S2 = coopSpot(spotOf(gc), { ...gc, tier: 4, ap: { ...gc.ap, side: null } }); if (S2.ok) { S = S2; of = true; } }
+      }
+      return { S, fl, of };
+    };
+    let R = room();
+    if (!R.S.ok) { const hopped = hopDecorsFor(gc, 4, () => room().S.ok); if (hopped.length) { R = room(); hintNext(game.t('dec_hop', { name: hopped.map(id => game.decorName(id)).join(', ') })); } }      // (24 Nov 2026: a decoration in its way hops aside)
+    const S = R.S; flip = R.fl; off = R.of;
     if (!S.ok) { themeWhy = 'room'; hint(game.t('theme_room')); return false; }      // (15 Nov 2026: its card then offers "Move this coop" there and then)
     clear = S.clear;
   }
@@ -7525,18 +7532,74 @@ function buyDress(id) {
 // ---- a coop's next look (release 4: Rustic, Mended, Snug, Cosy, Deluxe; game.js coopNext, upgradeCoop): its bigger pen
 // where it stands, if there's room (else: move it first); what's in the way cleared (in a puff, for good), the price paid;
 // then the coop in its new look there and then, its birds in their bigger pen
+// (24 Nov 2026, the test players: a decoration put down where a coop's next look will grow kept it from growing: "move the
+// coop first"; Audrey: "Decoration hops aside (Recommended)": as a bush does, it hops in sight to the nearest free spot
+// (clear of every coop's room to grow, the way to every gate kept open), and the coop grows there and then)
+function decorsInWay(gc, tier) {
+  const sp = spotOf(gc), a = sp.deg * DEG, c = Math.cos(a), s = Math.sin(a), self = { ...gc, tier }, v = new THREE.Vector3(), mine = new Map(), hit = new Set();
+  for (const id in DEC.items) { const it = DEC.items[id]; if (it && it.prop && DECOR[id] && !DECOR[id].pond && game.decorOwned(id)) mine.set(it.prop, id); }
+  const B = blockers().filter(b => b.p && mine.has(b.p)); if (!B.length) return [];
+  for (const R of [footOf(self), apronOf(self)]) for (let lz = R.z0; lz < R.z1 + 0.124; lz += 0.25) for (let lx = R.x0; lx < R.x1 + 0.124; lx += 0.25) {
+    const px = Math.min(lx, R.x1), pz = Math.min(lz, R.z1), x = sp.x + px * c + pz * s, z = sp.z - px * s + pz * c;
+    for (const b of B) { v.set(x, 0, z).applyMatrix4(b.inv); if (v.x > b.x0 && v.x < b.x1 && v.z > b.z0 && v.z < b.z1) hit.add(mine.get(b.p)); }
+  }
+  return [...hit];
+}
+// fits(): whether the coop's bigger look has its room, with what's in the way as it stands. The decorations in its way go
+// only if then it would; each to a spot found with the coop already at its bigger look; none found: nothing moves
+function hopDecorsFor(gc, tier, fits) {
+  const ids = decorsInWay(gc, tier); if (!ids.length) return [];
+  const props = new Set(ids.map(id => DEC.items[id].prop));
+  BLOCKERS = blockers().filter(b => !props.has(b.p)); const could = fits(); BLOCKERS = null;
+  if (!could) return [];
+  const t0 = gc.tier, done = []; gc.tier = tier;
+  for (const id of ids) {
+    const it = DEC.items[id], from = [it.prop.pos[0], it.prop.pos[2]], deg = it.prop.deg || 45;
+    const to = decorFreeNear(id, from[0], from[1], 40, true, [deg], true);
+    if (!to) { for (const d of done) setDecorAt(d.it, d.from[0], d.from[1], d.deg); gc.tier = t0; return []; }
+    setDecorAt(it, to.x, to.z, deg); done.push({ id, it, from, to: [to.x, to.z], deg });
+  }
+  gc.tier = t0;
+  for (const d of done) {
+    const S = decorSpot(d.id, d.to[0], d.to[1], d.deg), ids2 = new Set(S.clear.map(o => o.id));
+    game.moveDecor(d.id, { x: d.to[0], z: d.to[1] }, [...ids2]);
+    V.trees = V.trees.filter(o => !ids2.has(o.id)); V.bushes = V.bushes.filter(o => !ids2.has(o.id)); V.rocks = V.rocks.filter(o => !ids2.has(o.id));
+    for (const o of S.clear) clearAway(o);
+    DHOPS.push({ it: d.it, from: d.from, to: d.to, deg: d.deg, t: -0.35 - 0.25 * DHOPS.length });
+  }
+  BLOCKERS = null; decorSpots = null; rebuildNav(); buildNature(); buildGrass(); hidePebbles();
+  for (const d of done) clearDecorWalkers(d.it);
+  syncDecor(); renderer.shadowMap.needsUpdate = true; wake(1500);
+  return done.map(d => d.id);
+}
+// a decoration hopping to its new spot (its place already the new one; only the picture travels)
+const DHOPS = [];
+function tickDecHops(dt) {
+  if (!DHOPS.length) return;
+  for (let i = DHOPS.length - 1; i >= 0; i--) {
+    const H = DHOPS[i]; H.t += dt; if (H.t < 0) { H.it.group.matrix.copy(place(H.from[0], 0, H.from[1], H.deg, 1)); H.it.group.matrixWorldNeedsUpdate = true; continue; }
+    const far = Math.hypot(H.to[0] - H.from[0], H.to[1] - H.from[1]), T = 0.7 + Math.min(0.8, far * 0.06), k = Math.min(1, H.t / T), e = k * k * (3 - 2 * k), up = Math.sin(Math.PI * k) * (0.5 + Math.min(1.2, far * 0.1));
+    H.it.group.matrix.copy(place(H.from[0] + (H.to[0] - H.from[0]) * e, up, H.from[1] + (H.to[1] - H.from[1]) * e, H.deg, 1)); H.it.group.matrixWorldNeedsUpdate = true;
+    if (k >= 1) { H.it.group.matrix.copy(H.it.d.m); DHOPS.splice(i, 1); bitsAt(new THREE.Vector3(H.to[0], 0.1, H.to[1]), 8, '#cdbb8e', { speed: 0.9, up: 1.0, life: 0.7, size: 0.06 }); renderer.shadowMap.needsUpdate = true; }
+  }
+  wake(200);
+}
 function tryUpgrade(p) {
   const gc = p && p.gc && game.coop(p.gc.id), n = gc && game.coopNext(gc);
   if (!n) return 'top';
   if (p.farmer || MOVE.plot || DMOVE.id || (inside.open && inside.plot === p)) { hint(game.t('up_busy', { farmer: farmerName() })); return 'busy'; }
   if (game.data.coins < n.price) return 'coins';
-  let S = coopSpot(spotOf(gc), { ...gc, tier: n.tier }), off = false;
-  let flip = null;
-  if (!S.ok && gc.ap && gc.ap.side) {      // (no room for its bigger pen with the apple tree's corner: the tree goes to the other side if there's room there (11 Nov 2026: "Always keep it"); only with no room on either side does it wait)
-    const other = gc.ap.side === 'l' ? 'r' : 'l', S1 = coopSpot(spotOf(gc), { ...gc, tier: n.tier, ap: { ...gc.ap, side: other } });
-    if (S1.ok) { S = S1; flip = other; }
-    else { const S2 = coopSpot(spotOf(gc), { ...gc, tier: n.tier, ap: { ...gc.ap, side: null } }); if (S2.ok) { S = S2; off = true; } }
-  }      // (no room for its bigger pen with the apple tree's corner: the tree moves, the coop grows)
+  const room = () => {
+    let S = coopSpot(spotOf(gc), { ...gc, tier: n.tier }), off = false, flip = null;
+    if (!S.ok && gc.ap && gc.ap.side) {      // (no room for its bigger pen with the apple tree's corner: the tree goes to the other side if there's room there (11 Nov 2026: "Always keep it"); only with no room on either side does it wait)
+      const other = gc.ap.side === 'l' ? 'r' : 'l', S1 = coopSpot(spotOf(gc), { ...gc, tier: n.tier, ap: { ...gc.ap, side: other } });
+      if (S1.ok) { S = S1; flip = other; }
+      else { const S2 = coopSpot(spotOf(gc), { ...gc, tier: n.tier, ap: { ...gc.ap, side: null } }); if (S2.ok) { S = S2; off = true; } }
+    }      // (no room for its bigger pen with the apple tree's corner: the tree moves, the coop grows)
+    return { S, off, flip };
+  };
+  let { S, off, flip } = room(), hopped = [];
+  if (!S.ok) { hopped = hopDecorsFor(gc, n.tier, () => room().S.ok); if (hopped.length) ({ S, off, flip } = room()); }      // (a decoration in its way: it hops aside)
   if (!S.ok) return 'room';
   const res = game.upgradeCoop(gc.id, S.clear.map(o => o.id));
   if (res !== 'ok') return res;
@@ -7547,6 +7610,7 @@ function tryUpgrade(p) {
   for (const o of S.clear) clearAway(o);
   gameUI.close(); gameUI.refresh(); gameUI.bumpCoins();
   upgradeShow(p, n);                                        // (the view to it, the dust, its new look springing up, then its card)
+  if (hopped.length) hintNext(game.t('dec_hop', { name: hopped.map(id => game.decorName(id)).join(', ') }));
   return 'ok';
 }
 // ---- a coop's new look, shown (24 Nov 2026, Audrey: "When you upgrade a coop, get a little animation for the update and
@@ -8562,7 +8626,7 @@ function clearAway(o, puff = false) {
   CLEARING.push({ g, base, t: 0, bits, mat });
 }
 function tickClearing(dt) {
-  tickHops(dt);
+  tickHops(dt); tickDecHops(dt);
   for (let i = CLEARING.length - 1; i >= 0; i--) {
     const C = CLEARING[i]; C.t += dt;
     if (C.t < 0) continue;                             // (waiting its turn)
@@ -11517,7 +11581,7 @@ window.__farm = {
   // tests (Rusty's visits in the game): the nights to come he visits (from a time), tonight's on the farm, the film's record
   foxGame: { nights: (from, n = 30) => { const out = []; for (let d = 0; d < n; d++) { const k = nightKey(from + d * 86400e3 + 12 * 3600e3); if (foxNight(k) && !out.some(o => o.key === k)) out.push({ key: k, t: foxAt(k) }); } return out; },
     live: () => FOXLIVE, rec: () => foxRec(), liveTick: now => foxLiveTick(now, true) },
-  deco: { clock: () => { const it = DEC.items.clock_tower, C = it && it.group.userData.clock; return C ? { hour: DAY.hour, hr: +C.faces[0].hr.rotation.z.toFixed(4), mn: +C.faces[0].mn.rotation.z.toFixed(4), bell: +(C.bell ? C.bell.rotation.x : 0).toFixed(4), ring: C.ring } : null; }, ring: () => { const it = DEC.items.clock_tower, C = it && it.group.userData.clock; if (C) C.ring = 4.5; return !!C; }, balloon: () => { const it = DEC.items.hot_air_balloon, B = it && it.group.userData.balloon; return B ? { y: +B.up.position.y.toFixed(4), flag: +B.fl.rotation.y.toFixed(3), flame: !!(decorLife && decorLife.balloon && decorLife.balloon.flame.visible) } : null; }, swing: () => { const it = DEC.items.tree_house, w = it && it.group.userData.swing; return w ? +w.rotation.x.toFixed(4) : null; }, shop: () => shopSheet(), buy: id => buyDecor(id), start: id => startDecor(id), to: (x, z) => decMoveTo(x, z), place: () => putDecor(), cancel: () => endDecor(false), card: id => decorCard(id),
+  deco: { clock: () => { const it = DEC.items.clock_tower, C = it && it.group.userData.clock; return C ? { hour: DAY.hour, hr: +C.faces[0].hr.rotation.z.toFixed(4), mn: +C.faces[0].mn.rotation.z.toFixed(4), bell: +(C.bell ? C.bell.rotation.x : 0).toFixed(4), ring: C.ring } : null; }, ring: () => { const it = DEC.items.clock_tower, C = it && it.group.userData.clock; if (C) C.ring = 4.5; return !!C; }, balloon: () => { const it = DEC.items.hot_air_balloon, B = it && it.group.userData.balloon; return B ? { y: +B.up.position.y.toFixed(4), flag: +B.fl.rotation.y.toFixed(3), flame: !!(decorLife && decorLife.balloon && decorLife.balloon.flame.visible) } : null; }, swing: () => { const it = DEC.items.tree_house, w = it && it.group.userData.swing; return w ? +w.rotation.x.toFixed(4) : null; }, shop: () => shopSheet(), buy: id => buyDecor(id), start: id => startDecor(id), to: (x, z) => decMoveTo(x, z), place: () => putDecor(), cancel: () => endDecor(false), card: id => decorCard(id), said: () => [(document.getElementById('hint') || {}).textContent || '', ...HINT_NEXT.map(x => typeof x === 'string' ? x : x.t)], inWay: (i, tier = 4) => { const q = gamePlots()[i], gc = q && game.coop(q.gc.id); return gc ? decorsInWay(gc, tier) : null; },
     spot: (id, x, z, deg) => { const S = decorSpot(id, x, z, deg ?? (id === 'kennel' ? KENNEL_DEG : 45)); return { ok: S.ok, why: S.why, clear: S.clear.map(o => o.id) }; }, free: (id, x, z) => decorFreeNear(id, x, z, 40, true, id === 'kennel' ? [KENNEL_DEG] : [45], true), way: (id, x, z) => decorWayOk(id, x, z),
     state: () => ({ on: DMOVE.id, at: DMOVE.at, ok: !!(DMOVE.spot && DMOVE.spot.ok), why: DMOVE.spot && DMOVE.spot.why, clear: DMOVE.spot ? DMOVE.spot.clear.map(o => o.id) : [], text: document.querySelector('.gmove-t') && document.querySelector('.gmove-t').textContent }),
     items: () => Object.entries(DEC.items).filter(([id]) => id !== 'wheat' && id !== 'wheat2' && id !== 'garden').map(([id, it]) => ({ id, at: it.d.pos, shown: !!it.group.parent, prop: V.props.includes(it.prop), tap: decorList.includes(it.d) })), life: () => decorLife && decorLife.state(), fountainT: () => FOUNTAIN_T.value, fountainWater: () => { const it = DEC.items.fountain; const n = []; if (it) it.group.traverse(o => { if (o.isMesh && /^fountain_/.test(o.material.name)) n.push(o.material.name); }); return n; }, duckHouse: () => !!(duckFlock && duckFlock.house),
