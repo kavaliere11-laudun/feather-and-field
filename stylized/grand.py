@@ -8,8 +8,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *
 from coop import plank
 from coops import C, finish
-from village3d import stone_row, polyline, flat_leaf
-from mathutils import Vector, Quaternion
+from village3d import stone_row, polyline, flat_leaf, bale, straw_ms
+from mathutils import Vector, Quaternion, Matrix
 
 
 def ring(name, r0, r1, z, h, m, verts=48):
@@ -445,4 +445,114 @@ def dovecote_dec(seed=101, name='dovecote'):
     return finish(objs, name)
 
 
-GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec, 'dovecote': dovecote_dec}
+# ------------------------------------------------------------------ level 44: the Red Tractor
+def tyre(objs, c, r, w, axis_y, rubber, rim, hub, lugs=18, lug=0.05, name='rt'):
+    """A wheel side on to y: a black tyre with chevron lugs round it, a cream rim, a red hub."""
+    x, y, z = c
+    objs.append(cyl(name + 'tyre', r - lug * 0.5, w, (x, y, z), (math.pi / 2, 0, 0), m=rubber, verts=28, bevel=0.02))
+    for k in range(lugs):                                         # (the tread: a chevron of two bars at each step)
+        a = 2 * math.pi * k / lugs
+        for sd in (-1, 1):
+            objs.append(box(name + 'lug', (lug * 1.3, w * 0.48, lug), (x + math.cos(a) * (r - lug * 0.45), y + sd * w * 0.25, z + math.sin(a) * (r - lug * 0.45)), (0, -a + math.pi / 2, sd * 0.45), m=rubber, bevel=0.006, segs=1))
+    for sd in (-1, 1):
+        objs.append(cyl(name + 'rim', r * 0.6, 0.02, (x, y + sd * (w / 2 - 0.004), z), (math.pi / 2, 0, 0), m=rim, verts=24, bevel=0.006))
+        objs.append(cyl(name + 'hub', r * 0.2, 0.05, (x, y + sd * (w / 2 + 0.01), z), (math.pi / 2, 0, 0), m=hub, verts=14, bevel=0.008))
+        for k in range(6):                                        # (the wheel nuts)
+            a = 2 * math.pi * k / 6
+            objs.append(cyl(name + 'nut', r * 0.03, 0.03, (x + math.cos(a) * r * 0.13, y + sd * (w / 2 + 0.04), z + math.sin(a) * r * 0.13), (math.pi / 2, 0, 0), m=hub, verts=6, bevel=0.0))
+
+
+def tractor_dec(seed=111, name='tractor'):
+    """A little vintage red tractor, no maker's name on it: big rear wheels with chevron treads and cream rims, small
+    front wheels, a rounded red bonnet with a silver grille and two headlamps, a tall exhaust with a flap on its top, a
+    steering wheel and a sprung pan seat, red mudguards over the big wheels; hitched behind, a wooden trailer with red
+    sideboards loaded with straw bales and pumpkins. Parked on a patch of trodden earth with straw about, a bale and a
+    pitchfork, a milk churn. Turned a little, so its front is seen. The exhaust's top at EXHAUST (main.js: its puffs)."""
+    random.seed(seed); objs = []
+    red = C('rtred', '#c8322b', rough=0.35, var=0.03); red2 = C('rtred2', '#b02a24', rough=0.4, var=0.03)
+    cream = C('rtcream', '#f1e6cc', rough=0.45); grey = C('rtgrey', '#5d6166', rough=0.55, var=0.04); dark = C('rtdark', '#3a3d40', rough=0.6)
+    rubber = C('rtrubber', '#2a2a2a', rough=0.9, var=0.03); silver = C('rtsilver', '#d4d8da', rough=0.25, metal=0.9)
+    black = C('rtblack', '#1f1f1f', rough=0.5); seatM = C('rtseat', '#2c2c2c', rough=0.6)
+    wood = [C('rtwood%d' % i, h, rough=0.8, var=0.1, grain=0.3) for i, h in enumerate(('#9a6b3f', '#8a5d36', '#a8784a'))]
+    earth = C('rtearth', '#a08867', rough=0.95, var=0.06); earth2 = C('rtearth2', '#8f7a5c', rough=0.95, var=0.06)
+    ms = straw_ms(); twine = C('vhtwinec', '#b8382e', rough=0.7)
+    pump = C('rtpump', '#e0802e', rough=0.55); stalk = C('rtstalk', '#6b5a2e', rough=0.8)
+    T = []                                                       # (the tractor and its trailer: turned together after)
+    # ---- the tractor: its rear axle at the origin, its front towards +x
+    tyre(T, (0, 0.6, 0.55), 0.55, 0.26, True, rubber, cream, red, lugs=20, lug=0.06)
+    tyre(T, (0, -0.6, 0.55), 0.55, 0.26, True, rubber, cream, red, lugs=20, lug=0.06)
+    for y in (0.42, -0.42): tyre(T, (1.38, y, 0.3), 0.3, 0.14, True, rubber, cream, red, lugs=0, lug=0.03)
+    for y in (0.42, -0.42):                                       # (the front tyres' ribs)
+        for k in range(3): T.append(ring('rtrib', 0.29, 0.305, 0, 0.012, rubber, verts=24)); T[-1].location = (1.38, y + (k - 1) * 0.04, 0.3); T[-1].rotation_euler = (math.pi / 2, 0, 0)
+    T.append(cyl('rtaxle', 0.05, 1.0, (0, 0, 0.55), (math.pi / 2, 0, 0), m=grey, verts=12, bevel=0.0))
+    T.append(box('rtfaxle', (0.1, 0.9, 0.1), (1.38, 0, 0.32), m=grey, bevel=0.012, segs=1))
+    T.append(box('rtgearbox', (0.62, 0.5, 0.5), (0.18, 0, 0.62), m=grey, bevel=0.04, segs=2))
+    T.append(box('rtengine', (0.75, 0.42, 0.34), (0.88, 0, 0.55), m=dark, bevel=0.03, segs=2))
+    T.append(box('rtbonnet', (1.05, 0.5, 0.36), (0.98, 0, 0.88), m=red, bevel=0.12, segs=4))      # (rounded over the top)
+    T.append(box('rtbonnetside', (1.0, 0.52, 0.06), (0.98, 0, 0.73), m=red2, bevel=0.02, segs=1))
+    T.append(box('rtgrille', (0.06, 0.46, 0.44), (1.52, 0, 0.78), m=silver, bevel=0.03, segs=2))
+    for k in range(6): T.append(box('rtslat', (0.02, 0.38, 0.018), (1.555, 0, 0.62 + k * 0.06), m=dark, bevel=0.0))
+    T.append(box('rtweight', (0.14, 0.6, 0.14), (1.58, 0, 0.42), m=grey, bevel=0.02, segs=1))
+    for y in (0.27, -0.27):                                       # (the headlamps, either side of the bonnet's front)
+        T.append(cyl('rtlamp', 0.06, 0.09, (1.42, y, 0.98), (0, math.pi / 2, 0), m=red, verts=14, bevel=0.01))
+        T.append(cyl('rtlampglass', 0.045, 0.01, (1.47, y, 0.98), (0, math.pi / 2, 0), m=cream, verts=14, bevel=0.0))
+    T.append(cyl('rtcap', 0.04, 0.05, (1.25, 0, 1.08), m=silver, verts=10, bevel=0.006))      # (the radiator cap)
+    T.append(cyl('rtexhaust', 0.032, 0.62, (1.12, 0.17, 1.27), m=black, verts=10, bevel=0.0))
+    T.append(cyl('rtexflap', 0.042, 0.012, (1.12, 0.17, 1.585), (0.25, 0, 0), m=black, verts=10, bevel=0.0))
+    T.append(cyl('rtcolumn', 0.025, 0.55, (0.38, 0, 1.12), (0, math.radians(-38), 0), m=dark, verts=8, bevel=0.0))
+    T.append(cyl('rtdash', 0.12, 0.18, (0.48, 0, 1.0), (0, math.pi / 2, 0), m=red2, verts=14, bevel=0.01))
+    wheel = ring('rtwheel', 0.15, 0.18, 0, 0.025, black, verts=28); wheel.location = (0.2, 0, 1.36); wheel.rotation_euler = (0, math.radians(-52), 0); T.append(wheel)
+    for a in (0, 2.1, 4.2): T.append(plank('rtspoke', (0.2, 0, 1.36), (0.2 + math.cos(a) * 0.1 * math.cos(math.radians(52)), math.sin(a) * 0.15, 1.36 + math.cos(a) * 0.12), 0.02, 0.01, (1, 0, 1), black, jitter=0.0, bevel=0.0))
+    T.append(cyl('rtseatstem', 0.02, 0.4, (-0.35, 0, 0.95), (0, math.radians(30), 0), m=dark, verts=6, bevel=0.0))
+    T.append(cyl('rtseat', 0.2, 0.06, (-0.42, 0, 1.12), m=seatM, verts=18, r2=0.17, bevel=0.02))
+    T.append(box('rtseatback', (0.06, 0.32, 0.14), (-0.6, 0, 1.2), (0, math.radians(-15), 0), m=seatM, bevel=0.03, segs=2))
+    for sd in (-1, 1):                                            # the mudguards, curving over the big wheels
+        pts = [Vector((math.cos(a) * 0.66, sd * 0.6, 0.55 + math.sin(a) * 0.66)) for a in [math.radians(15 + k * 15) for k in range(11)]]
+        polyline(T, 'rtguard', pts, 0.34, 0.025, (0, 0, 1), red)
+        T.append(box('rtstep', (0.4, 0.14, 0.03), (0.42, sd * 0.42, 0.42), m=grey, bevel=0.006, segs=1))
+    for sd in (-1, 1): T.append(plank('rtlink', (-0.2, sd * 0.22, 0.5), (-0.72, sd * 0.32, 0.36), 0.05, 0.03, (0, 0, 1), grey, jitter=0.0, bevel=0.0))
+    T.append(box('rtdrawbar', (0.6, 0.08, 0.05), (-0.78, 0, 0.42), m=grey, bevel=0.01, segs=1))
+    # ---- the trailer, hitched behind: a bed on two wheels, red sideboards, straw bales and pumpkins
+    TX = -1.85; L, W, BZ = 1.35, 0.95, 0.56
+    T.append(box('rttbar', (0.6, 0.06, 0.06), (-1.0, 0, 0.44), (0, math.radians(-6), 0), m=grey, bevel=0.01, segs=1))
+    T.append(box('rttbed', (L, W, 0.06), (TX, 0, BZ), m=wood[0], bevel=0.01, segs=1))
+    for k in range(7): T.append(box('rttplank', (0.18, W - 0.02, 0.012), (TX - L / 2 + 0.1 + k * 0.19, 0, BZ + 0.035), m=random.choice(wood), bevel=0.003, segs=1))
+    for sd in (-1, 1):
+        for k in range(2): T.append(box('rttside', (L, 0.04, 0.12), (TX, sd * (W / 2 - 0.02), BZ + 0.1 + k * 0.13), m=red if k else red2, bevel=0.008, segs=1))
+        for k in range(4): T.append(box('rttpost', (0.05, 0.05, 0.3), (TX - L / 2 + 0.06 + k * (L - 0.12) / 3, sd * (W / 2 - 0.02), BZ + 0.15), m=wood[1], bevel=0.006, segs=1))
+        tyre(T, (TX, sd * (W / 2 + 0.14), 0.32), 0.32, 0.16, True, rubber, cream, red, lugs=12, lug=0.035, name='rtt')
+    for k in range(2): T.append(box('rttend', (0.04, W, 0.12), (TX - L / 2 + 0.02, 0, BZ + 0.1 + k * 0.13), m=red if k else red2, bevel=0.008, segs=1))
+    T.append(cyl('rttaxle', 0.035, W + 0.2, (TX, 0, 0.32), (math.pi / 2, 0, 0), m=grey, verts=8, bevel=0.0))
+    for (bx, by, bz, yaw) in ((TX - 0.33, 0.21, BZ + 0.2, 0.0), (TX - 0.33, -0.21, BZ + 0.2, 0.03), (TX + 0.12, 0.21, BZ + 0.2, -0.04), (TX - 0.1, 0.0, BZ + 0.48, 0.08)):
+        bale(T, (bx, by, bz), (0.42, 0.4, 0.28), yaw + math.pi / 2, ms, twine)
+    for (x, y, r) in ((TX + 0.45, -0.2, 0.13), (TX + 0.48, 0.15, 0.11), (TX + 0.2, -0.22, 0.1)):      # (pumpkins at its front end)
+        z = BZ + 0.05 + r * 0.8
+        for k in range(6):
+            a = k / 6 * math.tau
+            T.append(sphere('rtpump', r * 0.62, (x + math.cos(a) * r * 0.38, y + math.sin(a) * r * 0.38, z), (1, 1, 0.82), m=pump, seg=8, rings=6))
+        T.append(cyl('rtstalk', 0.014, 0.06, (x, y, z + r * 0.75), m=stalk, verts=6, r2=0.009, bevel=0.0))
+    # turned so its front is towards the player and a little to the right; set back so it sits in the middle
+    TURN, SHIFT = math.radians(-28), Vector((0.45, 0.12, 0))
+    Rm = Matrix.Rotation(TURN, 4, 'Z')
+    for o in T: o.matrix_basis = Matrix.Translation(SHIFT) @ Rm @ o.matrix_basis
+    objs += T
+    # ---- the ground: trodden earth, straw about, a bale and a pitchfork, a milk churn
+    for k in range(9):
+        a = 2 * math.pi * k / 9; r = random.uniform(1.0, 1.3)
+        objs.append(cyl('rtpatch', random.uniform(0.6, 0.85), 0.012, (math.cos(a) * r * 0.9, math.sin(a) * r * 0.55, 0.006), m=random.choice((earth, earth2)), verts=14, bevel=0.0))
+    objs.append(cyl('rtpatch', 1.1, 0.014, (0, 0, 0.007), (0, 0, 0), m=earth, verts=24, bevel=0.0)); objs[-1].scale = (1.85, 1.05, 1)
+    for k in range(60):
+        x, y = random.uniform(-1.9, 1.9), random.uniform(-1.0, 1.0)
+        if (x / 2.0) ** 2 + (y / 1.1) ** 2 > 1: continue
+        objs.append(plank('rtstraw', (x, y, 0.016), (x + random.uniform(-0.09, 0.09), y + random.uniform(-0.09, 0.09), 0.016), 0.01, 0.003, (0, 0, 1), random.choice(ms[1:]), jitter=0.0, bevel=0.0))
+    bale(objs, (-1.05, -0.78, 0.14), (0.62, 0.34, 0.28), 0.35, ms, twine)
+    objs.append(plank('rtforkshaft', (-0.72, -0.62, 0.05), (-1.05, -0.62, 1.15), 0.035, 0.035, (0, -1, 0), wood[2], jitter=0.0, bevel=0.0))
+    for k in range(3): objs.append(plank('rtfork', (-0.71 + 0.01 * k, -0.62 + (k - 1) * 0.035, 0.05), (-0.62 + 0.01 * k, -0.62 + (k - 1) * 0.035, -0.12), 0.01, 0.01, (0, -1, 0), silver, jitter=0.0, bevel=0.0))
+    churn = Vector((0.78, -1.02, 0))
+    objs.append(cyl('rtchurn', 0.14, 0.42, tuple(churn + Vector((0, 0, 0.21))), m=silver, verts=16, r2=0.12, bevel=0.01))
+    objs.append(cyl('rtchurnneck', 0.07, 0.12, tuple(churn + Vector((0, 0, 0.47))), m=silver, verts=12, r2=0.09, bevel=0.006))
+    objs.append(cyl('rtchurnlid', 0.08, 0.04, tuple(churn + Vector((0, 0, 0.55))), m=red, verts=12, bevel=0.008))
+    return finish(objs, name)
+
+
+GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec, 'dovecote': dovecote_dec, 'tractor': tractor_dec}
