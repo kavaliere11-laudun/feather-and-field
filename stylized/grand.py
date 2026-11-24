@@ -8,7 +8,8 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from common import *
 from coop import plank
 from coops import C, finish
-from village3d import stone_row
+from village3d import stone_row, polyline, flat_leaf
+from mathutils import Vector, Quaternion
 
 
 def ring(name, r0, r1, z, h, m, verts=48):
@@ -143,4 +144,170 @@ def fountain_dec(seed=81, name='fountain', part=None):
     return finish(keep, name)
 
 
-GRAND = {'fountain': fountain_dec}
+# ------------------------------------------------------------------ level 42: the Rose Arbour
+def rose_arbour_dec(seed=91, name='rose_arbour'):
+    """A white timber arbour smothered in climbing roses (deep pink, blush and crimson): four square posts, an arched top
+    of curved ribs with battens over it, trellis on its sides and back, a white bench inside with two soft cushions, a
+    lantern hanging from the top of the arch (lit at night); on a round terrace of bricks laid in basket weave with an edge
+    of bricks, two standard roses in terracotta pots either side of the way in, two clipped box balls at the back,
+    a few fallen petals."""
+    random.seed(seed); objs = []
+    white = C('rawhite', '#f3efe6', rough=0.6, var=0.02); white2 = C('rawhite2', '#e9e4d8', rough=0.6, var=0.02)
+    bricks = [C('rabrick%d' % i, h, rough=0.85, var=0.07) for i, h in enumerate(('#b65a3e', '#a94f37', '#c2694a'))]
+    mortar = C('ramortar', '#b8a487', rough=0.95, var=0.04)
+    leaf = [C('raleaf%d' % i, h, rough=0.8, var=0.07, hue_var=0.015) for i, h in enumerate(('#2f6a2c', '#3d7a32', '#4f8c3a', '#64a042'))]
+    roses = [C('rarose', '#e0507a', rough=0.55), C('rarose2', '#f4b8c6', rough=0.55), C('rarose3', '#c22a44', rough=0.55), C('rarose4', '#f7dfe2', rough=0.55)]
+    heart = [C('raheart', '#b8325a', rough=0.6), C('raheart2', '#e48aa0', rough=0.6), C('raheart3', '#8e1a2e', rough=0.6), C('raheart4', '#eab3bd', rough=0.6)]
+    hedge = [C('rahedge', '#3f7a35', rough=0.85, var=0.08), C('rahedge2', '#4c8b3d', rough=0.85, var=0.08)]
+    terra = C('raterra', '#b8653d', rough=0.8, var=0.05); terra2 = C('raterra2', '#c47248', rough=0.8); soil = C('rasoil', '#5a3f2c', rough=0.95)
+    stem = C('rastem', '#5a4a30', rough=0.85); iron = C('rairon', '#2b2f2f', rough=0.45); lamp = C('lamp', '#ffe2a0', rough=0.3)
+    sage = C('racush', '#9cb89a', rough=0.9, var=0.03); blush = C('racush2', '#f0d4d0', rough=0.9, var=0.03)
+    RT = 1.3                                                     # (the terrace's radius)
+    # the terrace: mortar under, bricks in basket weave (pairs, each square turned from the next), an edge of bricks
+    objs.append(cyl('ramortar', RT, 0.02, (0, 0, 0.01), m=mortar, verts=48, bevel=0.0))
+    for i in range(-7, 7):
+        for j in range(-7, 7):
+            cx, cy = (i + 0.5) * 0.2, (j + 0.5) * 0.2
+            for k in (-1, 1):
+                at, size = ((cx, cy + k * 0.05), (0.19, 0.09)) if (i + j) % 2 else ((cx + k * 0.05, cy), (0.09, 0.19))
+                if math.hypot(*at) > RT - 0.135: continue           # (each brick inside the edge)
+                objs.append(box('rabrick', (size[0], size[1], 0.03), (at[0], at[1], 0.03), m=random.choice(bricks), bevel=0.0))
+    n = 44
+    for k in range(n):
+        a = 2 * math.pi * (k + 0.5) / n
+        objs.append(box('raedge', (2 * math.pi * (RT - 0.06) / n - 0.012, 0.1, 0.05), (math.cos(a) * (RT - 0.06), math.sin(a) * (RT - 0.06), 0.03), (0, 0, a + math.pi / 2), m=random.choice(bricks), bevel=0.004, segs=1))
+    # two clipped box balls at the back, either side of the arbour
+    for sx in (-1, 1):
+        a = math.radians(90 - sx * 58); R = RT - 0.3
+        objs.append(sphere('raboxball', 0.22, (math.cos(a) * R, math.sin(a) * R, 0.24), (1, 1, 0.95), m=hedge[0 if sx < 0 else 1], ico=2, disp=0.18, seed=int(20 + sx * 3)))
+    # the arbour: posts, arched ribs front and back, battens over, trellis sides and back
+    AY, X2, Y2, PH, RISE = 0.3, 0.75, 0.3, 1.8, 0.5
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            x, y = sx * X2, AY + sy * Y2
+            objs.append(box('rapost', (0.085, 0.085, PH), (x, y, PH / 2 + 0.04), m=white, bevel=0.01, segs=1))
+            objs.append(box('rafoot', (0.13, 0.13, 0.08), (x, y, 0.08), m=white2, bevel=0.01, segs=1))
+            objs.append(box('racap', (0.11, 0.11, 0.04), (x, y, PH + 0.04), m=white2, bevel=0.008, segs=1))
+    arch = lambda t, r=1.0: Vector((X2 * r * math.cos(t), 0, PH + 0.04 + RISE * r * math.sin(t)))
+    N = 14
+    for y in (AY - Y2, AY + Y2):
+        for rr, w in ((1.0, 0.09), (0.8, 0.05)):                  # (a rib, and a slimmer one under it)
+            pts = [arch(math.pi * k / N, rr) + Vector((0, y, 0)) for k in range(N + 1)]
+            polyline(objs, 'rarib', pts, w, 0.05, (0, -1, 0), white)
+        for k in range(1, N, 2):                                  # (little spokes between them)
+            t = math.pi * k / N
+            objs.append(plank('raspoke', tuple(arch(t, 0.8) + Vector((0, y, 0))), tuple(arch(t, 1.0) + Vector((0, y, 0))), 0.03, 0.04, (0, -1, 0), white2, jitter=0.0, bevel=0.0))
+    for k in range(1, N):
+        t = math.pi * k / N; p = arch(t, 1.0)
+        objs.append(plank('rabatten', (p.x, AY - Y2 - 0.07, p.z + 0.03), (p.x, AY + Y2 + 0.07, p.z + 0.03), 0.045, 0.03, (math.cos(t) * RISE, 0, math.sin(t) * X2), white2, jitter=0.0, bevel=0.0))
+    def lattice(face, u0, u1, z0, z1, fixed, step=0.17):
+        """Diagonal trellis in a frame: along y (face 'x', at x = fixed) or along x (face 'y', at y = fixed)."""
+        P = (lambda u, z: (fixed, u, z)) if face == 'x' else (lambda u, z: (u, fixed, z))
+        nm = (1, 0, 0) if face == 'x' else (0, -1, 0)
+        for z in (z0, z1): objs.append(plank('raframe', P(u0, z), P(u1, z), 0.05, 0.035, nm, white, jitter=0.0, bevel=0.0))
+        for sgn in (1, -1):
+            c = -(u1 - u0) - (z1 - z0)
+            while c < (u1 - u0) + (z1 - z0):
+                # the line z - z0 = sgn * (u - u0) + c, clipped to the frame
+                seg = []
+                for u in (u0, u1):
+                    z = z0 + sgn * (u - u0) + c
+                    if z0 <= z <= z1: seg.append((u, z))
+                for z in (z0, z1):
+                    u = u0 + (z - z0 - c) * sgn
+                    if u0 < u < u1: seg.append((u, z))
+                seg = sorted(set(seg))
+                if len(seg) >= 2 and math.hypot(seg[-1][0] - seg[0][0], seg[-1][1] - seg[0][1]) > 0.05:
+                    a, b = seg[0], seg[-1]; off = 0.012 * sgn
+                    pa, pb = list(P(*a)), list(P(*b))
+                    if face == 'x': pa[0] += off; pb[0] += off
+                    else: pa[1] += off; pb[1] += off
+                    objs.append(plank('ralath', tuple(pa), tuple(pb), 0.028, 0.012, nm, white2, jitter=0.0, bevel=0.0))
+                c += step
+    for sx in (-1, 1): lattice('x', AY - Y2 + 0.04, AY + Y2 - 0.04, 0.2, 1.62, sx * X2)
+    lattice('y', -X2 + 0.04, X2 - 0.04, 0.62, 1.62, AY + Y2)
+    # the bench inside, along the back, and its cushions
+    for sx in (-1, 1):
+        for y in (AY + 0.0, AY + Y2 - 0.08):
+            objs.append(box('raleg', (0.05, 0.05, 0.4), (sx * (X2 - 0.12), y, 0.24), m=white, bevel=0.006, segs=1))
+    for k in range(4):
+        objs.append(box('raseat', (2 * X2 - 0.14, 0.075, 0.03), (0, AY - 0.02 + k * 0.085, 0.45), m=white, bevel=0.006, segs=1))
+    for z in (0.58, 0.7):
+        objs.append(box('raback', (2 * X2 - 0.14, 0.03, 0.06), (0, AY + Y2 - 0.06, z), m=white, bevel=0.006, segs=1))
+    objs.append(box('racushion', (0.5, 0.3, 0.06), (-0.3, AY + 0.1, 0.495), m=sage, bevel=0.03, segs=3))
+    objs.append(box('racushion', (0.5, 0.3, 0.06), (0.3, AY + 0.1, 0.495), m=sage, bevel=0.03, segs=3))
+    objs.append(box('rapillow', (0.26, 0.08, 0.24), (0.42, AY + 0.2, 0.64), (math.radians(-15), 0, math.radians(-8)), m=blush, bevel=0.035, segs=3))
+    # the lantern hanging from the top of the arch
+    top = PH + 0.04 + RISE
+    objs.append(cyl('rachain', 0.006, 0.28, (0, AY, top - 0.14), m=iron, verts=5, bevel=0.0))
+    objs.append(cyl('ralantcap', 0.06, 0.04, (0, AY, top - 0.3), m=iron, verts=8, r2=0.02, bevel=0.0))
+    objs.append(cyl('ralamp', 0.04, 0.12, (0, AY, top - 0.38), m=lamp, verts=8, bevel=0.0))
+    for k in range(4):
+        a = math.pi / 4 + k * math.pi / 2
+        objs.append(cyl('ralantbar', 0.006, 0.13, (math.cos(a) * 0.045, AY + math.sin(a) * 0.045, top - 0.38), m=iron, verts=4, bevel=0.0))
+    objs.append(cyl('ralantbase', 0.055, 0.025, (0, AY, top - 0.455), m=iron, verts=8, bevel=0.0))
+    # the roses: leafy clumps climbing every post and over the arch, more at the front and on the left, roses dotted on them;
+    # little leaves all over; swags hanging from the front arch
+    clumps = []
+    def clump(p, r, out):
+        clumps.append((Vector(p), r, Vector(out).normalized()))
+        objs.append(sphere('raclump', r * 0.85, tuple(p), (1, 1, 0.9), (0, 0, random.uniform(0, 3)), m=random.choice(leaf[:2]), ico=1, disp=0.3, disp_scale=5.0, seed=len(clumps) * 7 + seed))      # (a dark core: the leaves cover it)
+    for sx in (-1, 1):
+        for sy in (-1, 1):
+            x, y = sx * X2, AY + sy * Y2; z = 0.12
+            while z < PH:
+                a = random.uniform(0, 2 * math.pi)
+                out = Vector((sx * 0.8 + math.cos(a) * 0.4, sy * 0.6 + math.sin(a) * 0.4, 0.1))
+                clump((x + out.x * 0.06, y + out.y * 0.06, z), random.uniform(0.07, 0.095) * (0.8 if z < 0.6 else 1.0), out)
+                z += random.uniform(0.11, 0.16) * (1.4 if z < 0.7 and sy > 0 else 1.0)
+    for k in range(34):                                           # (over the arch: more at the front, more on the left)
+        t = math.pi * (random.uniform(0, 1) ** (1.25 if random.random() < 0.5 else 1.0))
+        if random.random() < 0.35: t = math.pi - t * 0.6
+        p = arch(t, 1.04); y = AY + random.uniform(-Y2 - 0.06, Y2 + 0.06) * (1 if random.random() < 0.6 else 0.4) - (0.12 if random.random() < 0.5 else 0)
+        out = Vector((math.cos(t) * 0.8, -0.2, math.sin(t) + 0.2))
+        clump((p.x, y, p.z + 0.03), random.uniform(0.08, 0.12), out)
+    for sx in (-1, 1):                                            # (swags at the front, hanging from the shoulders)
+        t0 = math.pi * (0.15 if sx > 0 else 0.85); p = arch(t0, 0.95)
+        for j in range(4):
+            clump((p.x - sx * 0.04 * j, AY - Y2 - 0.07, p.z - 0.08 - j * 0.11), 0.07 - j * 0.008, (sx * 0.3, -1, 0))
+    for k in range(1300):                                         # leaves all over the clumps, lighter where the sun reaches
+        c, r, out = random.choice(clumps)
+        d = (out * 0.7 + Vector((random.uniform(-1, 1), random.uniform(-1, 1), random.uniform(-0.7, 1)))).normalized()
+        p = c + d * r * random.uniform(0.78, 0.95)
+        q = d.to_track_quat('Z', 'Y') @ Quaternion((0, 0, 1), random.uniform(0, 2 * math.pi)) @ Quaternion((1, 0, 0), random.uniform(0.25, 0.6))
+        objs.append(flat_leaf('raleafy', tuple(p), q, random.uniform(0.06, 0.08), random.uniform(0.022, 0.03), leaf[min(3, 1 + (k % 2) + (1 if d.z > 0.5 else 0))], both=False, fold=0.005))
+    for k in range(130):                                          # the roses: a cup with its heart
+        c, r, out = random.choice(clumps)
+        d = (out * 1.2 + Vector((random.uniform(-0.8, 0.8), random.uniform(-0.8, 0.8), random.uniform(-0.4, 0.9)))).normalized()
+        p = c + d * r * 0.98; i = random.choice((0, 0, 0, 1, 1, 2, 3)); s = random.uniform(0.03, 0.04)
+        e = d.to_track_quat('Z', 'Y').to_euler()
+        objs.append(sphere('rarose', s, tuple(p), (1, 1, 0.62), e, m=roses[i], seg=8, rings=5))
+        objs.append(sphere('raheart', s * 0.5, tuple(p + d * s * 0.42), (1, 1, 0.7), e, m=heart[i], ico=0))
+    # two standard roses in pots either side of the way in
+    for sx in (-1, 1):
+        x, y = sx * 0.88, -0.62
+        objs.append(cyl('rapot', 0.15, 0.3, (x, y, 0.17), m=terra, verts=16, r2=0.115, bevel=0.004))
+        objs.append(cyl('rapotrim', 0.165, 0.05, (x, y, 0.31), m=terra2, verts=16, bevel=0.004))
+        objs.append(cyl('rasoil', 0.14, 0.01, (x, y, 0.335), m=soil, verts=14, bevel=0.0))
+        objs.append(cyl('rastem', 0.016, 0.62, (x, y, 0.64), m=stem, verts=6, bevel=0.0))
+        hc = Vector((x, y, 1.02))
+        objs.append(sphere('rahead', 0.19, tuple(hc), (1, 1, 0.92), m=leaf[1], ico=2, disp=0.25, disp_scale=4.0, seed=int(50 + sx * 3)))
+        for k in range(160):
+            a = random.uniform(0, 2 * math.pi); el = math.asin(random.uniform(-0.5, 1.0))
+            d = Vector((math.cos(a) * math.cos(el), math.sin(a) * math.cos(el), math.sin(el)))
+            q = d.to_track_quat('Z', 'Y') @ Quaternion((0, 0, 1), random.uniform(0, 2 * math.pi)) @ Quaternion((1, 0, 0), random.uniform(0.25, 0.55))
+            objs.append(flat_leaf('raleafy', tuple(hc + Vector((d.x, d.y, d.z * 0.92)) * 0.19), q, random.uniform(0.06, 0.075), random.uniform(0.022, 0.028), leaf[min(3, 1 + (k % 2) + (1 if d.z > 0.5 else 0))], both=False, fold=0.005))
+        for k in range(16):
+            a = random.uniform(0, 2 * math.pi); el = math.asin(random.uniform(-0.3, 0.95))
+            d = Vector((math.cos(a) * math.cos(el), math.sin(a) * math.cos(el), math.sin(el)))
+            i = 0 if sx < 0 else 2; s = random.uniform(0.028, 0.034); e = d.to_track_quat('Z', 'Y').to_euler()
+            objs.append(sphere('rarose', s, tuple(hc + d * 0.215), (1, 1, 0.62), e, m=roses[i if k % 4 else 1], seg=8, rings=5))
+            objs.append(sphere('raheart', s * 0.5, tuple(hc + d * (0.215 + s * 0.42)), (1, 1, 0.7), e, m=heart[i if k % 4 else 1], ico=0))
+    # a few fallen petals on the bricks
+    for k in range(18):
+        x, y = random.uniform(-0.6, 0.6), random.uniform(-0.5, 0.25)
+        objs.append(cyl('rapetal', 0.014, 0.004, (x, y, 0.048), (0, 0, random.uniform(0, 3)), m=random.choice(roses[:2]), verts=6, bevel=0.0))
+    return finish(objs, name)
+
+
+GRAND = {'fountain': fountain_dec, 'rose_arbour': rose_arbour_dec}
