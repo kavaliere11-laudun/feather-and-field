@@ -19,7 +19,7 @@ permissions:
   contents: read
 jobs:
   simulator:
-    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[asc-status]')
+    if: github.event_name != 'push' || (!contains(github.event.head_commit.message, '[asc-status]') && !contains(github.event.head_commit.message, '[asc-listing]'))
     runs-on: macos-26
     timeout-minutes: 50
     permissions:
@@ -187,6 +187,29 @@ jobs:
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" -exportOptionsPlist "$RUNNER_TEMP/export.plist" \
             -exportPath "$RUNNER_TEMP/export" "${AUTH[@]}" | tail -n 30
           rm -f "$KEY"
+
+  # The App Store page (words in six languages and the iPhone screenshots) into App Store Connect: a push whose message has
+  # [asc-listing]. app/tools/asc-listing.mjs from app/store/; prints what it did and the states only, never the key; never
+  # submits anything.
+  asc-listing:
+    if: github.event_name == 'push' && contains(github.event.head_commit.message, '[asc-listing]')
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            app/tools
+            app/store
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Put the App Store page into App Store Connect
+        run: node app/tools/asc-listing.mjs
 
   # What App Store Connect says about the builds (processing, TestFlight state, tester groups): a push whose message has
   # [asc-status]. Prints states only (app/tools/asc-status.mjs), never the key.
