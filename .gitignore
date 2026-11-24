@@ -7,3 +7,6 @@
 web3d/node_modules/
 web3d/dist/
 web3d/_docs/
+
+# Python bytecode (Blender runs of stylized/: never in the repository)
+__pycache__/
