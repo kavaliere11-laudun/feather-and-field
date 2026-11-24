@@ -16,3 +16,4 @@ fi
 rm -rf "$M/img" "$M/icons"        # (the first game's files, at the top until the switch: in classic/ since)
 node site.mjs "$M"
 sed -e 's|href="fonts/fonts.css"|href="3d/fonts/fonts.css"|' -e 's|class="back" href="../"|class="back" href="./"|' dist/privacy.html > "$M/privacy.html"      # (the privacy page at the usual address too: the stores link to it)
+sed -e 's|href="fonts/fonts.css"|href="3d/fonts/fonts.css"|' -e 's|class="back" href="../"|class="back" href="./"|' dist/support.html > "$M/support.html"      # (the help page too: the App Store's support address)

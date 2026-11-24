@@ -11,14 +11,15 @@
    ]
   },
   {
-   "h": "Si vous vous connectez avec Google (facultatif)",
+   "h": "Si vous vous connectez (facultatif)",
    "p": [
-    "Mon compte est facultatif. Si vous vous connectez avec Google, le jeu utilise le service Firebase de Google pour :",
-    "• vous connecter : Google transmet au jeu l’identifiant de votre compte, votre nom et votre adresse e-mail. Le jeu ne voit jamais votre mot de passe ;",
+    "Mon compte est facultatif. Vous pouvez vous connecter avec Google, ou aussi avec Apple dans l’app iPhone. Le jeu utilise alors le service Firebase de Google pour :",
+    "• vous connecter : Google ou Apple transmet au jeu l’identifiant de votre compte, votre nom et votre adresse e-mail (avec Apple, vous pouvez choisir de masquer votre adresse : Apple donne alors une adresse relais qui renvoie vers la vôtre). Le jeu ne voit jamais votre mot de passe ;",
     "• garder une copie de votre ferme en ligne, pour que vous ne la perdiez pas et puissiez y jouer sur un autre téléphone ou une autre tablette. Elle est conservée dans la base de données Firebase de Google {where}, liée à votre compte, et elle n’est accessible qu’à vous.",
     "Pourquoi : pour vous rendre le service que vous avez demandé, votre ferme gardée en sécurité et sur tous vos appareils.",
     "Combien de temps : jusqu’à ce que vous supprimiez votre compte. Dans les Réglages, Mon compte, « Supprimer mon compte » supprime aussitôt votre compte et votre ferme en ligne ; votre ferme reste sur votre téléphone.",
-    "Pour préparer la connexion Google, le jeu ne contacte Google que lorsque vous ouvrez les Réglages ou touchez « Connectez-vous » sur l’écran d’accueil, quand le jeu vous propose de vous connecter (une seule fois, quelques jours après le début d’une ferme), et, une fois la connexion faite, à chaque ouverture du jeu. Les serveurs de connexion de Google peuvent se trouver hors du Royaume-Uni et de l’Europe ; Google s’occupe de ces données pour nous selon les conditions de Firebase, avec les garanties prévues par la loi. En savoir plus : <a href=\"https://firebase.google.com/support/privacy\">Confidentialité et sécurité dans Firebase</a>."
+    "Pour préparer la connexion Google, le jeu ne contacte Google que lorsque vous ouvrez les Réglages ou touchez « Connectez-vous » sur l’écran d’accueil, quand le jeu vous propose de vous connecter (une seule fois, quelques jours après le début d’une ferme), et, une fois la connexion faite, à chaque ouverture du jeu. Les serveurs de connexion de Google peuvent se trouver hors du Royaume-Uni et de l’Europe ; Google s’occupe de ces données pour nous selon les conditions de Firebase, avec les garanties prévues par la loi. En savoir plus : <a href=\"https://firebase.google.com/support/privacy\">Confidentialité et sécurité dans Firebase</a>.",
+    "Dans l’app iPhone, la connexion Apple ou Google ne s’ouvre que lorsque vous touchez son bouton, et l’app contacte ensuite le service Firebase de Google comme ci-dessus. En savoir plus sur Apple : <a href=\"https://www.apple.com/legal/privacy/\">Politique de confidentialité d’Apple</a>."
    ]
   },
   {
@@ -32,13 +33,13 @@
    "h": "Ce que le jeu ne fait jamais",
    "p": [
     "Pas de publicité, pas de pistage, pas de statistiques, et vos données ne sont jamais vendues ni partagées. Pas de cookies de pistage ou de publicité : seul ce dont le jeu a besoin pour fonctionner est gardé sur votre appareil.",
-    "Il n’y a rien à acheter avec de l’argent réel pour l’instant. Si cela change, cette page expliquera d’abord comment cela fonctionne."
+    "Dans l’app iPhone, certaines choses peuvent s’acheter avec de l’argent réel. C’est Apple qui encaisse le paiement : le jeu apprend seulement d’Apple ce que vous avez acheté, pour vous le donner, et ne voit jamais votre carte ni vos informations de paiement. Sur le site, il n’y a rien à acheter."
    ]
   },
   {
    "h": "Les enfants",
    "p": [
-    "Feather & Field est fait pour les adultes et les jeunes adultes. Se connecter demande un compte Google, et Google fixe son propre âge minimum. Le jeu ne collecte sciemment aucune information auprès d’enfants de moins de 13 ans."
+    "Feather & Field est fait pour les adultes et les jeunes adultes. Se connecter demande un compte Google ou un compte Apple, et chacun fixe son propre âge minimum. Le jeu ne collecte sciemment aucune information auprès d’enfants de moins de 13 ans."
    ]
   },
   {

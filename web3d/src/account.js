@@ -30,9 +30,21 @@ const EMU = (location.hostname === 'localhost' || location.hostname === '127.0.0
 // Audrey trying it first (before it's on for everyone): ?account=1 on the game's address turns it on for that phone and
 // browser (kept), ?account=0 off again
 const BETA = (() => { try { const v = params.get('account'); if (v === '1') localStorage.setItem('ff3d.acctbeta', '1'); if (v === '0') localStorage.removeItem('ff3d.acctbeta'); return localStorage.getItem('ff3d.acctbeta') === '1'; } catch (e) { return false; } })();
-// inside the store app (app/make-www.mjs sets window.__ffApp): Google's sign-in page can't open inside an app, so the
-// account waits there for the app's own sign-in (Sign in with Apple and Google, native); the farm code still works
+// inside the store app (app/make-www.mjs sets window.__ffApp): Google's sign-in page can't open inside an app, so there
+// the app signs in itself (24 Nov 2026, Audrey: "I think we need it especially if people are making purchases otherwise
+// they might loose everything without an account"): Sign in with Apple (the phone's own sheet) and Google (its page in the
+// phone's secure sheet), app/ios/App/App/FFSignInPlugin.swift; each hands back the account's token, and cloud.js signs in
+// to Firebase with it. Without the app's sign-in (an older app), no account there; the farm code still works.
 const APP = typeof window !== 'undefined' && window.__ffApp === true;
+const NATIVE = (() => {
+  if (!APP) return null;
+  if (window.__fakeNative) return window.__fakeNative;                  // (the tests: { apple({ nonce }), google() })
+  const C = window.Capacitor;
+  if (!C || !C.nativePromise || !C.isNativePlatform || !C.isNativePlatform()) return null;
+  return { apple: o => C.nativePromise('FFSignIn', 'apple', o), google: () => C.nativePromise('FFSignIn', 'google', {}) };
+})();
+// a one-time word for Sign in with Apple: Apple is given it hashed (FFSignInPlugin), Firebase checks the token against it
+const nonce = () => { const a = new Uint8Array(32); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2, '0')).join(''); };
 const SYNC_KEY = FAKE ? 'ff3d.cloud.fake' : 'ff3d.cloud';      // { uid, n, s, fresh? }: the account, the save's number and the farm's seal then (the pretend account's kept apart)
 
 function readSync() {
@@ -74,11 +86,11 @@ function fakeCloud() {
   const subs = [], tell = () => subs.forEach(f => f(user));
   return {
     onUser(f) { subs.push(f); setTimeout(() => f(user), 0); },
-    async signIn() { if (window.__fakeSignIn === 'closed') throw Object.assign(new Error('closed'), { code: 'auth/popup-closed-by-user' }); user = { uid: window.__fakeUid || 'fake-farmer-1', name: 'Sam Field', email: 'sam@example.com' }; localStorage.setItem(UKEY, JSON.stringify(user)); tell(); return user; },
+    async signIn(cred) { if (window.__fakeSignIn === 'closed') throw Object.assign(new Error('closed'), { code: 'auth/popup-closed-by-user' }); if (window.__fakeSignIn === 'other') throw Object.assign(new Error('other'), { code: 'auth/account-exists-with-different-credential' }); user = { uid: window.__fakeUid || 'fake-farmer-1', name: cred && cred.kind === 'apple' ? (window.__fakeAppleName ?? 'Sam Field') : 'Sam Field', email: window.__fakeEmail || 'sam@example.com', by: cred && cred.kind === 'apple' ? 'apple' : 'google' }; if (window.__fakeCreds) window.__fakeCreds.push(cred || null); localStorage.setItem(UKEY, JSON.stringify(user)); tell(); return user; },
     async signOut() { user = null; localStorage.removeItem(UKEY); tell(); },
     get: () => io('get', { uid: user.uid }),
     put: (doc, base) => io('put', { uid: user.uid, doc, base }),
-    async drop() { await io('del', { uid: user.uid }); await this.signOut(); },
+    async drop(cred) { if (window.__fakeCreds) window.__fakeCreds.push(cred || null); await io('del', { uid: user.uid }); await this.signOut(); },
   };
 }
 // the Firebase one: cloud.js (built by build.sh from src/cloud.js), loaded once
@@ -86,7 +98,7 @@ let cloudP = null;
 function firebaseCloud(bust) {
   if (!cloudP) cloudP = new Promise((res, rej) => {
     const s = document.createElement('script'); s.src = 'cloud.js' + (bust || ''); s.async = true;
-    s.onload = () => (window.FFCloud ? res(window.FFCloud.make(FIREBASE, EMU)) : rej(new Error('cloud.js')));
+    s.onload = () => (window.FFCloud ? res(window.FFCloud.make(FIREBASE, EMU, { app: APP })) : rej(new Error('cloud.js')));
     s.onerror = () => { cloudP = null; rej(Object.assign(new Error('cloud.js'), { code: 'unavailable' })); };
     document.head.append(s);
   });
@@ -97,7 +109,8 @@ export class Account {
   // o: { bust, say(text), loaded() (the page opens the farm just put on the phone), ask(here, online) -> Promise<'here'|'online'> }
   constructor(game, o = {}) {
     this.g = game; this.o = o;
-    this.on = FAKE || (!!FIREBASE && (ACCOUNT_LIVE || BETA || !!EMU) && !APP);          // (no project yet: nothing of the account anywhere; in the app not yet: APP)
+    this.native = !!NATIVE;                                                            // (in the app: its own sign-in, Apple's and Google's)
+    this.on = FAKE || (!!FIREBASE && (ACCOUNT_LIVE || BETA || !!EMU) && (!APP || this.native));      // (no project yet: nothing of the account anywhere)
     this.cloud = null; this.user = null; this.status = 'out'; this.savedAt = 0; this.timer = 0;
     this.busy = false; this.again = false; this.asking = false; this.taking = false; this.subs = [];
     this.st = readSync();
@@ -132,15 +145,26 @@ export class Account {
   }
   watch(f) { this.subs.push(f); return () => { this.subs = this.subs.filter(x => x !== f); }; }
   set(status) { this.status = status; for (const f of this.subs) f(status); }
-  name() { return this.user ? this.user.name || this.user.email || '' : ''; }
-  // ---- signing in (from a tap: Google's window opens at once, so the online side must be there already: prepare())
-  async signIn() {
+  // the account's name, or its email (an Apple account's hidden email isn't shown: '')
+  name() { const u = this.user; return u ? u.name || (/@privaterelay\.appleid\.com$/i.test(u.email || '') ? '' : u.email) || '' : ''; }
+  by() { return this.user && this.user.by === 'apple' ? 'apple' : 'google'; }
+  // the app's sign-in: Apple's sheet or Google's page, then the token handed to cloud.js
+  async nativeCred(kind) {
+    if (kind === 'apple') { const raw = nonce(), r = await NATIVE.apple({ nonce: raw }); return { kind, idToken: r.idToken, rawNonce: raw, name: r.name || '' }; }
+    const r = await NATIVE.google(); return { kind: 'google', idToken: r.idToken };
+  }
+  // ---- signing in (from a tap: Google's window opens at once, so the online side must be there already: prepare());
+  // kind: 'google', or 'apple' (the app only)
+  async signIn(kind = 'google') {
     if (!this.cloud) { try { await this.prepare(); } catch (e) { if (this.o.say) this.o.say(this.g.t('acct_failed')); return false; } }
-    try { await this.cloud.signIn(); return true; }        // (signed in: onUser, then sync)
-    catch (e) {
+    try {
+      const u = this.native ? await this.cloud.signIn(await this.nativeCred(kind === 'apple' ? 'apple' : 'google')) : await this.cloud.signIn();
+      if (u && this.user && this.user.uid === u.uid && u.name !== this.user.name) { this.user = u; this.set(this.status); }      // (Apple's name, kept just after)
+      return true;                                         // (signed in: onUser, then sync)
+    } catch (e) {
       const c = e && e.code || ''; this.info.err = c || String(e && e.message || e).slice(0, 160);      // (for the tests)
-      if (c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request' || c === 'auth/user-cancelled') return false;
-      if (this.o.say) this.o.say(this.g.t(c === 'auth/popup-blocked' ? 'acct_popup' : 'acct_failed'));
+      if (c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request' || c === 'auth/user-cancelled' || c === 'cancelled') return false;
+      if (this.o.say) this.o.say(this.g.t(c === 'auth/popup-blocked' ? 'acct_popup' : c === 'auth/account-exists-with-different-credential' ? 'acct_other' : 'acct_failed'));
       return false;
     }
   }
@@ -151,12 +175,12 @@ export class Account {
     this.st = {}; writeSync(null); this.user = null; this.set('out');
     if (this.o.say) this.o.say(this.g.t('acct_out_done'));
   }
-  // delete the account: Google asks who it is again (from the tap), then the farm online and the account go; the farm
-  // stays on this phone
+  // delete the account: Google (or, in the app, Apple) asks who it is again (from the tap), then the farm online and the
+  // account go; the farm stays on this phone
   async drop() {
     if (!this.cloud || !this.user) return false;
     clearTimeout(this.timer); this.timer = 0;
-    try { await this.cloud.drop(); }
+    try { if (this.native) await this.cloud.drop(await this.nativeCred(this.by())); else await this.cloud.drop(); }
     catch (e) {
       const c = e && e.code || '';
       if (!/popup-closed|cancelled/.test(c) && this.o.say) this.o.say(this.g.t('acct_failed'));

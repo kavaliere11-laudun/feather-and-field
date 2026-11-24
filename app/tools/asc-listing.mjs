@@ -15,6 +15,8 @@ const HERE = path.dirname(new URL(import.meta.url).pathname), STORE = path.join(
 const L = JSON.parse(fs.readFileSync(path.join(STORE, 'listing.json'), 'utf8'));
 const LOCALES = Object.keys(L).filter(k => !k.startsWith('_'));
 const PRIVACY = 'https://kavaliere11-laudun.github.io/feather-and-field/privacy.html';
+const SUPPORT = 'https://kavaliere11-laudun.github.io/feather-and-field/support.html';      // (the help page, 24 Nov 2026: web3d/support/)
+const SHOTS = process.env.SHOTS !== '0';                         // (SHOTS=0: the words only, the pictures left as they are)
 const SHOT_TYPE = process.env.SHOT_TYPE || 'APP_IPHONE_67';      // (the 6.7 and 6.9-inch iPhones' screenshots: 2796 x 1290 on its side fits it)
 const b64 = o => Buffer.from(typeof o === 'string' ? o : JSON.stringify(o)).toString('base64url');
 let token = '', tokenAt = 0;
@@ -59,9 +61,9 @@ const vlocs = await all(`/v1/appStoreVersions/${ver.id}/appStoreVersionLocalizat
 for (const loc of LOCALES) {
   const v = L[loc];
   let vid;
-  try { vid = await upsert('appStoreVersionLocalizations', vlocs, loc, { description: v.description, keywords: v.keywords, promotionalText: v.promo }, { appStoreVersion: { data: { type: 'appStoreVersions', id: ver.id } } }); console.log(loc, 'description, keywords, promotional text: done'); }
+  try { vid = await upsert('appStoreVersionLocalizations', vlocs, loc, { description: v.description, keywords: v.keywords, promotionalText: v.promo, supportUrl: `${SUPPORT}?lang=${loc.slice(0, 2)}` }, { appStoreVersion: { data: { type: 'appStoreVersions', id: ver.id } } }); console.log(loc, 'description, keywords, promotional text, help page: done'); }
   catch (e) { console.log(loc, 'description, keywords, promotional text: NOT done:', e.message); continue; }
-  const dir = path.join(STORE, 'shots', loc); if (!fs.existsSync(dir)) { console.log(loc, 'no pictures'); continue; }
+  const dir = path.join(STORE, 'shots', loc); if (!SHOTS) continue; if (!fs.existsSync(dir)) { console.log(loc, 'no pictures'); continue; }
   const files = fs.readdirSync(dir).filter(f => /\.(jpe?g|png)$/i.test(f)).sort();
   try {
     const sets = await all(`/v1/appStoreVersionLocalizations/${vid}/appScreenshotSets`);
@@ -84,7 +86,7 @@ for (const loc of LOCALES) {
   } catch (e) { console.log(loc, 'pictures: NOT done:', e.message); }
 }
 // ---- Apple checking the pictures (a few seconds each): their states
-await new Promise(r => setTimeout(r, 20000));
+if (SHOTS) await new Promise(r => setTimeout(r, 20000));
 for (const loc of LOCALES) {
   const vl = (await all(`/v1/appStoreVersions/${ver.id}/appStoreVersionLocalizations`)).find(x => x.attributes.locale === loc); if (!vl) continue;
   const sets = await all(`/v1/appStoreVersionLocalizations/${vl.id}/appScreenshotSets`);

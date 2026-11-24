@@ -1,0 +1,34 @@
+{
+ "title": "Aiuto",
+ "intro": "Feather & Field è un tenero gioco di fattoria creato da {owner}. Qualcosa non funziona, una domanda o un’idea? Scrivi a {email}: ogni messaggio viene letto e riceve risposta il prima possibile.",
+ "sections": [
+  {
+   "h": "Tenere la tua fattoria",
+   "p": [
+    "La tua fattoria è conservata sul tuo telefono. Per tenerla al sicuro se cambi telefono, accedi nelle Impostazioni, Il mio account (con Apple o Google): così viene salvata anche online e torna quando accedi su un altro telefono.",
+    "Oppure copia il codice della tua fattoria nelle Impostazioni, “Il codice della tua fattoria”, e incollalo sull’altro telefono."
+   ]
+  },
+  {
+   "h": "Acquisti (app per iPhone)",
+   "p": [
+    "Hai comprato qualcosa e non lo vedi? Nelle Impostazioni, tocca “Ripristina acquisti”: il gioco chiede di nuovo ad Apple cosa hai comprato.",
+    "Pagamenti e rimborsi sono gestiti da Apple: <a href=\"https://reportaproblem.apple.com\">reportaproblem.apple.com</a>. Ogni razza si può avere anche con le monete guadagnate nel gioco."
+   ]
+  },
+  {
+   "h": "Eliminare il tuo account",
+   "p": [
+    "Nelle Impostazioni, Il mio account, “Elimina account” elimina subito il tuo account e la tua fattoria online. La tua fattoria resta sul tuo telefono, e “Inizia una nuova fattoria” nelle Impostazioni cancella anche quella."
+   ]
+  },
+  {
+   "h": "Privacy",
+   "p": [
+    "Cosa conserva il gioco su di te, e perché: <a href=\"https://kavaliere11-laudun.github.io/feather-and-field/privacy.html?lang=it\">la pagina sulla privacy</a>."
+   ]
+  }
+ ],
+ "contact": "Contatto: {owner}, {email}",
+ "back": "Torna al gioco"
+}

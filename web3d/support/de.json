@@ -1,0 +1,34 @@
+{
+ "title": "Hilfe",
+ "intro": "Feather & Field ist ein gemütliches Bauernhofspiel von {owner}. Etwas klappt nicht, eine Frage oder eine Idee? Schreib an {email}: Jede Nachricht wird gelesen und so bald wie möglich beantwortet.",
+ "sections": [
+  {
+   "h": "Deinen Hof behalten",
+   "p": [
+    "Dein Hof wird auf deinem Handy gespeichert. Damit er sicher ist, wenn du das Handy wechselst, melde dich in den Einstellungen unter Mein Konto an (mit Apple oder Google): Dann wird er auch online gespeichert und kommt zurück, wenn du dich auf einem anderen Handy anmeldest.",
+    "Oder kopiere deinen Hofcode in den Einstellungen unter „Dein Hofcode“ und füge ihn auf dem anderen Handy ein."
+   ]
+  },
+  {
+   "h": "Käufe (iPhone-App)",
+   "p": [
+    "Du hast etwas gekauft und siehst es nicht? Tippe in den Einstellungen auf „Käufe wiederherstellen“: Das Spiel fragt Apple noch einmal, was du gekauft hast.",
+    "Zahlungen und Erstattungen laufen über Apple: <a href=\"https://reportaproblem.apple.com\">reportaproblem.apple.com</a>. Jede Rasse bekommst du auch mit den Münzen, die du im Spiel verdienst."
+   ]
+  },
+  {
+   "h": "Dein Konto löschen",
+   "p": [
+    "In den Einstellungen unter Mein Konto löscht „Konto löschen“ dein Konto und deinen Hof online sofort. Dein Hof bleibt auf deinem Handy, und „Neuen Hof beginnen“ in den Einstellungen löscht auch ihn."
+   ]
+  },
+  {
+   "h": "Datenschutz",
+   "p": [
+    "Was das Spiel über dich speichert und warum: <a href=\"https://kavaliere11-laudun.github.io/feather-and-field/privacy.html?lang=de\">die Datenschutzseite</a>."
+   ]
+  }
+ ],
+ "contact": "Kontakt: {owner}, {email}",
+ "back": "Zurück zum Spiel"
+}

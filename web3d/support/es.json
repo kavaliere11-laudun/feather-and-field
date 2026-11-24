@@ -1,0 +1,34 @@
+{
+ "title": "Ayuda",
+ "intro": "Feather & Field es un tierno juego de granja creado por {owner}. ¿Algo no funciona, una pregunta o una idea? Escribe a {email}: se leen todos los mensajes y se responden lo antes posible.",
+ "sections": [
+  {
+   "h": "Conservar tu granja",
+   "p": [
+    "Tu granja se guarda en tu teléfono. Para que esté a salvo si cambias de teléfono, inicia sesión en Ajustes, Mi cuenta (con Apple o Google): así también se guarda en línea, y vuelve cuando inicias sesión en otro teléfono.",
+    "O copia el código de tu granja en Ajustes, «El código de tu granja», y pégalo en el otro teléfono."
+   ]
+  },
+  {
+   "h": "Compras (app para iPhone)",
+   "p": [
+    "¿Has comprado algo y no lo ves? En Ajustes, toca «Restaurar compras»: el juego vuelve a preguntar a Apple qué has comprado.",
+    "Los pagos y los reembolsos los gestiona Apple: <a href=\"https://reportaproblem.apple.com\">reportaproblem.apple.com</a>. Todas las razas se pueden conseguir también con las monedas que ganas en el juego."
+   ]
+  },
+  {
+   "h": "Eliminar tu cuenta",
+   "p": [
+    "En Ajustes, Mi cuenta, «Eliminar cuenta» elimina al instante tu cuenta y tu granja en línea. Tu granja sigue en tu teléfono, y «Empezar una granja nueva» en Ajustes también la borra."
+   ]
+  },
+  {
+   "h": "Privacidad",
+   "p": [
+    "Lo que el juego guarda sobre ti, y por qué: <a href=\"https://kavaliere11-laudun.github.io/feather-and-field/privacy.html?lang=es\">la página de privacidad</a>."
+   ]
+  }
+ ],
+ "contact": "Contacto: {owner}, {email}",
+ "back": "Volver al juego"
+}

@@ -1,10 +1,12 @@
 import UIKit
 import Capacitor
 
-// The game's screen: Capacitor's own, with the app's shop plugin added (FFStorePlugin.swift).
+// The game's screen: Capacitor's own, with the app's shop plugin (FFStorePlugin.swift) and its sign-in for My account
+// (FFSignInPlugin.swift: Apple's and Google's) added.
 class GameViewController: CAPBridgeViewController {
     override func capacitorDidLoad() {
         bridge?.registerPluginInstance(FFStorePlugin())
+        bridge?.registerPluginInstance(FFSignInPlugin())
         NSLog("FFStore: ready")      // (the simulator check looks for this line: the shop's plugin is in the app)
     }
 }

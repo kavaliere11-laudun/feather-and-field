@@ -1,0 +1,34 @@
+{
+ "title": "Aide",
+ "intro": "Feather & Field est un jeu de ferme tout doux créé par {owner}. Quelque chose ne marche pas, une question ou une idée ? Écrivez à {email} : chaque message est lu, et reçoit une réponse dès que possible.",
+ "sections": [
+  {
+   "h": "Garder votre ferme",
+   "p": [
+    "Votre ferme est conservée sur votre téléphone. Pour la garder en sécurité si vous changez de téléphone, connectez-vous dans Réglages, Mon compte (avec Apple ou Google) : elle est alors aussi enregistrée en ligne, et revient quand vous vous connectez sur un autre téléphone.",
+    "Ou copiez le code de votre ferme dans Réglages, « Le code de votre ferme », et collez-le sur l’autre téléphone."
+   ]
+  },
+  {
+   "h": "Achats (app iPhone)",
+   "p": [
+    "Vous avez acheté quelque chose et ne le voyez pas ? Dans Réglages, touchez « Restaurer mes achats » : le jeu redemande à Apple ce que vous avez acheté.",
+    "Les paiements et les remboursements sont gérés par Apple : <a href=\"https://reportaproblem.apple.com\">reportaproblem.apple.com</a>. Toutes les races peuvent aussi s’obtenir avec les pièces gagnées dans le jeu."
+   ]
+  },
+  {
+   "h": "Supprimer votre compte",
+   "p": [
+    "Dans Réglages, Mon compte, « Supprimer mon compte » supprime aussitôt votre compte et votre ferme en ligne. Votre ferme reste sur votre téléphone, et « Commencer une nouvelle ferme » dans Réglages l’efface aussi."
+   ]
+  },
+  {
+   "h": "Confidentialité",
+   "p": [
+    "Ce que le jeu garde sur vous, et pourquoi : <a href=\"https://kavaliere11-laudun.github.io/feather-and-field/privacy.html?lang=fr\">la page de confidentialité</a>."
+   ]
+  }
+ ],
+ "contact": "Contact : {owner}, {email}",
+ "back": "Retour au jeu"
+}

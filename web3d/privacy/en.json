@@ -11,14 +11,15 @@
    ]
   },
   {
-   "h": "If you sign in with Google (optional)",
+   "h": "If you sign in (optional)",
    "p": [
-    "My account is optional. If you sign in with Google, the game uses Google’s Firebase service to:",
-    "• sign you in: Google gives the game your account’s ID, your name and your email address. The game never sees your password;",
+    "My account is optional. You can sign in with Google, or, in the iPhone app, with Apple too. The game then uses Google’s Firebase service to:",
+    "• sign you in: Google or Apple gives the game your account’s ID, your name and your email address (with Apple you can choose to hide your email: Apple then gives a stand-in address that forwards to yours). The game never sees your password;",
     "• keep a copy of your farm online, so you don’t lose it and can play it on another phone or tablet. It’s kept in Google’s Firebase database {where}, linked to your account, and only you can open it.",
     "Why: to give you what you asked for, your farm kept safe and on all your devices (the service you chose to use).",
     "How long: until you delete your account. In Settings, My account, “Delete my account” deletes your account and your farm online straight away; your farm stays on your phone.",
-    "To get Google’s sign-in ready, the game connects to Google only when you open Settings or tap “Sign in” on the welcome screen, when the game suggests signing in (once, a few days into a farm), and, once you’re signed in, each time the game opens. Google’s sign-in servers may be outside the UK and Europe; Google looks after that data for us under its Firebase terms, with the safeguards the law asks for. More: <a href=\"https://firebase.google.com/support/privacy\">Privacy and security in Firebase</a>."
+    "To get Google’s sign-in ready, the game connects to Google only when you open Settings or tap “Sign in” on the welcome screen, when the game suggests signing in (once, a few days into a farm), and, once you’re signed in, each time the game opens. Google’s sign-in servers may be outside the UK and Europe; Google looks after that data for us under its Firebase terms, with the safeguards the law asks for. More: <a href=\"https://firebase.google.com/support/privacy\">Privacy and security in Firebase</a>.",
+    "In the iPhone app, Apple’s or Google’s sign-in opens only when you tap its button, and the app then connects to Google’s Firebase service as above. More about Apple: <a href=\"https://www.apple.com/legal/privacy/\">Apple’s privacy policy</a>."
    ]
   },
   {
@@ -32,13 +33,13 @@
    "h": "What the game never does",
    "p": [
     "No adverts, no tracking, no analytics, and your data is never sold or shared. No cookies for tracking or adverts: the only things kept on your device are those the game needs to work.",
-    "There’s nothing to buy with real money for now. If that changes, this page will explain how it works first."
+    "In the iPhone app, some things can be bought with real money. Apple takes the payment: the game only learns from Apple what you bought, to give it to you, and never sees your card or payment details. On the website, there’s nothing to buy."
    ]
   },
   {
    "h": "Children",
    "p": [
-    "Feather & Field is made for adults and young adults. Signing in needs a Google account, and Google sets its own minimum age. The game doesn’t knowingly collect anything from children under 13."
+    "Feather & Field is made for adults and young adults. Signing in needs a Google account or an Apple Account, and each sets its own minimum age. The game doesn’t knowingly collect anything from children under 13."
    ]
   },
   {

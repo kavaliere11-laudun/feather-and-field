@@ -68,6 +68,8 @@ const BASKET_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 const ROS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><circle cx="12" cy="9" r="2.4"/><path d="M8.9 14.1L7.4 21.5l2.9-1.4 1.7 2M15.1 14.1l1.5 7.4-2.9-1.4-1.7 2"/></svg>';
 
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+// Sign in with Apple's button (the app's My account): Apple's logo on it, as Apple asks of that button
+const APPLE_LOGO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>';
 
 // the language picker (the welcome, Settings): the languages as chips while there are few, a list once there are more (a
 // phone shows its own picker: six chips wouldn't fit a welcome held sideways)
@@ -362,10 +364,8 @@ export class GameUI {
         if (A && A.on) {
           const si = el('button', 'glink gwelcome-signin', this.t('welcome_signin')); si.type = 'button';
           si.addEventListener('click', () => {
-            const box = el('div', 'gwelcome-acct'), go = el('button', 'gbtn galt gacct-in', this.t('acct_google')); go.type = 'button';
-            go.disabled = !A.cloud; if (!A.cloud) A.prepare().then(() => { go.disabled = false; }, () => { go.disabled = false; });
-            go.addEventListener('click', () => A.signIn());
-            box.append(go, el('p', 'gnote gacct-privacy', this.t('acct_privacy')), this.privacyLink());
+            const box = el('div', 'gwelcome-acct');
+            box.append(...this.signInBtns(A, 'gbtn galt'), el('p', 'gnote gacct-privacy', this.t(A.native ? 'acct_privacy_app' : 'acct_privacy')), this.privacyLink());
             si.replaceWith(box);
             const stop = A.watch(st => { if (!box.isConnected) { stop(); return; } if (st === 'empty') { stop(); box.replaceWith(el('p', 'gnote gwelcome-empty', this.t('acct_empty'))); } });
           });
@@ -1895,13 +1895,11 @@ export class GameUI {
       card.replaceChildren();
       const hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '☁️'), el('span', 'gcard-t', this.t('acct_t'))); card.append(hd);
       if (!A.user) {
-        card.append(el('p', 'gnote', this.t('acct_how')));
-        const go = el('button', 'gbtn gsmallbtn gacct-in', this.t('acct_google')); go.type = 'button';
-        go.disabled = !A.cloud; if (!A.cloud) A.prepare().then(() => { go.disabled = false; }, () => { go.disabled = false; });      // (ready before the tap: Google's window opens straight from it)
-        go.addEventListener('click', () => A.signIn());
-        card.append(go);
+        card.append(el('p', 'gnote', this.t(A.native ? 'acct_how_app' : 'acct_how')));
+        const ins = el('div', 'gacct-ins'); ins.append(...this.signInBtns(A, 'gbtn gsmallbtn')); card.append(ins);
       } else {
-        card.append(el('p', 'gtext gacct-who', this.t('acct_who', { name: A.name() })));
+        const nm = A.name();
+        card.append(el('p', 'gtext gacct-who', A.by() === 'apple' ? (nm ? this.t('acct_who_apple', { name: nm }) : this.t('acct_in_apple')) : this.t('acct_who', { name: nm })));
         const S = A.status, line = S === 'saved' ? this.t('acct_saved', { when: this.when(A.savedAt) }) : S === 'syncing' ? this.t('acct_saving') : S === 'offline' ? this.t('acct_offline') : S === 'empty' ? this.t('acct_empty') : '';
         if (line) card.append(el('p', 'gnote gacct-state', line));
         const row = el('div', 'gacct-row');
@@ -1915,7 +1913,7 @@ export class GameUI {
         });
         row.append(out, del); card.append(row);
       }
-      card.append(el('p', 'gnote gacct-privacy', this.t('acct_privacy')), this.privacyLink());
+      card.append(el('p', 'gnote gacct-privacy', this.t(A.native ? 'acct_privacy_app' : 'acct_privacy')), this.privacyLink());
     };
     draw();
     const stop = A.watch(() => { if (!card.isConnected) { stop(); return; } draw(); });
@@ -1940,19 +1938,29 @@ export class GameUI {
       }
     });
   }
+  // the sign-in buttons: Google's; in the app (account.js A.native), Sign in with Apple first, in Apple's black with its logo
+  // (as Apple asks), then Google's. Each ready once the online side is (Google's window opens straight from the tap);
+  // then(ok) after its tap
+  signInBtns(A, cls, then) {
+    return (A.native ? ['apple', 'google'] : ['google']).map(k => {
+      const b = el('button', cls + ' gacct-in' + (k === 'apple' ? ' gacct-apple' : ' gacct-google')); b.type = 'button';
+      if (k === 'apple') { b.innerHTML = APPLE_LOGO; b.append(el('span', '', this.t('acct_apple'))); } else b.textContent = this.t('acct_google');
+      b.disabled = !A.cloud; if (!A.cloud) A.prepare().then(() => { b.disabled = false; }, () => { b.disabled = false; });
+      b.addEventListener('click', async () => { const ok = await A.signIn(k); if (then) then(ok); });
+      return b;
+    });
+  }
   // the privacy page (privacy.mjs), in the game's language, opened beside the game
   // (in the store app, the site's copy: a new window there opens in Safari, which can't reach the app's own files)
   privacyLink() { const a = el('a', 'glink gprivacy', this.t('privacy')); a.href = (window.__ffApp === true ? PRIVACY_ONLINE : 'privacy.html') + '?lang=' + this.g.lang; a.target = '_blank'; a.rel = 'noopener'; return a; }
   // the once-only suggestion, a few days into a farm (main.js showNews; account.js nudgeDue)
   accountNudge() {
     const A = this.o.account, b = this.open('acctask', '☁️ ' + this.t('nudge_t'));
-    b.append(el('p', 'gtext', this.t('nudge_how')));
-    const row = el('div', 'gfox-row'), go = el('button', 'gbtn gacct-in', this.t('acct_google')), later = el('button', 'gbtn galt', this.t('nudge_later'));
-    go.type = later.type = 'button';
-    go.disabled = !A.cloud; if (!A.cloud) A.prepare().then(() => { go.disabled = false; }, () => { go.disabled = false; });
-    go.addEventListener('click', async () => { const ok = await A.signIn(); if (ok && this.kind === 'acctask') this.close(); });
+    b.append(el('p', 'gtext', this.t(A.native ? 'nudge_how_app' : 'nudge_how')));
+    const row = el('div', 'gfox-row' + (A.native ? ' gacct-nudge2' : '')), later = el('button', 'gbtn galt', this.t('nudge_later'));
+    later.type = 'button';
     later.addEventListener('click', () => this.close());
-    row.append(go, later); b.append(row, el('p', 'gnote', this.t('nudge_note')));
+    row.append(...this.signInBtns(A, 'gbtn', ok => { if (ok && this.kind === 'acctask') this.close(); }), later); b.append(row, el('p', 'gnote', this.t('nudge_note')));
   }
   // the store app's reminders (notify.js), asked once the first day's guide is done: yes, and the phone asks the player
   notesAsk() {

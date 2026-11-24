@@ -1,0 +1,34 @@
+{
+ "title": "Help",
+ "intro": "Feather & Field is a cosy farm game made by {owner}. Something not working, a question or an idea? Write to {email}: every message is read, and answered as soon as possible.",
+ "sections": [
+  {
+   "h": "Keeping your farm",
+   "p": [
+    "Your farm is kept on your phone. To keep it safe if you change phones, sign in in Settings, My account (with Apple or Google): it’s then saved online too, and comes back when you sign in on another phone.",
+    "Or copy your farm code in Settings, “Your farm code”, and paste it on the other phone."
+   ]
+  },
+  {
+   "h": "Purchases (iPhone app)",
+   "p": [
+    "Bought something and can’t see it? In Settings, tap “Restore purchases”: the game asks Apple again what you bought.",
+    "Payments and refunds are handled by Apple: <a href=\"https://reportaproblem.apple.com\">reportaproblem.apple.com</a>. Every breed can also be had with the coins you earn in the game."
+   ]
+  },
+  {
+   "h": "Deleting your account",
+   "p": [
+    "In Settings, My account, “Delete my account” deletes your account and your farm online straight away. Your farm stays on your phone, and “Start a new farm” in Settings clears it too."
+   ]
+  },
+  {
+   "h": "Privacy",
+   "p": [
+    "What the game keeps about you, and why: <a href=\"https://kavaliere11-laudun.github.io/feather-and-field/privacy.html\">the privacy page</a>."
+   ]
+  }
+ ],
+ "contact": "Contact: {owner}, {email}",
+ "back": "Back to the game"
+}

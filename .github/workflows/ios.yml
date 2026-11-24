@@ -173,18 +173,33 @@ jobs:
           xcodebuild -project App.xcodeproj -scheme App -configuration Release -destination 'generic/platform=iOS' \
             -archivePath "$RUNNER_TEMP/App.xcarchive" DEVELOPMENT_TEAM="$APPLE_TEAM_ID" CODE_SIGNING_ALLOWED=NO \
             CURRENT_PROJECT_VERSION=${{ github.run_number }} archive | tail -n 30
-          cat > "$RUNNER_TEMP/export.plist" <<PLIST
+          # The app's entitlements (Sign in with Apple, App/App.entitlements): an unsigned archive has none, and the export
+          # signs with the ones it finds there, so the app is first signed ad hoc with them (its frameworks first, plainly).
+          APP="$RUNNER_TEMP/App.xcarchive/Products/Applications/App.app"
+          if [ -d "$APP/Frameworks" ]; then find "$APP/Frameworks" -maxdepth 1 \( -name '*.framework' -o -name '*.dylib' \) -exec codesign --force --sign - {} \; ; fi
+          codesign --force --sign - --entitlements App/App.entitlements --generate-entitlement-der "$APP"
+          codesign -d --entitlements - --xml "$APP" | grep -q applesignin || { echo "the archive has no Sign in with Apple entitlement"; exit 1; }
+          for dest in export upload; do
+          cat > "$RUNNER_TEMP/export-$dest.plist" <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
           <plist version="1.0"><dict>
             <key>method</key><string>app-store-connect</string>
-            <key>destination</key><string>upload</string>
+            <key>destination</key><string>$dest</string>
             <key>teamID</key><string>$APPLE_TEAM_ID</string>
             <key>signingStyle</key><string>automatic</string>
             <key>manageAppVersionAndBuildNumber</key><false/>
           </dict></plist>
           PLIST
-          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" -exportOptionsPlist "$RUNNER_TEMP/export.plist" \
+          done
+          # first a copy here, to check the signed app has its entitlement; then the same export sent to App Store Connect
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" -exportOptionsPlist "$RUNNER_TEMP/export-export.plist" \
+            -exportPath "$RUNNER_TEMP/check" "${AUTH[@]}" | tail -n 20
+          mkdir -p "$RUNNER_TEMP/ipa" && unzip -q "$RUNNER_TEMP"/check/*.ipa -d "$RUNNER_TEMP/ipa"
+          codesign -d --entitlements - --xml "$RUNNER_TEMP"/ipa/Payload/*.app > "$RUNNER_TEMP/ents.xml" 2>/dev/null || true
+          plutil -p "$RUNNER_TEMP/ents.xml" || true
+          grep -q applesignin "$RUNNER_TEMP/ents.xml" || { echo "the signed app has no Sign in with Apple entitlement"; exit 1; }
+          xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" -exportOptionsPlist "$RUNNER_TEMP/export-upload.plist" \
             -exportPath "$RUNNER_TEMP/export" "${AUTH[@]}" | tail -n 30
           rm -f "$KEY"
 
@@ -209,6 +224,8 @@ jobs:
         with:
           node-version: 22
       - name: Put the App Store page into App Store Connect
+        env:
+          SHOTS: ${{ contains(github.event.head_commit.message, '[no-shots]') && '0' || '1' }}      # ([no-shots]: the words only)
         run: node app/tools/asc-listing.mjs
 
   # What App Store Connect says about the builds (processing, TestFlight state, tester groups): a push whose message has

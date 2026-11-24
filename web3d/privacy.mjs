@@ -3,6 +3,8 @@
 // made into one page, dist/privacy.html, in every language the game speaks: the game's own when it's opened from Settings
 // (?lang=fr), else the phone's, else English, with a list to change it. Fonts from the game's own (no other company).
 //   node privacy.mjs            (build.sh runs it; deploy.sh also puts a copy at the usual address: /privacy.html)
+// The help page too (24 Nov 2026, the App Store asks for a support page; Audrey: "A new support email", "email is:
+// contact.featherfield@gmail.com"), the same way: support/<lang>.json into dist/support.html (/support.html too).
 import fs from 'fs';
 const DIR = new URL('.', import.meta.url).pathname;
 const LANGS = ['en', 'fr', 'de', 'es', 'pt', 'it'], NAME = { en: 'English', fr: 'Français', de: 'Deutsch', es: 'Español', pt: 'Português', it: 'Italiano' };
@@ -15,13 +17,14 @@ const fill = (s, L) => s.replace(/\{(\w+)\}/g, (m, k) => {
   const w = typeof v === 'object' ? (v[L] ?? v.en) : v;
   return k === 'email' ? `<a href="mailto:${esc(w)}">${esc(w)}</a>` : esc(w);
 });
-const have = LANGS.filter(L => fs.existsSync(DIR + `privacy/${L}.json`));
+for (const [PAGE, TITLE] of [['privacy', 'Privacy'], ['support', 'Help']]) {
+const have = LANGS.filter(L => fs.existsSync(DIR + `${PAGE}/${L}.json`));
 const sections = have.map(L => {
-  const T = JSON.parse(fs.readFileSync(DIR + `privacy/${L}.json`, 'utf8')), f = s => fill(safe(s), L);
+  const T = JSON.parse(fs.readFileSync(DIR + `${PAGE}/${L}.json`, 'utf8')), f = s => fill(safe(s), L);
   const body = T.sections.map(s => `<h2>${f(s.h)}</h2>\n` + s.p.map(p => `<p${p.startsWith('•') ? ' class="li"' : ''}>${f(p)}</p>`).join('\n')).join('\n');
   return `<section lang="${L}" data-title="${esc(T.title)}" hidden>
 <h1>${f(T.title)}</h1>
-<p class="date">${f(T.updated)}</p>
+${T.updated ? `<p class="date">${f(T.updated)}</p>` : ''}
 <p class="intro">${f(T.intro)}</p>
 ${body}
 <p class="contact">${f(T.contact)}</p>
@@ -33,7 +36,7 @@ const html = `<!doctype html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Feather &amp; Field · Privacy</title>
+<title>Feather &amp; Field · ${TITLE}</title>
 <link rel="stylesheet" href="fonts/fonts.css">
 <style>
   :root { --ink: #1f3326; --ink-2: #4d5e50; --meadow: #3f7a2e; --cream: #fbf8ef; --sage: #edf1e4; --line: #dfe3d2; }
@@ -73,5 +76,6 @@ ${sections}
 </html>
 `;
 fs.mkdirSync(DIR + 'dist', { recursive: true });
-fs.writeFileSync(DIR + 'dist/privacy.html', html);
-console.log('privacy page:', have.join(', '));
+fs.writeFileSync(DIR + `dist/${PAGE}.html`, html);
+console.log(PAGE + ' page:', have.join(', '));
+}

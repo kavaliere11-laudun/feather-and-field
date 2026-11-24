@@ -11,14 +11,15 @@
    ]
   },
   {
-   "h": "Si inicias sesión con Google (opcional)",
+   "h": "Si inicias sesión (opcional)",
    "p": [
-    "Mi cuenta es opcional. Si inicias sesión con Google, el juego usa el servicio Firebase de Google para:",
-    "• iniciar tu sesión: Google le da al juego el ID de tu cuenta, tu nombre y tu dirección de correo electrónico. El juego nunca ve tu contraseña;",
+    "Mi cuenta es opcional. Puedes iniciar sesión con Google o, en la app para iPhone, también con Apple. El juego usa entonces el servicio Firebase de Google para:",
+    "• iniciar tu sesión: Google o Apple le da al juego el ID de tu cuenta, tu nombre y tu dirección de correo electrónico (con Apple puedes ocultar tu correo: Apple da entonces una dirección de reenvío que llega a la tuya). El juego nunca ve tu contraseña;",
     "• guardar una copia de tu granja en línea, para que no la pierdas y puedas seguir jugando en otro teléfono o tableta. Se conserva en la base de datos de Firebase de Google {where}, vinculada a tu cuenta, y solo tú puedes abrirla.",
     "Por qué: para darte lo que pediste, tu granja a salvo y en todos tus dispositivos (el servicio que decidiste usar).",
     "Cuánto tiempo: hasta que elimines tu cuenta. En Ajustes, en Mi cuenta, «Eliminar cuenta» elimina al instante tu cuenta y tu granja en línea; tu granja sigue en tu teléfono.",
-    "Para tener listo el inicio de sesión de Google, el juego solo se conecta con Google cuando abres Ajustes o tocas «Inicia sesión» en la pantalla de bienvenida, cuando el juego te sugiere iniciar sesión (una sola vez, unos días después de empezar una granja) y, una vez que has iniciado sesión, cada vez que se abre el juego. Los servidores de inicio de sesión de Google pueden estar fuera del Reino Unido y de Europa; Google gestiona esos datos en nuestro nombre según sus condiciones de Firebase, con las garantías que exige la ley. Más información: <a href=\"https://firebase.google.com/support/privacy\">Privacidad y seguridad en Firebase</a>."
+    "Para tener listo el inicio de sesión de Google, el juego solo se conecta con Google cuando abres Ajustes o tocas «Inicia sesión» en la pantalla de bienvenida, cuando el juego te sugiere iniciar sesión (una sola vez, unos días después de empezar una granja) y, una vez que has iniciado sesión, cada vez que se abre el juego. Los servidores de inicio de sesión de Google pueden estar fuera del Reino Unido y de Europa; Google gestiona esos datos en nuestro nombre según sus condiciones de Firebase, con las garantías que exige la ley. Más información: <a href=\"https://firebase.google.com/support/privacy\">Privacidad y seguridad en Firebase</a>.",
+    "En la app para iPhone, el inicio de sesión de Apple o de Google solo se abre cuando tocas su botón, y después la app se conecta al servicio Firebase de Google como se explica arriba. Más sobre Apple: <a href=\"https://www.apple.com/legal/privacy/\">Política de privacidad de Apple</a>."
    ]
   },
   {
@@ -32,13 +33,13 @@
    "h": "Lo que el juego nunca hace",
    "p": [
     "Sin anuncios, sin rastreo, sin estadísticas de uso, y tus datos nunca se venden ni se comparten. Sin cookies de rastreo ni de publicidad: en tu dispositivo solo se guarda lo que el juego necesita para funcionar.",
-    "Por ahora no hay nada que comprar con dinero real. Si eso cambia, esta página te explicará antes cómo funciona."
+    "En la app para iPhone, algunas cosas se pueden comprar con dinero real. El pago lo gestiona Apple: el juego solo sabe por Apple lo que has comprado, para dártelo, y nunca ve tu tarjeta ni tus datos de pago. En el sitio web no hay nada que comprar."
    ]
   },
   {
    "h": "Niños",
    "p": [
-    "Feather & Field está pensado para adultos y jóvenes adultos. Para iniciar sesión se necesita una cuenta de Google, y Google fija su propia edad mínima. El juego no recopila a sabiendas ningún dato de niños menores de 13 años."
+    "Feather & Field está pensado para adultos y jóvenes adultos. Para iniciar sesión se necesita una cuenta de Google o una cuenta de Apple, y cada una fija su propia edad mínima. El juego no recopila a sabiendas ningún dato de niños menores de 13 años."
    ]
   },
   {

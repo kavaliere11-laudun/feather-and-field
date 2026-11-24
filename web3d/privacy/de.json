@@ -11,14 +11,15 @@
    ]
   },
   {
-   "h": "Wenn du dich mit Google anmeldest (freiwillig)",
+   "h": "Wenn du dich anmeldest (freiwillig)",
    "p": [
-    "Mein Konto ist optional. Wenn du dich mit Google anmeldest, nutzt das Spiel den Firebase-Dienst von Google, um:",
-    "• dich anzumelden: Google gibt dem Spiel deine Konto-ID, deinen Namen und deine E-Mail-Adresse. Dein Passwort sieht das Spiel nie;",
+    "Mein Konto ist optional. Du kannst dich mit Google anmelden, in der iPhone-App auch mit Apple. Das Spiel nutzt dann den Firebase-Dienst von Google, um:",
+    "• dich anzumelden: Google oder Apple gibt dem Spiel deine Konto-ID, deinen Namen und deine E-Mail-Adresse (bei Apple kannst du deine E-Mail-Adresse verbergen: Apple gibt dann eine Ersatzadresse an, die an deine weiterleitet). Dein Passwort sieht das Spiel nie;",
     "• eine Kopie deines Hofs online aufzubewahren, damit er nicht verloren geht und du auf einem anderen Handy oder Tablet weiterspielen kannst. Sie liegt in der Firebase-Datenbank von Google {where}, ist mit deinem Konto verknüpft, und nur du kannst sie öffnen.",
     "Warum: Du hast darum gebeten, dass dein Hof sicher aufbewahrt wird und auf all deinen Geräten verfügbar ist – das ist der Dienst, den du selbst gewählt hast.",
     "Wie lange: bis du dein Konto löschst. In den Einstellungen unter Mein Konto löschst du mit „Konto löschen“ dein Konto und deinen Hof online sofort; auf deinem Handy bleibt dein Hof erhalten.",
-    "Damit die Anmeldung über Google bereitsteht, verbindet sich das Spiel nur dann mit Google, wenn du die Einstellungen öffnest oder auf dem Willkommensbildschirm auf „Anmelden“ tippst, wenn das Spiel dir die Anmeldung vorschlägt (einmal, ein paar Tage nach dem Start deines Hofs) – und, sobald du angemeldet bist, bei jedem Start des Spiels. Die Anmeldeserver von Google können außerhalb des Vereinigten Königreichs und Europas liegen; Google kümmert sich in unserem Auftrag um diese Daten, nach den Bedingungen von Firebase und mit den Schutzmaßnahmen, die das Gesetz verlangt. Mehr dazu: <a href=\"https://firebase.google.com/support/privacy\">Datenschutz und Sicherheit in Firebase</a>."
+    "Damit die Anmeldung über Google bereitsteht, verbindet sich das Spiel nur dann mit Google, wenn du die Einstellungen öffnest oder auf dem Willkommensbildschirm auf „Anmelden“ tippst, wenn das Spiel dir die Anmeldung vorschlägt (einmal, ein paar Tage nach dem Start deines Hofs) – und, sobald du angemeldet bist, bei jedem Start des Spiels. Die Anmeldeserver von Google können außerhalb des Vereinigten Königreichs und Europas liegen; Google kümmert sich in unserem Auftrag um diese Daten, nach den Bedingungen von Firebase und mit den Schutzmaßnahmen, die das Gesetz verlangt. Mehr dazu: <a href=\"https://firebase.google.com/support/privacy\">Datenschutz und Sicherheit in Firebase</a>.",
+    "In der iPhone-App öffnet sich die Anmeldung über Apple oder Google nur, wenn du auf die jeweilige Taste tippst; danach verbindet sich die App wie oben beschrieben mit dem Firebase-Dienst von Google. Mehr zu Apple: <a href=\"https://www.apple.com/legal/privacy/\">Datenschutzrichtlinie von Apple</a>."
    ]
   },
   {
@@ -32,13 +33,13 @@
    "h": "Was das Spiel nie tut",
    "p": [
     "Keine Werbung, kein Tracking, keine Nutzungsanalyse, und deine Daten werden nie verkauft oder weitergegeben. Keine Cookies für Tracking oder Werbung: Auf deinem Gerät wird nur gespeichert, was das Spiel zum Funktionieren braucht.",
-    "Im Moment gibt es nichts für echtes Geld zu kaufen. Falls sich das ändert, erklärt diese Seite vorher, wie es funktioniert."
+    "In der iPhone-App kann man manche Dinge für echtes Geld kaufen. Die Zahlung wickelt Apple ab: Das Spiel erfährt von Apple nur, was du gekauft hast, damit du es bekommst, und sieht nie deine Karte oder deine Zahlungsdaten. Auf der Website gibt es nichts zu kaufen."
    ]
   },
   {
    "h": "Kinder",
    "p": [
-    "Feather & Field ist für Erwachsene und junge Erwachsene gemacht. Für die Anmeldung braucht man ein Google-Konto, und Google legt sein eigenes Mindestalter fest. Das Spiel sammelt nicht wissentlich Daten von Kindern unter 13 Jahren."
+    "Feather & Field ist für Erwachsene und junge Erwachsene gemacht. Für die Anmeldung braucht man ein Google-Konto oder einen Apple Account, und beide legen ihr eigenes Mindestalter fest. Das Spiel sammelt nicht wissentlich Daten von Kindern unter 13 Jahren."
    ]
   },
   {
