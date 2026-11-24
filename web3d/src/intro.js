@@ -30,7 +30,7 @@ function mirrorArms(P) {
 }
 // each scene's stage and camera turned together by this much (degrees) from the game's view, so the late-morning sun
 // comes from in front and to the left: faces in the light, shadows falling away behind (?turn=N tries another)
-const TURNS = [0, -50, -50, -50, -72, -40];
+const TURNS = [0, -50, -50, -50, -72, -40, -50];
 const TURN_Q = typeof location !== 'undefined' && /[?&]turn=(-?\d+)/.test(location.search) ? +RegExp.$1 : null;
 // every pose field a bird's rig reads, at rest: a scene's pose starts from these, so nothing the bird does by herself shows
 const REST = { walk: 0, peck: 0, sit: 0, kick: 0, kickT: 0, flap: 0, crow: 0, ruffle: 0, hopT: -1, wag: 0, turn: 0, sing: 0, cluck: 0, kawk: 0,
@@ -61,7 +61,7 @@ class Intro {
     if (this.n === 4) await loadShow(C.loadGLB, C.loadJSON);
     // (the sale sign's words are drawn once, in the game's own type: wait for it, a few seconds at most)
     if (this.n === 3 && document.fonts) await Promise.race([document.fonts.load('800 58px Nunito').catch(() => null), new Promise(ok => setTimeout(ok, 4000))]);
-    [null, () => this.flock(), () => this.chicks(), () => this.land(), () => this.show(), () => this.fox()][this.n]();
+    [null, () => this.flock(), () => this.chicks(), () => this.land(), () => this.show(), () => this.fox(), () => this.breeds()][this.n]();
     C.allBirds.push(...this.plot.birds);
     this.update(0);
   }
@@ -335,6 +335,30 @@ class Intro {
   }
   // ------------------------------------------------------------------ 5. Rusty the fox
   // (dusk: intropics.mjs shoots it at 19:40; nobody hurt, as ever: he's off empty-handed, the door shut)
+  // ------------------------------------------------------------------ 6. Breeds to collect (24 Nov 2026, the App Store's
+  // pictures, Audrey: "First option but make sure it's top quality"): a gathering of the game's breeds on the grass in the
+  // late-morning light, the peacock with his fan up behind them; each bird as the game has it (the Silkies as they are)
+  breeds() {
+    this.cam = { at: [0, 0.5, -0.2], el: 11, dist: 5.7, fov: 22, shadowReach: 4.5 };
+    this.prop('tree_apple', 3.0, -3.6, 0); this.prop('tree_a', -3.1, -3.8, 40); this.prop('tree_a', 0.5, -4.8, 110, 0.9);
+    this.prop('bush_a', -2.0, -2.3, 0, 0.75); this.prop('bush_b', 2.1, -2.4, 30, 0.7);
+    this.dress(170, { clear: [[-3.0, -1.8, 3.0, 1.2]], seed: 61 });
+    this.dress(60, { x0: -3.4, x1: 3.4, z0: 1.2, z1: 2.6, seed: 62, flowers: 0.6 });
+    const B = (breed, kind, colour, x, z, yaw, f) => this.bird(breed, kind, colour, x, z, yaw, f);
+    // the peacock, his fan raised, at the back in the middle
+    B('pea', 'rooster', null, 0.0, -1.35, 0, A => { A.fan = 1; A.proud = 1; });
+    // the back row, between the front row's birds
+    B('mar', 'rooster', null, -2.7, -0.45, 1.1, A => { A.proud = 0.6; A.lookYaw = -0.3; });
+    B('bra', 'rooster', null, -1.75, -0.7, 0.3, A => { A.proud = 1; A.lookYaw = 0.1; });
+    B('pol', 'hen', null, 1.5, -0.55, -0.3, A => { A.lookTilt = 0.25; A.lookYaw = -0.2; });
+    B('coc', 'hen', null, 2.7, -0.45, -1.45, A => { A.lookTilt = 0.15; A.lookYaw = 0.2; });
+    // the front row
+    B('sus', 'hen', null, -2.05, 0.45, 0.45, A => { A.lookTilt = 0.1; A.lookYaw = 0.2; });
+    B('aya', 'rooster', null, -0.85, 0.4, 1.25, A => { A.proud = 0.8; A.lookYaw = -0.35; });
+    B('sil', 'hen', 'white', 0.0, 0.55, 0, A => { A.lookTilt = 0.3; });
+    B('orp', 'hen', null, 1.0, 0.4, -0.25, A => { A.lookTilt = 0.15; A.lookYaw = -0.15; });
+    B('ara', 'hen', null, 2.05, 0.45, -0.45, A => { A.lookTilt = 0.2; A.lookYaw = -0.2; });
+  }
   fox() {
     this.cam = { at: [0.2, 0.4, -0.25], el: 13, dist: 6.9, fov: 22, shadowReach: 4.5 };
     this.prop('rustic_rir', -0.95, -2.1, 18);

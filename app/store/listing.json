@@ -1,0 +1,101 @@
+{
+  "_about": "The App Store page in each language (24 Nov 2026, Audrey: \"App Store ready (Recommended)\"). name and subtitle: 30 characters at most; promo: 170; keywords: 100, commas, no spaces after them; description: 4000. app/tools/asc-listing.mjs puts them into App Store Connect (never submits). Drafts until Audrey says yes.",
+  "en-GB": {
+    "name": "Feather & Field",
+    "subtitle": "A flock to love for good",
+    "promo": "Grandma has left you her farm and her three Rhode Island Reds. Bring it back to life, one field at a time, with a flock that's yours for good.",
+    "keywords": "chicken,hens,farm,cozy,silkie,coop,breeds,eggs,rooster,poultry,garden,village,cute,relaxing,pets",
+    "description": "Grandma has left you her farm, and her three Rhode Island Reds are waiting at the gate. Bring the farm back to life, one field at a time, with a flock you'll love for good.\n\nA FOREVER FLOCK\nEvery hen and rooster is yours for good. Each has a personality of her own: a Diva, a Rebel, a Glutton, a Good mum… Cuddle them and they trust you more each day. Collect their eggs, fill their feeders and watch them raise their own chicks.\n\n24 BREEDS AND COLOURS\nFrom fluffy Silkies to the Ayam Cemani, black from beak to toe, and a peacock to crown it all. Rare Silkie colours hatch now and then, and special breeds wait on the collector's shelf.\n\nA COOP FOR EVERY BREED\nEach breed has its own coop, from a rustic crate to a Deluxe home with a garden full of toys: swings, sand baths, a xylophone to peck. In winter, snowy coops of their own.\n\nA FARM THAT'S ALIVE\nDay and night follow your own clock. A shower brings worms to catch, snow settles in December, Mrs Potts the baker drops by in a hurry, and now and then a hen slips out to explore. At night Rusty the fox comes for the eggs, but your geese and Biscuit the sheepdog chase him home. Nobody ever gets hurt.\n\nSHOWS, FISHING AND MORE\nGroom your best bird and enter her at the village show. Fish the pond and the river for twenty kinds of fish. Grow vegetables, fill the villagers' orders, and save up for grand decorations: a hot-air balloon, a tree house, a clock tower…\n\nPLAY YOUR WAY\nA few minutes a day is plenty, and there are fifty levels to grow through. Gentle reminders, only if you want them.\n\nFree to play, with optional in-app purchases. Every breed can also be earned just by playing."
+  },
+  "fr-FR": {
+    "name": "Feather & Field",
+    "subtitle": "Une basse-cour pour la vie",
+    "promo": "Mamie vous a laissé sa ferme et ses trois Rhode Island Red. Redonnez-lui vie, terrain après terrain, avec une basse-cour à vous pour toujours.",
+    "keywords": "poule,poules,ferme,poulailler,soie,races,œufs,coq,basse-cour,potager,village,relaxant,animaux",
+    "description": "Mamie vous a laissé sa ferme, et ses trois Rhode Island Red vous attendent au portail. Redonnez vie à la ferme, terrain après terrain, avec une basse-cour que vous aimerez pour toujours.\n\nUNE BASSE-COUR POUR LA VIE\nChaque poule et chaque coq sont à vous pour toujours. Chacun a son caractère : une Diva, une Rebelle, une Gourmande, une Mère poule… Faites-leur des câlins : leur confiance grandit chaque jour. Ramassez leurs œufs, remplissez leurs mangeoires et regardez-les élever leurs poussins.\n\n24 RACES ET COULEURS\nDes poules soie toutes douces à l’Ayam Cemani, noire du bec aux pattes, et un paon pour couronner le tout. Des poules soie de couleurs rares éclosent de temps en temps, et des races spéciales attendent dans la vitrine du collectionneur.\n\nUN POULAILLER POUR CHAQUE RACE\nChaque race a son poulailler, d’une vieille caisse rustique à une maison Deluxe avec un jardin plein de jeux : balançoires, bains de sable, un xylophone à picorer. En hiver, des poulaillers sous la neige rien que pour elles.\n\nUNE FERME BIEN VIVANTE\nLe jour et la nuit suivent votre propre horloge. Une averse fait sortir des vers à attraper, la neige tombe en décembre, Mme Potts la boulangère passe en coup de vent, et de temps en temps une poule s’échappe pour explorer. La nuit, Rusty le renard vient pour les œufs, mais vos oies et Biscuit le chien de berger le renvoient chez lui. Personne n’est jamais blessé.\n\nCONCOURS, PÊCHE ET PLUS ENCORE\nPréparez votre plus belle volaille et inscrivez-la au concours du village. Pêchez vingt sortes de poissons dans l’étang et la rivière. Faites pousser des légumes, livrez les commandes des villageois et économisez pour de grandes décorations : une montgolfière, une cabane dans l’arbre, une tour de l’horloge…\n\nJOUEZ À VOTRE RYTHME\nQuelques minutes par jour suffisent, et cinquante niveaux vous attendent. Des rappels tout doux, seulement si vous le souhaitez.\n\nGratuit, avec des achats intégrés facultatifs. Chaque race peut aussi s’obtenir simplement en jouant."
+  },
+  "de-DE": {
+    "name": "Feather & Field",
+    "subtitle": "Hühner zum Liebhaben",
+    "promo": "Oma hat dir ihren Hof und ihre drei Rhode Island Reds vererbt. Erwecke ihn wieder zum Leben, Feld für Feld, mit einer Hühnerschar, die für immer bleibt.",
+    "keywords": "hühner,huhn,bauernhof,hof,hühnerstall,seidenhuhn,rassen,eier,hahn,garten,dorf,süß,entspannend",
+    "description": "Oma hat dir ihren Hof vererbt, und ihre drei Rhode Island Reds warten schon am Tor. Erwecke den Hof wieder zum Leben, Feld für Feld, mit einer Hühnerschar, die du für immer lieben wirst.\n\nEINE HÜHNERSCHAR FÜR IMMER\nJede Henne und jeder Hahn bleibt für immer bei dir. Jedes Huhn hat seinen eigenen Charakter: eine Diva, eine Rebellin, ein Vielfraß, eine Glucke… Kuschle mit ihnen, und sie vertrauen dir jeden Tag mehr. Sammle ihre Eier, fülle ihre Futterspender und sieh zu, wie sie ihre eigenen Küken großziehen.\n\n24 RASSEN UND FARBEN\nVon flauschigen Seidenhühnern bis zum Ayam Cemani, schwarz vom Schnabel bis zu den Zehen, und als Krönung ein Pfau. Seltene Seidenhuhn-Farben schlüpfen ab und zu, und besondere Rassen warten in der Sammlervitrine.\n\nEIN STALL FÜR JEDE RASSE\nJede Rasse hat ihren eigenen Stall, von der rustikalen Kiste bis zum Deluxe-Zuhause mit einem Garten voller Spielsachen: Schaukeln, Sandbäder, ein Xylofon zum Picken. Im Winter gibt es eigene verschneite Ställe.\n\nEIN HOF VOLLER LEBEN\nTag und Nacht folgen deiner eigenen Uhr. Ein Regenschauer lockt Würmer hervor, im Dezember fällt Schnee, Mrs Potts, die Bäckerin, schaut eilig vorbei, und ab und zu büxt eine Henne aus, um die Gegend zu erkunden. Nachts kommt Rusty, der Fuchs, wegen der Eier, aber deine Gänse und Biscuit, der Hütehund, jagen ihn nach Hause. Niemand wird je verletzt.\n\nSCHAUEN, ANGELN UND MEHR\nMach dein schönstes Huhn zurecht und melde es bei der Dorfschau an. Angle im Teich und im Fluss zwanzig Fischarten. Baue Gemüse an, erfülle die Bestellungen der Dorfbewohner und spare auf große Dekorationen: einen Heißluftballon, ein Baumhaus, einen Uhrturm…\n\nSPIEL IN DEINEM TEMPO\nEin paar Minuten am Tag genügen, und fünfzig Stufen warten auf dich. Sanfte Erinnerungen, nur wenn du sie möchtest.\n\nKostenlos spielbar, mit optionalen In-App-Käufen. Jede Rasse kannst du auch einfach durchs Spielen bekommen."
+  },
+  "es-ES": {
+    "name": "Feather & Field",
+    "subtitle": "Gallinas para querer siempre",
+    "promo": "La abuela te ha dejado su granja y sus tres Rhode Island Red. Devuélvele la vida, campo a campo, con unas gallinas que serán tuyas para siempre.",
+    "keywords": "gallinas,gallina,granja,gallinero,sedosa,razas,huevos,gallo,aves,huerto,pueblo,bonito,relajante",
+    "description": "La abuela te ha dejado su granja, y sus tres Rhode Island Red te esperan en la puerta. Devuelve la vida a la granja, campo a campo, con unas gallinas a las que querrás para siempre.\n\nTU FAMILIA DE PLUMAS\nCada gallina y cada gallo son tuyos para siempre. Cada una tiene su carácter: una Diva, una Rebelde, una Glotona, una Mamá gallina… Dales mimos y confiarán más en ti cada día. Recoge sus huevos, llena sus comederos y míralas criar a sus propios pollitos.\n\n24 RAZAS Y COLORES\nDesde las suaves gallinas sedosas hasta la Ayam Cemani, negra del pico a las patas, y un pavo real para coronarlo todo. De vez en cuando nacen sedosas de colores raros, y las razas especiales esperan en la vitrina del coleccionista.\n\nUN GALLINERO PARA CADA RAZA\nCada raza tiene su gallinero, desde una caja rústica hasta una casa Deluxe con un jardín lleno de juegos: columpios, baños de arena, un xilófono para picotear. En invierno, gallineros nevados solo para ellas.\n\nUNA GRANJA LLENA DE VIDA\nEl día y la noche siguen tu propio reloj. Un chaparrón saca gusanos que atrapar, la nieve llega en diciembre, la señora Potts, la panadera, pasa con prisas, y de vez en cuando una gallina se escapa a explorar. Por la noche, el zorro Rusty viene a por los huevos, pero tus gansos y Biscuit, el perro pastor, lo mandan a casa. Nadie sale nunca herido.\n\nCONCURSOS, PESCA Y MÁS\nArregla a tu mejor gallina y preséntala al concurso del pueblo. Pesca veinte clases de peces en el estanque y en el río. Cultiva verduras, prepara los pedidos de los vecinos y ahorra para grandes decoraciones: un globo aerostático, una casa en el árbol, una torre del reloj…\n\nJUEGA A TU RITMO\nUnos minutos al día bastan, y te esperan cincuenta niveles. Recordatorios suaves, solo si los quieres.\n\nGratis, con compras opcionales dentro de la app. Todas las razas se pueden conseguir también jugando."
+  },
+  "it": {
+    "name": "Feather & Field",
+    "subtitle": "Un’aia da amare per sempre",
+    "promo": "La nonna ti ha lasciato la sua fattoria e le sue tre Rhode Island Red. Ridale vita, campo dopo campo, con un’aia tutta tua, per sempre.",
+    "keywords": "galline,gallina,fattoria,pollaio,moroseta,razze,uova,gallo,aia,orto,villaggio,carino,rilassante",
+    "description": "La nonna ti ha lasciato la sua fattoria, e le sue tre Rhode Island Red ti aspettano al cancello. Ridai vita alla fattoria, campo dopo campo, con un’aia che amerai per sempre.\n\nLA TUA AIA PER SEMPRE\nOgni gallina e ogni gallo sono tuoi per sempre. Ognuna ha il suo carattere: una Diva, una Ribelle, una Golosa, una Mamma chioccia… Coccolale e si fideranno di te ogni giorno di più. Raccogli le loro uova, riempi le mangiatoie e guardale crescere i loro pulcini.\n\n24 RAZZE E COLORI\nDalle morbide Morosete all’Ayam Cemani, nera dal becco alle zampe, e un pavone a coronare il tutto. Ogni tanto nascono Morosete di colori rari, e le razze speciali aspettano nella vetrina del collezionista.\n\nUN POLLAIO PER OGNI RAZZA\nOgni razza ha il suo pollaio, da una cassa rustica a una casa Deluxe con un giardino pieno di giochi: altalene, bagni di sabbia, uno xilofono da beccare. D’inverno, pollai innevati tutti per loro.\n\nUNA FATTORIA PIENA DI VITA\nGiorno e notte seguono il tuo orologio. Un acquazzone fa uscire i lombrichi da prendere, a dicembre arriva la neve, la signora Potts, la fornaia, passa di corsa, e ogni tanto una gallina scappa a esplorare. Di notte Rusty la volpe viene per le uova, ma le tue oche e Biscuit, il cane pastore, la rimandano a casa. Nessuno si fa mai male.\n\nMOSTRE, PESCA E ALTRO\nFai bella la tua gallina migliore e iscrivila alla mostra del villaggio. Pesca venti tipi di pesci nello stagno e nel fiume. Coltiva l’orto, prepara gli ordini dei vicini e risparmia per le grandi decorazioni: una mongolfiera, una casa sull’albero, una torre dell’orologio…\n\nGIOCA CON CALMA\nBastano pochi minuti al giorno, e ti aspettano cinquanta livelli. Promemoria gentili, solo se li vuoi.\n\nGratis, con acquisti in-app facoltativi. Ogni razza si può ottenere anche solo giocando."
+  },
+  "pt-BR": {
+    "name": "Feather & Field",
+    "subtitle": "Galinhas para amar sempre",
+    "promo": "A vovó deixou para você a fazenda dela e suas três Rhode Island Red. Traga a fazenda de volta à vida, campo por campo, com galinhas que são suas para sempre.",
+    "keywords": "galinhas,galinha,fazenda,galinheiro,sedosa,raças,ovos,galo,aves,horta,vila,fofo,relaxante",
+    "description": "A vovó deixou a fazenda para você, e as três Rhode Island Red dela estão esperando no portão. Traga a fazenda de volta à vida, campo por campo, com galinhas que você vai amar para sempre.\n\nSUAS AVES PARA SEMPRE\nCada galinha e cada galo são seus para sempre. Cada uma tem sua personalidade: uma Diva, uma Rebelde, uma Gulosa, uma Mãe coruja… Faça carinho e elas vão confiar mais em você a cada dia. Recolha os ovos, encha os comedouros e veja elas criarem os próprios pintinhos.\n\n24 RAÇAS E CORES\nDas fofinhas galinhas sedosas à Ayam Cemani, preta do bico aos pés, e um pavão para completar. De vez em quando nascem sedosas de cores raras, e raças especiais esperam na vitrine do colecionador.\n\nUM GALINHEIRO PARA CADA RAÇA\nCada raça tem seu galinheiro, de um caixote rústico a uma casa Deluxe com um jardim cheio de brinquedos: balanços, banhos de areia, um xilofone para bicar. No inverno, galinheiros com neve só para elas.\n\nUMA FAZENDA CHEIA DE VIDA\nO dia e a noite seguem o seu relógio. Uma chuva traz minhocas para pegar, a neve cai em dezembro, a senhora Potts, a padeira, passa com pressa, e de vez em quando uma galinha escapa para explorar. À noite, Rusty, o raposo, vem atrás dos ovos, mas seus gansos e Biscuit, o cão pastor, mandam ele de volta para casa. Ninguém nunca se machuca.\n\nEXPOSIÇÕES, PESCA E MAIS\nArrume sua melhor ave e inscreva na exposição da vila. Pesque vinte tipos de peixe no lago e no rio. Plante verduras, atenda os pedidos dos vizinhos e junte moedas para grandes decorações: um balão de ar quente, uma casa na árvore, uma torre do relógio…\n\nJOGUE NO SEU RITMO\nAlguns minutos por dia já bastam, e cinquenta níveis esperam por você. Lembretes delicados, só se você quiser.\n\nGrátis para jogar, com compras opcionais no app. Todas as raças também podem ser conseguidas só jogando."
+  },
+  "_captions": {
+    "en-GB": [
+      "A flock to love for good",
+      "Bring Grandma’s farm back to life",
+      "24 breeds and colours to collect",
+      "A dream coop for every breed",
+      "Chicks raised by their mums",
+      "Win rosettes at the village show",
+      "Biscuit keeps Rusty the fox away"
+    ],
+    "fr-FR": [
+      "Une basse-cour à aimer pour toujours",
+      "Redonnez vie à la ferme de Mamie",
+      "24 races et couleurs à collectionner",
+      "Un poulailler de rêve pour chaque race",
+      "Des poussins élevés par leur maman",
+      "Gagnez des cocardes au concours du village",
+      "Biscuit éloigne Rusty le renard"
+    ],
+    "de-DE": [
+      "Eine Hühnerschar für immer",
+      "Erwecke Omas Hof wieder zum Leben",
+      "24 Rassen und Farben zum Sammeln",
+      "Ein Traumstall für jede Rasse",
+      "Küken, großgezogen von ihrer Mama",
+      "Gewinne Rosetten bei der Dorfschau",
+      "Biscuit hält Rusty, den Fuchs, fern"
+    ],
+    "es-ES": [
+      "Gallinas para querer siempre",
+      "Devuelve la vida a la granja de la abuela",
+      "24 razas y colores para coleccionar",
+      "Un gallinero de ensueño para cada raza",
+      "Pollitos criados por su mamá",
+      "Gana escarapelas en el concurso del pueblo",
+      "Biscuit mantiene lejos al zorro Rusty"
+    ],
+    "it": [
+      "Un’aia da amare per sempre",
+      "Ridai vita alla fattoria della nonna",
+      "24 razze e colori da collezionare",
+      "Un pollaio da sogno per ogni razza",
+      "Pulcini cresciuti dalla loro mamma",
+      "Vinci coccarde alla mostra del villaggio",
+      "Biscuit tiene lontana Rusty la volpe"
+    ],
+    "pt-BR": [
+      "Galinhas para amar sempre",
+      "Traga a fazenda da vovó de volta à vida",
+      "24 raças e cores para colecionar",
+      "Um galinheiro dos sonhos para cada raça",
+      "Pintinhos criados pela mamãe",
+      "Ganhe rosetas na exposição da vila",
+      "Biscuit mantém o raposo Rusty longe"
+    ]
+  }
+}
