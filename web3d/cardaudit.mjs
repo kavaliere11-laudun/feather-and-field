@@ -54,7 +54,7 @@ const AUDIT = () => {
         }
       }
     }
-    for (const btn of s.querySelectorAll('button')) if (vis(btn) && btn.scrollWidth > btn.clientWidth + 2) out.push(['button words cut', words(btn), where]);
+    for (const btn of s.querySelectorAll('button')) { if (!vis(btn)) continue; const bd = btn.querySelector('.gbed-have'); if (bd) bd.style.display = 'none'; const cut = btn.scrollWidth > btn.clientWidth + 2; if (bd) bd.style.display = ''; if (cut) out.push(['button words cut', words(btn), where]); }      // (a bed's seed button: its "🧺 n" sits over its corner on purpose, 18 Nov 2026)
   };
   scrolling = body.scrollHeight > body.clientHeight + 2;
   body.scrollTop = 0; look('top');
@@ -78,7 +78,7 @@ for (const L of LANGS) for (const [W, H] of SIZES) {
     const wantMid = CENTER.some(k => a.kind.split(' ').includes('g' + k)) || a.kind.includes('gcenter');
     const issues = [...a.out];
     if (/gcenter/.test(a.kind) && !a.centred) issues.push(['a message, not in the middle']);
-    if (!/gwelcome/.test(a.kind) && !a.centred) issues.push(['not in the middle']);      // (every card in the middle since 7 Nov 2026: "Make these centred on the screen")
+    if (!/gwelcome/.test(a.kind) && !/\bgbird\b/.test(a.kind) && !a.centred) issues.push(['not in the middle']);      // (a bird's card beside her since 13 Nov 2026)      // (every card in the middle since 7 Nov 2026: "Make these centred on the screen")
     // (its bottom corners round, as drawn: nothing cream painted out into them, 7 Nov, Audrey: "Still cut")
     if (a.rad >= 12) for (const [cx, cy] of [[a.R[0] + 1, a.R[3] - 2], [a.R[2] - 3, a.R[3] - 2]]) {
       const px = await p.screenshot({ clip: { x: Math.max(0, cx), y: Math.max(0, cy), width: 2, height: 1 } });

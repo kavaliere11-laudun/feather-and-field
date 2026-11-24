@@ -1,12 +1,12 @@
 // Release 3 step 2 (the dog to buy): node dogbuy.mjs   (LANG=fr; W, H: the screen, e.g. W=874 H=402; SHOTS: a folder)
-// A farm at level 8: no dog; the shop's Animals shelf says he comes at level 9. Level 9: its card says "New to buy: Biscuit,
+// A farm at level 9: no dog; the shop's Animals shelf says he comes at level 10 (the road of 50 levels). Level 10: its card says "New to buy: Biscuit,
 // the farm dog". Too few coins: "Not enough coins yet". "Buy and place · 4,000": his kennel to place like a decoration (its
 // outline, the bar); put down: paid for (4,000 coins, +80 XP), the dog out in front of it, "Biscuit has come to live on your
 // farm!", then the card for his name: "Pepper" saved (his label, the board over his door, the shelf's card). The kennel and
 // bowls in everyone's way on the grid. Minutes of his day: never into anything outside his own kennel, never off the farm's
 // ground he can walk. His kennel moved from the shelf: the dog back at it. A tap on the kennel: the Animals shelf. A reload
 // keeps him, his name and his kennel, unflagged. At night he sleeps in his kennel. A save changed outside (a name with
-// < >, the dog before level 9) is checked and flagged. No page errors.
+// < >, the dog before level 10) is checked and flagged. No page errors.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 import { xpFor } from './src/game.js';
@@ -47,9 +47,9 @@ const xpAt = L => xpFor(L) + 5;                    // (the game's own levels: sr
 const st = () => p.evaluate(() => { const f = window.__farm, g = f.game(), D = f.dog(), k = g.kennel();
   return { level: g.level, coins: g.data.coins, xp: g.data.xp, owned: g.animalOwned('dog'), name: g.dogName(), kennel: k && [k.x, k.z], dog: !!D, label: D && D.dog.label, board: f.kennelName(), card: f.gameUI().kind, edited: g.edited, hint: document.getElementById('hint').textContent,
     form: !document.getElementById('dogname').hidden, move: f.deco.state().on }; });
-const animals = async () => { await p.evaluate(() => { window.__farm.deco.shop(); document.querySelector('.gshop-tabs .gchip[data-tab="animals"]').click(); }); await run(0.3); return p.evaluate(() => { const c = document.querySelector('.gsheet [data-animal="dog"]'); return c && { text: c.innerText, btns: [...c.querySelectorAll('button')].map(x => x.textContent), off: [...c.querySelectorAll('button')].map(x => x.disabled) }; }); };
-const tapBtn = async text => { await p.evaluate(t => [...document.querySelectorAll('.gsheet [data-animal="dog"] button')].find(x => x.textContent === t).click(), text); await run(0.4); };
-const T = { lvl9: fr ? /Arrive au niveau 9/ : /Comes at level 9/, newbuy: fr ? /Nouveau à acheter : Biscuit, le chien de la ferme/ : /New to buy: Biscuit, the farm dog/,
+const animals = async () => { await p.evaluate(() => { window.__farm.deco.shop(); document.querySelector('.gshop-tabs .gchip[data-tab="animals"]').click(); }); await run(0.3); return p.evaluate(() => { const c = document.querySelector('.gsheet [data-animal="dog"]'); return c && { text: c.innerText, all: c.textContent, btns: [...c.querySelectorAll('button')].map(x => x.getAttribute('aria-label') || x.textContent), off: [...c.querySelectorAll('button')].map(x => x.disabled) }; }); };
+const tapBtn = async text => { await p.evaluate(t => [...document.querySelectorAll('.gsheet [data-animal="dog"] button')].find(x => (x.getAttribute('aria-label') || x.textContent) === t).click(), text); await run(0.4); };
+const T = { lvl9: fr ? /Arrive au niveau 10/ : /Comes at level 10/, newbuy: fr ? /Nouveau à acheter : Biscuit, le chien de la ferme/ : /New to buy: Biscuit, the farm dog/,
   broke: fr ? 'Pas encore assez de pièces' : 'Not enough coins yet', buy: fr ? /^Acheter et placer · 4\s000$/ : /^Buy and place · 4,000$/, came: fr ? /Biscuit vient vivre dans votre ferme ! \+80 XP/ : /Biscuit has come to live on your farm! \+80 XP/,
   named: fr ? /Votre chien s’appelle Pepper/ : /Your dog is called Pepper/, card: fr ? /Pepper, le chien de la ferme/ : /Pepper, the farm dog/, label: fr ? 'Pepper · border collie' : 'Pepper · Border Collie',
   move: fr ? 'Déplacer sa niche' : 'Move his kennel', rename: fr ? 'Renommer' : 'Rename', see: fr ? 'Le voir' : 'See him', moved: fr ? /La niche de Pepper : c’est déplacé !/ : /Pepper’s kennel: moved!/ };
@@ -57,28 +57,29 @@ await p.goto(URL, { waitUntil: 'domcontentloaded', timeout: 120000 });
 await p.waitForSelector('.gsheet:not([hidden])', { timeout: 60000 });
 await p.tap('.gsheet .gbtn');
 await load();
-// level 8, eight fields: no dog yet; the shelf says level 9
-await p.evaluate(L8 => { const g = window.__farm.game(); g.data.xp = L8; g.data.lvSeen = 8; g.data.coins = 3000; g.data.land = [0, 1, 2, 3, 4, 5, 6, 7]; g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(8));
+// level 9, eight fields: no dog yet; the shelf says level 10 (the road of 50 levels, 22 Nov 2026: the dog at 10)
+await p.evaluate(L8 => { const g = window.__farm.game(); g.data.xp = L8; g.data.lvSeen = 9; g.data.coins = 3000; g.data.land = [0, 1, 2, 3, 4, 5, 6, 7]; g.data.guide = { step: 5, done: true }; g.save(); }, xpAt(9));
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 await p.evaluate(() => window.__farm.gameUI().close());
 let s = await st(), a = await animals();
-ok('level 8: no dog on the farm; the shelf says he comes at level 9', s.level === 8 && !s.owned && !s.dog && a && T.lvl9.test(a.text) && !a.btns.length, { s, a });
+ok('level 9: no dog on the farm; the shelf says he comes at level 10', s.level === 9 && !s.owned && !s.dog && a && T.lvl9.test(a.text) && !a.btns.length, { s, a });
 await p.evaluate(() => window.__farm.gameUI().close());
-// level 9: its card
-await p.evaluate(L9 => { const g = window.__farm.game(); g.data.xp = L9; g.data.land.push(8); g.save(); }, xpAt(9)); await run(1.6);
+// level 10: its card
+await p.evaluate(L9 => { const g = window.__farm.game(); g.data.xp = L9; g.data.land.push(8); g.save(); }, xpAt(10)); await run(1.6);
 s = await st(); let t = await p.evaluate(() => document.querySelector('.gsheet').innerText);
 await shot('1_level9');
-ok('level 9: its card says "New to buy: Biscuit, the farm dog"', s.level === 9 && s.card === 'levelup' && T.newbuy.test(t), { s, t: t.slice(0, 400) });
+ok('level 10: its card says "New to buy: Biscuit, the farm dog"', s.level === 10 && s.card === 'levelup' && T.newbuy.test(t), { s, t: t.slice(0, 400) });
 await p.evaluate(() => window.__farm.gameUI().close());
+await p.evaluate(() => { const g = window.__farm.game(); g.data.coins = 3000; g.save(); });      // (the level's gift of coins aside)
 a = await animals();
-ok('3,000 coins: "Not enough coins yet", the button off', a.btns[0] === T.broke && a.off[0], a);
+ok('3,000 coins: its button quiet and off (the gold coin and 4,000: 24 Nov 2026, every coin price so)', T.buy.test(a.btns[0]) && a.off[0], a);
 await p.evaluate(() => window.__farm.gameUI().close());
 // bought: his kennel placed like a decoration
 await p.evaluate(() => { const g = window.__farm.game(); g.data.coins = 6000; g.save(); });
 a = await animals();
 await p.waitForFunction(() => { const i = document.querySelector('.gsheet [data-animal="dog"] img'); return i && i.complete; }, null, { timeout: 20000 }).catch(() => {});
 await shot('2_shop');
-ok('6,000 coins: "Buy and place · 4,000" (+80 XP)', T.buy.test(a.btns[0]) && !a.off[0] && /\+80 XP/.test(a.text), a);
+ok('6,000 coins: "Buy and place · 4,000" (+80 XP)', T.buy.test(a.btns[0]) && !a.off[0] && /\+80 XP/.test(a.all), a);      // (its XP: in its words, shown when the picture is tapped)
 const xp0 = (await st()).xp;
 await tapBtn(a.btns[0]); await run(1);
 let m = await p.evaluate(() => window.__farm.deco.state());
@@ -116,7 +117,7 @@ ok('his kennel moved: the save, the dog back at it, the message', !!sp2 && m.ok 
 // a tap on the kennel: the Animals shelf
 const ks = await p.evaluate(() => { const f = window.__farm, k = f.game().kennel(); f.dog().reset(); f.dog().update(1 / 30, 12); f.lookAt(k.x, k.z, 2.4); f.step(1 / 30, 2); f.draw(); return f.screenOf(k.x, k.z, 0.55); });
 await p.touchscreen.tap(ks.x, ks.y); await run(0.4);
-const shelf = await p.evaluate(() => ({ kind: window.__farm.gameUI().kind, dog: !!document.querySelector('.gsheet [data-animal="dog"]'), on: (document.querySelector('.gshop-tabs .gchip.on') || {}).dataset }));
+const shelf = await p.evaluate(() => ({ kind: window.__farm.gameUI().kind, dog: !!document.querySelector('.gsheet [data-animal="dog"]'), on: (document.querySelector('.gshop-tabs .gchip.on') || {}).dataset, prev: !!document.querySelector('.gsheet:not([hidden]) .gprev-on') }));
 ok('a tap on his kennel: the Animals shelf', shelf.kind === 'shop' && shelf.dog && shelf.on && shelf.on.tab === 'animals', shelf);
 await p.evaluate(() => window.__farm.gameUI().close());
 // a reload keeps him
@@ -135,10 +136,10 @@ await p.evaluate(() => { const raw = JSON.parse(localStorage.getItem('ff3d.farm'
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 s = await st();
 ok('a save changed outside (a name with < >): checked (the name cleaned) and flagged', s.edited && s.owned && s.name === 'bRex/b' && s.board === 'bRex/b', s);
-await p.evaluate(L8 => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.xp = L8; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); }, xpAt(8) + 10);
+await p.evaluate(L8 => { const raw = JSON.parse(localStorage.getItem('ff3d.farm')); raw.d.xp = L8; localStorage.setItem('ff3d.farm', JSON.stringify(raw)); }, xpAt(9) + 10);
 await p.reload({ waitUntil: 'domcontentloaded' }); await load();
 s = await st();
-ok('a save changed outside (the dog before level 9): checked and flagged, no dog', s.edited && !s.owned && !s.dog, s);
+ok('a save changed outside (the dog before level 10): checked and flagged, no dog', s.edited && !s.owned && !s.dog, s);
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();

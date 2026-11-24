@@ -52,7 +52,7 @@ await p.waitForFunction(() => [...document.querySelectorAll('.gdec img')].every(
 let t = await sheet();
 const cards = await p.evaluate(() => [...document.querySelectorAll('.gdec[data-decor]')].map(c => [c.dataset.decor, c.classList.contains('glock'), !!c.querySelector('.gbtn:not([disabled])'), c.querySelector('img') ? c.querySelector('img').complete && c.querySelector('img').naturalWidth > 0 : !!c.querySelector('.gsil')]));
 ok('the coins open the shop: the seventeen with their pictures (the grand decorations from 24 Nov 2026: the Golden Egg Fountain, the Rose Arbour, the Dovecote, the Red Tractor, the Little Orchard, the Tree House, the Hot-Air Balloon, the Clock Tower, the Topiary Garden); the five its level has come for to buy, the others greyed with their level',
-  (await kind()) === 'shop' && T.title.test(t) && cards.length === 17 && cards.filter(c => !c[1] && c[2]).length === 5 && cards.filter(c => c[1]).length === 12 && cards.every(c => c[3]) && T.buy.test(t) && T.lvl13.test(t) && T.pond.test(t), { cards, t: t.slice(0, 400) });
+  (await kind()) === 'shop' && T.title.test(t) && cards.length === 17 && cards.filter(c => !c[1] && c[2]).length === 5 && cards.filter(c => c[1]).length === 12 && cards.every(c => c[3]) && T.buy.test(await p.evaluate(() => { const b = document.querySelector('.gdec[data-decor="flowers"] .gbtn'); return b ? b.getAttribute('aria-label') + ' ' + b.textContent : ''; })) && T.lvl13.test(t) && T.pond.test(await p.evaluate(() => { const b = document.querySelector('.gdec[data-decor="duckhouse"] .gbtn'); return b ? b.getAttribute('aria-label') : ''; })), { cards, t: t.slice(0, 400) });
 await shot('1_shop');
 // buy the flower bed: placing it
 const m0 = await money();
@@ -123,7 +123,7 @@ await p.waitForFunction(() => [...document.querySelectorAll('.gout img')].every(
 const outs = await p.evaluate(() => [...document.querySelectorAll('.gout')].map(c => [c.dataset.outfit, c.classList.contains('glock'), c.classList.contains('gout-on'), !!c.querySelector('.gbtn:not([disabled])'), c.querySelector('img') ? c.querySelector('img').naturalWidth > 0 : !!c.querySelector('.gsil')]));
 t = await sheet();
 ok('Outfits: the six with their pictures; the classic worn; market day and the garden party to buy; the other three to come',
-  outs.length === 6 && outs.every(o => o[4]) && outs[0][2] && outs.filter(o => o[1]).length === 3 && outs.filter(o => o[3]).length === 2 && (fr ? /Jour de marché/ : /Market day/).test(t) && (fr ? /Acheter et porter · 1[\s\u202f ]200/ : /Buy and wear · 1,200/).test(t), { outs, t: t.slice(0, 300) });
+  outs.length === 6 && outs.every(o => o[4]) && outs[0][2] && outs.filter(o => o[1]).length === 3 && outs.filter(o => o[3]).length === 2 && (fr ? /Jour de marché/ : /Market day/).test(t) && (fr ? /Acheter et porter · 1[\s\u202f ]200/ : /Buy and wear · 1,200/).test(await p.evaluate(() => { const b = document.querySelector('.gout[data-outfit="market"] .gbtn'); return b ? b.getAttribute('aria-label') : ''; })), { outs, t: t.slice(0, 300) });
 await shot('6_outfits');
 let m1 = await money();
 await p.evaluate(() => document.querySelector('.gout[data-outfit="market"] .gbtn').click()); await p.waitForTimeout(1500); await run(1.5);

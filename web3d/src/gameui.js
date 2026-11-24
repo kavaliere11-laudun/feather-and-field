@@ -157,6 +157,13 @@ export class GameUI {
     if (document.fonts && document.fonts.addEventListener) document.fonts.addEventListener('loadingdone', more);      // (the words' own font arriving makes them longer)
     this.dim = el('div', 'gdim'); this.dim.hidden = true;
     document.body.append(this.dim, this.sheet);
+    // (24 Nov 2026, found while checking the buttons for Audrey: a tap on the farm opens its card as the finger lifts, and the
+    // phone's click that follows landed on whatever the new card had under the finger: a tile's picture, a button. A click
+    // whose finger went down before the card opened is dropped; a click from the keyboard (no finger) is kept)
+    let downAt = -Infinity; this.openedAt = -Infinity;
+    window.addEventListener('pointerdown', () => { downAt = performance.now(); }, { capture: true, passive: true });
+    const ghost = e => { if (e.isTrusted && e.detail > 0 && downAt < this.openedAt) { e.stopPropagation(); e.preventDefault(); } };
+    this.sheet.addEventListener('click', ghost, true); this.dim.addEventListener('click', ghost, true);
     this.x.addEventListener('click', () => this.close());
     this.lvl.addEventListener('click', () => this.levelSheet());
     this.coins.addEventListener('click', () => { if (this.o.shop) this.o.shop(); else this.coinSheet(); });
@@ -206,7 +213,7 @@ export class GameUI {
   open(kind, title, modal = false) {
     this.dropPreview();
     if (this.twoResolve && kind !== 'twofarms') { const r = this.twoResolve; this.twoResolve = null; r(null); }      // (the two farms' choice not made: asked again later)
-    this.kind = kind; this.title.textContent = title; this.body.replaceChildren();
+    this.kind = kind; this.title.textContent = title; this.body.replaceChildren(); this.openedAt = performance.now();      // (a click begun before this card was drawn isn't for it)
     this.x.hidden = modal; this.dim.hidden = !modal; this.sheet.hidden = false; document.body.classList.add('gopen');
     this.sheet.classList.toggle('gbird', kind === 'bird'); document.body.classList.toggle('gbirdopen', kind === 'bird');      // (a bird's card: beside her, not over her: index.html, 13 Nov 2026)
     this.sheet.classList.toggle('modal', modal); this.sheet.classList.toggle('gcongrats', kind === 'congrats' || kind === 'showres'); document.body.classList.toggle('gcong', kind === 'congrats' || kind === 'showres'); this.sheet.classList.remove('in'); void this.sheet.offsetWidth; this.sheet.classList.add('in');
@@ -850,7 +857,7 @@ export class GameUI {
     this.bird = null; b.scrollTop = 0;
     // (the breeds, the fish once fishing's open, the milestones: tabs)
     {
-      const tabs = el('div', 'gbooktabs'), tab = (k, label, dot) => { const t = el('button', 'gbtn gsmallbtn' + ((this.bookTab || 'birds') === k ? ' gon' : ' galt'), label); t.type = 'button'; t.dataset.tab = k; if (dot) { const d = el('span', 'gdot'); t.append(d); } t.addEventListener('click', () => { this.bookTab = k; this.bookSheet(h); }); return t; };
+      const tabs = el('div', 'gbooktabs'), tab = (k, label, dot) => { const t = el('button', 'gchip' + ((this.bookTab || 'birds') === k ? ' on' : ''), label); t.type = 'button'; t.dataset.tab = k; if (dot) { const d = el('span', 'gdot'); t.append(d); } t.addEventListener('click', () => { this.bookTab = k; this.bookSheet(h); }); return t; };
       tabs.append(tab('birds', '🐔 ' + this.t('book_tab_birds')));
       if (g.level >= PAY_LEVEL) tabs.append(tab('shelf', '✨ ' + this.t('book_tab_shelf')));      // (the collector's shelf, 21 Nov 2026: from level 3, its first breed at 8)
       if (g.fishOpen('pond')) tabs.append(tab('fish', '🐟 ' + this.t('book_tab_fish')));
@@ -1040,7 +1047,7 @@ export class GameUI {
       const broke = g.data.coins < T.fee;
       const line = x => el('p', 'gtext gchance', this.t('show_chance', { name: x.b.name, word: this.t('chance' + x.ch.word), p: Math.round(x.ch.rosette * 100) }));
       const enterBtn = (x, small) => {
-        const go = el('button', 'gbtn' + (small ? ' gsmallbtn' : '') + (broke || x.ch.word === 0 ? ' galt' : ''), broke ? this.t('show_broke', { fee: T.fee }) : small ? this.t('show_pick') : this.t('show_enter', { name: x.b.name, fee: T.fee }));
+        const go = el('button', 'gbtn' + (small ? ' gsmallbtn' : '') + (broke ? ' galt' : ''), broke ? this.t('show_broke', { fee: T.fee }) : small ? this.t('show_pick') : this.t('show_enter', { name: x.b.name, fee: T.fee }));
         go.type = 'button'; go.disabled = broke; go.addEventListener('click', () => { if (!go.disabled && h.enter) h.enter(s.id, x.b.id); });
         return go;
       };
@@ -1291,7 +1298,7 @@ export class GameUI {
       }
       if (own && !D.pond) { const mv = el('button', 'gbtn galt gsmallbtn gpage-go', this.t('dec_move')); mv.type = 'button'; mv.addEventListener('click', () => h.move(id)); info.append(mv); }
       if (!own && !lock) {
-        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), this.t(D.pond ? 'dec_buy_pond' : 'dec_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.coinFill(go, D.price);
+        const go = this.coinFill(el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : '')), D.price); go.setAttribute('aria-label', this.t(D.pond ? 'dec_buy_pond' : 'dec_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke;
         go.addEventListener('click', () => { if (!go.disabled) h.buy(id); });
         if (broke && IAP_DEMO) this.getCoins(go, h);
         info.append(go);
@@ -1489,7 +1496,7 @@ export class GameUI {
         info.append(row);
       }
       if (!own && !lock) {
-        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), this.t(A.kennel ? 'dec_buy' : 'ani_buy', { c: fmt(A.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.coinFill(go, A.price);
+        const go = this.coinFill(el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : '')), A.price); go.setAttribute('aria-label', this.t(A.kennel ? 'dec_buy' : 'ani_buy', { c: fmt(A.price) })); go.type = 'button'; go.disabled = broke;
         go.addEventListener('click', () => { if (!go.disabled) h.buyAnimal(id); });
         if (broke && IAP_DEMO) this.getCoins(go, h);
         info.append(go);
@@ -1514,7 +1521,7 @@ export class GameUI {
       else if (!own) { const pr = el('p', 'gpage-s gdec-p'); pr.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(O.price) + ' · ' + this.t('dec_xp', { xp: outfitXp(id) }))); info.append(pr); }
       if (own && !on) { const w = el('button', 'gbtn galt gsmallbtn gpage-go', this.t('out_wear')); w.type = 'button'; w.addEventListener('click', () => h.wear(id)); info.append(w); }
       if (!own && !lock) {
-        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), this.t('out_buy', { c: fmt(O.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.coinFill(go, O.price);
+        const go = this.coinFill(el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : '')), O.price); go.setAttribute('aria-label', this.t('out_buy', { c: fmt(O.price) })); go.type = 'button'; go.disabled = broke;
         go.addEventListener('click', () => { if (!go.disabled) h.buyOutfit(id); });
         if (broke && IAP_DEMO) this.getCoins(go, h);
         info.append(go);
@@ -1538,7 +1545,7 @@ export class GameUI {
       else if (!on) info.append(el('p', 'gpage-s glock-lv', '📅 ' + this.t('dress_when_' + id)));
       else {
         const pr = el('p', 'gpage-s gdec-p'); pr.append(el('span', 'gcoin gcoin-s'), document.createTextNode(fmt(D.price) + ' · ' + this.t('dec_xp', { xp: dressXp(id) }))); info.append(pr);
-        const go = el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : ''), this.t('dress_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke; if (broke) this.coinFill(go, D.price);
+        const go = this.coinFill(el('button', 'gbtn gsmallbtn gpage-go' + (broke ? ' gdec-broke' : '')), D.price); go.setAttribute('aria-label', this.t('dress_buy', { c: fmt(D.price) })); go.type = 'button'; go.disabled = broke;
         go.addEventListener('click', () => { if (!go.disabled) h.buyDress(id); });
         info.append(go);
       }
@@ -1745,7 +1752,7 @@ export class GameUI {
     if (id === 'beehives' && g.data.honey) { const n = g.honeyAt(); info.append(el('p', 'gpage-s gfound', '🍯 ' + (n ? (n === 1 ? this.t('honey_jar') : this.t('honey_jars', { n })) : this.t('honey_none', { t: this.dur(g.honeyNext()) })))); }
     if (!DECOR[id].pond) info.append(el('p', 'gnote', this.t('dec_card_body')));
     card.append(pic, info); body.append(card);
-    if (onMove && !DECOR[id].pond) { const go = el('button', 'gbtn', this.t('dec_move')); go.type = 'button'; go.addEventListener('click', () => onMove()); body.append(go); }
+    if (onMove && !DECOR[id].pond) { const go = el('button', 'gbtn galt', this.t('dec_move')); go.type = 'button'; go.addEventListener('click', () => onMove()); body.append(go); }
   }
   // ---- fishing (release 5): the dock's card (tapped): the pond's fish (those caught in colour, the others dark), the worms
   // in the bag (and where they come from: the chickens who love the farmer), Go fishing; a tin of worms. o: { open, worms, state: 'ok'|'night'|'on' }; h: { go, buy }

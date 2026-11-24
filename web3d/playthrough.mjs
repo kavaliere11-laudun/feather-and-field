@@ -182,7 +182,7 @@ async function spend() {
       tally('coop look');
       await act(1.5);
       const why = await p.evaluate(() => { const w = document.querySelector('.gsheet .gup-why'); return w && !w.hidden ? w.textContent : ''; });
-      if (why) { await note('upgrade refused', why); await p.evaluate(() => window.__farm.gameUI().close()); return; }
+      if (why) { await note('upgrade refused', why + ' · ' + JSON.stringify(await p.evaluate(i => window.__farm.upSpot ? window.__farm.upSpot(i) : null, u.i))); await p.evaluate(() => window.__farm.gameUI().close()); return; }
       const P = await p.evaluate(i => { const q = window.__farm.gamePlots()[i].group.position; return [q.x, q.z]; }, u.i);
       await look(P[0], P[1], 2.4); await act(1); await once('look:' + u.look, 'coop_' + u.look);
     });
