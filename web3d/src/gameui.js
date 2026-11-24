@@ -1696,6 +1696,25 @@ export class GameUI {
     if (!g.vegCount()) b.append(el('p', 'gnote gcenter', this.t('treat_none')));
   }
   // ---- a decoration on the farm (tapped): what it is; Move (onMove; not the duck house, on the pond)
+  // ---- a coop's new look, just put up (24 Nov 2026, Audrey: "some explanation about the toys (if any) and how the chicken will
+  // interact with them"): its picture and what it brings; each new play thing and how the birds play with it; "Watch them
+  // play" only when one can go there and then (onWatch)
+  upgradedCard(coop, toys, onWatch) {
+    const g = this.g, body = this.open('upgraded', g.coopName(coop)), look = ['rustic', 'mended', 'snug', 'cosy', 'deluxe'][Math.max(0, Math.min(4, coop.tier))];
+    this.bird = null; this.sheet.classList.add('gbird');      // (sideways: on the right half, the coop in view on the left, as a bird's card)
+    const top = el('div', 'gupd-top'), pic = el('img', 'gupd-pic'), side = el('div', 'gupd-side');
+    pic.alt = ''; pic.src = 'looks/' + g.baseOf(coop.breed) + '_' + coop.tier + '.webp' + (this.o.bust || ''); pic.addEventListener('error', () => { pic.hidden = true; });
+    side.append(el('p', 'gupd-look', '✨ ' + g.lookName(coop)), el('p', 'gcoop-fx', this.t('upic_' + look)));
+    top.append(pic, side); body.append(top);
+    if (toys.length) {
+      body.append(el('p', 'gsub gupd-h', this.t('up_toys')));
+      const list = el('div', 'gupd-toys');
+      const ICON = { swing: '🪢', dust: '🏖️', cabbage: '🥬', ladder: '🪜', xylo: '🎶', ball: '🏐' };
+      for (const k of toys) { const r = el('div', 'gupd-toy'), h = el('p', 'gupd-tn'); r.dataset.toy = k; h.append(el('span', 'gupd-ti', ICON[k] || '✨'), document.createTextNode(this.t('toy_' + k))); r.append(h, el('p', 'gupd-tl', this.t('toyl_' + k))); list.append(r); }
+      body.append(list);
+    }
+    if (onWatch) { const b = el('button', 'gbtn', this.t('up_watch')); b.type = 'button'; b.addEventListener('click', () => onWatch()); body.append(b); }
+  }
   decorCard(id, onMove) {
     const g = this.g, body = this.open('decor', g.decorName(id));
     this.bird = null;

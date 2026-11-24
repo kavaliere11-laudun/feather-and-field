@@ -6,6 +6,8 @@
 // bigger pen and free to walk, the farmer still able to get to its gate, the play things from Cosy; where the bigger pen
 // doesn't fit, the card says to move the coop first (moved somewhere roomier, then it fits). A reload keeps the look,
 // unflagged. A farm from before the looks: its coops Snug, unflagged. Pictures of each look (OUT/up_<n>.png).
+// (24 Nov 2026) Each upgrade shown: the view to the coop, dust, the new look springing up, then its card (the new look, its
+// new play things and how they play, "Watch them play": a bird off to the newest one).
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs';
 const OUT = process.argv[2] || '/tmp/claude-0/farmer/upgradetest', fr = process.env.LANG === 'fr', W = +(process.env.W || 402), H = +(process.env.H || 874), B = process.env.BREED || 'rir';
@@ -41,6 +43,7 @@ const card = async () => {
   await run(0.2);
   return p.evaluate(() => { const s = document.querySelector('.gsheet'), u = s.querySelector('.gup'), bt = u && u.querySelector('.gbtn'), why = s.querySelector('.gup-why'); return { kind: window.__farm.gameUI().kind, text: s.innerText, up: u ? u.innerText : null, btn: bt ? bt.textContent : null, dis: bt ? bt.disabled : null, why: why && !why.hidden ? why.textContent : null }; });
 };
+const shootCard = async n => { await p.screenshot({ path: `${OUT}/up_card_${B === 'rir' ? '' : B + '_'}${n}${fr ? '_fr' : ''}${W > H ? '_side' : ''}.png`, timeout: 180000 }); };
 const shoot = async n => {
   await p.evaluate(() => { const f = window.__farm; f.gameUI().close(); const [x, z] = f.coopAt(0); f.lookAt(x, z, 2.6); f.step(1 / 30, 2); f.draw(); });
   await p.addStyleTag({ content: '#hint { opacity: 0.0001 !important; }' }).catch(() => {});
@@ -94,8 +97,28 @@ for (let t = 1; t <= 4; t++) {
     await run(0.5);
     c = await card(); await p.tap('.gsheet .gup .gbtn'); await run(0.4); s = await state();
   }
-  const bd = await birds(), hint = await p.evaluate(() => document.getElementById('hint').textContent);
-  ok(`upgraded to ${look}: the price paid, a little XP, its look (house, pen, fence) there and then, a hint`, s.tier === t && s.coins === s0.coins - price && s.xp > s0.xp && s.house === LOOKS[t] && s.pen === PENN(t) && (fr ? new RegExp('style ' + look) : new RegExp('now ' + look)).test(hint), { s, hint });
+  // (24 Nov 2026, Audrey: "a little animation for the update and some explanation about the toys") the show: under way at
+  // once (the view to the coop), dust round it as it shakes, its new look springing up; then its card with the new play things
+  const sPaid = s;      // (paid at the tap; a new level's gift of coins may come after)
+  const sh0 = await p.evaluate(() => window.__farm.upShow());
+  await run(0.9); const sh1 = await p.evaluate(() => window.__farm.upShow());
+  await run(1.2); const sh2 = await p.evaluate(() => window.__farm.upShow());
+  ok(`${look}: the show: under way at once, dust round it, its new look springing up, then over`, sh0.on && !sh0.swapped && sh1.on && sh1.puffs > 0 && !sh2.on, { sh0, sh1, sh2 });
+  const hint = await p.evaluate(() => document.getElementById('hint').textContent);
+  await run(1);
+  if ((await p.evaluate(() => window.__farm.gameUI().kind)) === 'levelup') { await p.evaluate(() => window.__farm.gameUI().close()); await run(0.8); }      // (its XP brought a new level: that card first, then this one)
+  const uc = await p.evaluate(() => ({ kind: window.__farm.gameUI().kind, toys: [...document.querySelectorAll('.gsheet .gupd-toy')].map(x => x.dataset.toy), look: (document.querySelector('.gsheet .gupd-look') || {}).textContent || '', watch: !!document.querySelector('.gsheet .gupd-toys ~ .gbtn') }));
+  const want = t === 3 ? 'swing,dust,cabbage' : t === 4 ? 'xylo' : '';
+  ok(`${look}: its card: the new look${want ? ', the new play things (' + want + ') with how they play, Watch them play' : ', no play things'}`, uc.kind === 'upgraded' && uc.look.includes(look) && uc.toys.join() === want && uc.watch === !!want, uc);
+  if (t === 3) await shootCard(t);
+  if (uc.watch) {
+    await p.evaluate(() => document.querySelector('.gsheet .gupd-toys ~ .gbtn').click()); await run(0.5);
+    const pl = await p.evaluate(() => { const f = window.__farm, P = f.coopPlots().find(q => q.gc && q.gc.id === f.game().data.coops[0].id); return { open: f.gameUI().isOpen, kinds: P.birds.filter(b => b.play).map(b => b.play.kind) }; });
+    ok(`${look}: Watch them play: the card closed, a bird off to the ${t === 3 ? 'swing' : 'xylophone'}`, !pl.open && pl.kinds.includes(t === 3 ? 'swing' : 'xylo'), pl);
+  }
+  s = await state();
+  const bd = await birds();
+  ok(`upgraded to ${look}: the price paid, a little XP, its look (house, pen, fence) there and then, a hint`, s.tier === t && sPaid.coins === s0.coins - price && s.xp > s0.xp && s.house === LOOKS[t] && s.pen === PENN(t) && (fr ? new RegExp('style ' + look) : new RegExp('now ' + look)).test(hint), { s, hint });
   ok(`${look}: its pen bigger than before, its birds in it free to walk, the farmer can get to its gate${t >= 3 ? ', the play things' : ''}`, s.foot.x1 - s.foot.x0 >= s0.foot.x1 - s0.foot.x0 && bd.free && bd.gate && bd.toys === t >= 3, { foot: s.foot, bd });
   await run(3);
   await shoot(t);

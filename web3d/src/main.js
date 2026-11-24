@@ -2343,10 +2343,12 @@ function dressedPen(plot, pen) {
 }
 // the coops in their styles' batches (made again when one's moved; the one being moved is drawn on its own meanwhile)
 const COOP_BATCH = [];
+// (a coop being shown in its new look: drawn on its own while it springs up, out of its style's batch: upgradeShow)
+const UPG = { p: null, t: 0, ghost: null, swapped: false, cheered: false, puffIn: 0, n: null, before: [], cardIn: -1, card: null, puffs: [], mat: null };
 function batchCoops() {
   dropMeshes(COOP_BATCH);
   const lists = {};
-  for (const p of plots) if (p.kind === 'coop' && p.frame && p !== MOVE.plot) for (const [name, M] of coopParts(p)) (lists[name] = lists[name] || []).push(p.frame.matrixWorld.clone().multiply(M));
+  for (const p of plots) if (p.kind === 'coop' && p.frame && p !== MOVE.plot && p !== UPG.p) for (const [name, M] of coopParts(p)) (lists[name] = lists[name] || []).push(p.frame.matrixWorld.clone().multiply(M));
   for (const name in lists) COOP_BATCH.push(...batch(name, lists[name], { cast: true }));
 }
 
@@ -7528,12 +7530,107 @@ function tryUpgrade(p) {
   const ids = new Set(S.clear.map(o => o.id));
   V.trees = V.trees.filter(o => !ids.has(o.id)); V.bushes = V.bushes.filter(o => !ids.has(o.id)); V.rocks = V.rocks.filter(o => !ids.has(o.id));
   for (const o of S.clear) clearAway(o);
-  retier(p);
   gameUI.close(); gameUI.refresh(); gameUI.bumpCoins();
-  hint(game.t('up_done', { coop: game.coopName(gc), look: game.lookName(gc), xp: n.xp }));
-  const top = p.frame.localToWorld(new THREE.Vector3(0, 1.2, 0));
-  for (let k = 0; k < 5; k++) setTimeout(() => spawnHeart(top.clone().add(new THREE.Vector3((k - 2) * 0.18, k * 0.06, 0))), k * 160);
+  upgradeShow(p, n);                                        // (the view to it, the dust, its new look springing up, then its card)
   return 'ok';
+}
+// ---- a coop's new look, shown (24 Nov 2026, Audrey: "When you upgrade a coop, get a little animation for the update and
+// some explanation about the toys (if any) and how the chicken will interact with them. With a camera focus on the coop"):
+// after her tap on its button the view goes over to the coop; it shakes a little as dust puffs up round it; out of the dust
+// it springs up in its new look (low and wide, a touch too tall, settling), stars and hearts over it, the word with its XP;
+// then its card: the new look's picture and what it brings, and each new play thing with how the birds play with it, and
+// "Watch them play" (by day, a bird free to: she goes to the newest one there and then). Paid for and saved at the tap.
+const TOY_KINDS = ['swing', 'dust', 'cabbage', 'ladder', 'xylo'];
+function toysOf(p) {
+  if (game.isDuck(p.gc.breed)) return (COOPS.balls || {})[coopLook(p).house] ? ['ball'] : [];      // (the call ducks: their beach ball)
+  const P = penOf(p).play; return P ? TOY_KINDS.filter(k => P[k]) : [];
+}
+function coopGhost(p) {
+  const g = new THREE.Group();
+  for (const [name, M] of coopParts(p)) for (const m of meshesOf(parts[name])) { const k = new THREE.Mesh(m.geometry, m.material); k.matrixAutoUpdate = false; k.matrix.copy(M).multiply(m.matrixWorld); k.castShadow = true; k.receiveShadow = true; g.add(k); }
+  p.frame.add(g); return g;
+}
+function upgradeShow(p, n) {
+  if (UPG.p) upgradeDone(true);
+  Object.assign(UPG, { p, t: 0, swapped: false, cheered: false, puffIn: 0, n, before: toysOf(p), cardIn: -1 });
+  UPG.ghost = coopGhost(p); batchCoops();
+  const B = penOf(p).pen, c = p.frame.localToWorld(new THREE.Vector3(B ? (B.min[0] + B.max[0]) / 2 : 0, 0, B ? (B.min[2] + B.max[2]) / 2 : 0.4));
+  focusOn(c.x, c.z, sideways() ? 2.9 : 3.7);
+  renderer.shadowMap.needsUpdate = true; wake(3000);
+}
+// a puff of dust somewhere round the coop (its house and its pen's fence), rising and spreading
+function upPuff(p, big) {
+  if (!PUFF_TEX) PUFF_TEX = fxTexture64(64, c => { const gr = c.createRadialGradient(32, 32, 0, 32, 32, 30); gr.addColorStop(0, 'rgba(255,255,255,1)'); gr.addColorStop(0.6, 'rgba(255,255,255,0.7)'); gr.addColorStop(1, 'rgba(255,255,255,0)'); c.fillStyle = gr; c.beginPath(); c.arc(32, 32, 30, 0, Math.PI * 2); c.fill(); });
+  if (!UPG.mat) UPG.mat = new THREE.SpriteMaterial({ map: PUFF_TEX, color: '#e9dfc8', transparent: true, depthWrite: false });
+  const B = penOf(p).pen || { min: [-1.2, 0, -0.8], max: [1.2, 0, 1.6] }, r = Math.random, sp = new THREE.Sprite(UPG.mat.clone());
+  const onFence = r() < 0.55, x = onFence ? (r() < 0.5 ? B.min[0] : B.max[0]) : (r() - 0.5) * 1.3, z = onFence ? B.min[2] + r() * (B.max[2] - B.min[2]) : (r() - 0.3) * 1.1;
+  const at = p.frame.localToWorld(new THREE.Vector3(onFence && r() < 0.5 ? B.min[0] + r() * (B.max[0] - B.min[0]) : x, 0.1 + r() * 0.5, onFence && r() < 0.5 ? B.max[2] : z));
+  sp.position.copy(at); sp.scale.setScalar(0.01); sp.renderOrder = 5; scene.add(sp);
+  const a = r() * Math.PI * 2;
+  UPG.puffs.push({ sp, v: new THREE.Vector3(Math.cos(a) * (0.3 + r() * 0.5), 0.35 + r() * 0.6, Math.sin(a) * (0.3 + r() * 0.5)), s: (0.35 + r() * 0.35) * big, t: 0, life: 0.9 + r() * 0.5 });
+}
+function tickUpgrade(dt) {
+  for (let i = UPG.puffs.length - 1; i >= 0; i--) {
+    const P = UPG.puffs[i]; P.t += dt; const u = Math.min(1, P.t / P.life);
+    P.sp.position.addScaledVector(P.v, dt); P.v.multiplyScalar(1 - dt * 1.8); P.sp.scale.setScalar(P.s * (0.35 + u));
+    P.sp.material.opacity = 0.85 * (1 - u) * Math.min(1, P.t / 0.08);
+    if (u >= 1) { P.sp.removeFromParent(); P.sp.material.dispose(); UPG.puffs.splice(i, 1); }
+  }
+  if (UPG.cardIn >= 0 && (UPG.cardIn -= dt) < 0 && UPG.card) {      // (another card open: a new level's, say: it waits for it, a little while)
+    const c = UPG.card;
+    if ((gameUI.isOpen || MOVE.plot || DMOVE.id) && (c.wait = (c.wait || 0) + 0.5) < 45) UPG.cardIn = 0.5;
+    else { UPG.card = null; upgradedCard(c.p, c.fresh); }
+  }
+  const p = UPG.p; if (!p) { if (UPG.puffs.length) wake(200); return; }
+  UPG.t += dt; renderer.shadowMap.needsUpdate = true; wake(300);
+  const SHAKE = 0.6, SWAP = 1.15, END = 1.95, G = UPG.ghost;
+  if (!UPG.swapped) {
+    if (UPG.t > SHAKE) {                                    // (a little shake, the dust rising round it)
+      const k = Math.min(1, (UPG.t - SHAKE) / (SWAP - SHAKE));
+      G.position.set(Math.sin(UPG.t * 47) * 0.022 * k, Math.abs(Math.sin(UPG.t * 31)) * 0.02 * k, Math.cos(UPG.t * 41) * 0.018 * k);
+      if ((UPG.puffIn -= dt) <= 0) { UPG.puffIn = 0.05; upPuff(p, 1 + k); }
+    }
+    if (UPG.t >= SWAP) {                                    // (its new look, out of the dust)
+      G.removeFromParent(); retier(p); UPG.ghost = coopGhost(p); UPG.swapped = true;
+      for (let i = 0; i < 12; i++) upPuff(p, 2);
+    }
+  } else {
+    const u = Math.min(1, (UPG.t - SWAP) / (END - SWAP)), e = 1 - Math.pow(1 - u, 3), over = Math.sin(u * Math.PI) * 0.14 * (1 - u * 0.5);
+    G.scale.set(1.06 - 0.06 * e - over * 0.3, 0.3 + 0.7 * e + over, 1.06 - 0.06 * e - over * 0.3); G.position.set(0, 0, 0);
+    if (!UPG.cheered && u > 0.4) {                          // (stars and hearts over it)
+      UPG.cheered = true;
+      const top = p.frame.localToWorld(new THREE.Vector3(0, 1.3, 0));
+      for (let k = 0; k < 7; k++) spawnHeart(top.clone().add(new THREE.Vector3((k - 3) * 0.17, (k % 3) * 0.08, 0)), k % 2 === 0);
+    }
+    if (u >= 1) upgradeDone();
+  }
+}
+// the show over (or cut short: another one, the test's own): the coop back in its batch, the word, its card a moment later
+function upgradeDone(now = false) {
+  const p = UPG.p; if (!p) return;
+  if (UPG.ghost) UPG.ghost.removeFromParent(); UPG.ghost = null;
+  if (!UPG.swapped) retier(p);
+  UPG.p = null; batchCoops(); renderer.shadowMap.needsUpdate = true; wake(1000);
+  const gc = game.coop(p.gc.id), n = UPG.n;
+  hint(game.t('up_done', { coop: game.coopName(gc), look: game.lookName(gc), xp: n.xp }));
+  UPG.card = { p, fresh: toysOf(p).filter(k => !UPG.before.includes(k)) }; UPG.cardIn = now ? -1 : 0.7;
+  if (now) UPG.card = null;
+}
+// its card: the new look and what it brings; each new play thing, how the birds play with it; "Watch them play"
+function upgradedCard(p, fresh) {
+  if (!p.gc || gameUI.isOpen || MOVE.plot || DMOVE.id) return;
+  const kind = fresh.includes('swing') ? 'swing' : fresh.includes('xylo') ? 'xylo' : fresh.find(k => k !== 'ball') || null;
+  const who = kind && !nightAt(p) ? playWho(p) : null;
+  gameUI.upgradedCard(game.coop(p.gc.id), fresh, who ? () => { gameUI.close(); if (startPlay(who, kind)) { who.wait = 0; wake(2000); } } : null);
+  if (sideways()) {                                         // (the card on the right half: the coop in the middle of the left half)
+    const B = penOf(p).pen, c = p.frame.localToWorld(new THREE.Vector3(B ? (B.min[0] + B.max[0]) / 2 : 0, 0, B ? (B.min[2] + B.max[2]) / 2 : 0.4));
+    const size = view.size, upp = 2 * size / Math.max(1, canvas.clientHeight), side = (gameUI.sheet.offsetWidth + 24) / 2 * upp;
+    const right = new THREE.Vector3(1, 0, 0).applyQuaternion(camera.quaternion); right.y = 0; right.normalize();
+    focusOn(c.x + right.x * side, c.z + right.z * side, size);
+  }
+}
+function playWho(p) {      // (a grown bird free to go and play now)
+  return p.birds.find(b => b.kind !== 'chick' && !b.train && !b.play && !b.asleep && !b.mum && !b.cuddle && !b.called && !b.laying && !b.stay && !b.flight && !b.leaving && b.root.visible && !b.nightNow(0.6)) || null;
 }
 // a coop in its look (its tier) as the save has it now: the house, pen and fence (in their batches), its birds' yard and
 // what's in it, its play things, its feeder's grain, its lanterns, the walking grid and the grass round it
@@ -11101,7 +11198,7 @@ function frame(now) {
   if (poster) { tickPoster(dt); wake(100); }
   if (intro) { intro.update(dt); wake(100); }
   findFarmerBtn(); tickFocus(dt); tickViewTurn(dt); placeTag(dt); tickDogBtn(dt); tickHenBtns(dt); tickReplayBtn(); tickHint(dt); tickFarmerSay();
-  if (GAME_MODE) { gameTick(); tickBusy(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); tickRain(dt); tickSnow(dt); tickVisit(dt); placeBubbles(); tickTurnTip(now); }
+  if (GAME_MODE) { gameTick(); tickBusy(); tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickUpgrade(dt); tickHunt(dt); tickStray(dt); tickRain(dt); tickSnow(dt); tickVisit(dt); placeBubbles(); tickTurnTip(now); }
   if (!frozen) { WIND.time.value = now / 1000; WATER_T.value = (now / 1000) % 3600; }
   if (now - (DAY.lastSet || 0) > 250) { DAY.lastSet = now; applyDaylight(GROOM_LIVE.on ? 12.5 : clockHour()); }      // the light follows the clock (held at midday while a bird is groomed: groomLive)
   if (GROOM_LIVE.on) { /* (the grooming game over the farm: her drawn live, the farm not) */ }
@@ -11232,7 +11329,7 @@ window.__farm = {
   freeze: (on) => { frozen = on; },
   pause: (on) => { paused = on; },                         // tests: stop drawing (the test browser draws slowly) and draw once on demand
   draw: () => { for (const p of plots) for (const b of p.birds) placeBlob(b); placeTag(0); placeBubbles(); drawFarmerShadows(renderer); renderFarm(); },
-  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickHunt(dt); tickStray(dt); tickRain(dt); tickSnow(dt); tickVisit(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
+  step: (dt, n) => { for (let i = 0; i < n; i++) { tickFocus(dt); tickViewTurn(dt); if (poster) tickPoster(dt); if (intro) intro.update(dt); for (const p of plots) if (p.birds.length) { for (const b of p.birds) b.update(dt); if (p.kind === 'coop') separate(p.birds, dt); for (const b of p.birds) placeBlob(b); } tickNotes(dt); tickPenFx(dt); tickDoors(dt); tickFoxes(dt); if (GAME_MODE) { tickChicks(dt); tickLand(dt); tickMove(dt); tickClearing(dt); tickUpgrade(dt); tickHunt(dt); tickStray(dt); tickRain(dt); tickSnow(dt); tickVisit(dt); } } placeTag(dt * n); tickHint(dt * n); wake(300); },
   decor: () => decorList, props: () => V.props.map(q => { const pt = parts[q.model], bx = pt ? new THREE.Box3().setFromObject(pt) : null; return { model: q.model, pos: q.pos, deg: q.deg, s: q.s || 1, h: bx ? (bx.max.y - bx.min.y) * (q.s || 1) : 1, w: bx ? Math.max(bx.max.x - bx.min.x, bx.max.z - bx.min.z) * (q.s || 1) : 1 }; }), sails: () => sails, decorLife: () => decorLife, decorFree: (x, z) => decorFree && decorFree(x, z), coopPlots: () => plots.filter(p => p.kind === 'coop'), penOf, penVisit: (i, kind, j = 0) => { const p = plots.filter(q => q.kind === 'coop')[i]; henBird = p && p.birds[j]; return sendToPen(kind); }, penSpec, henTap: b => henTapped(b),
   inkPass: () => INK,
   spotChar: (x, z) => { const f = fieldAt(x, z), v = new THREE.Vector3(); let bl = ''; for (const b of blockers()) { if (b.r) { if (Math.hypot(x - b.c[0], z - b.c[1]) < b.r) bl = 'o'; continue; } v.set(x, 0, z).applyMatrix4(b.inv); if (v.x > b.x0 && v.x < b.x1 && v.z > b.z0 && v.z < b.z1) bl = (b.p.model || '?')[0]; }
@@ -11243,7 +11340,7 @@ window.__farm = {
   catchCard, stowCatch: () => stowCatch(), fishRules: () => FISH_RULES, pantrySheet: note => pantrySheet(note), bookOpen: tab => { if (tab) gameUI.bookTab = tab; bookSheet(); }, cuddleAll: i => cuddleAll(gamePlots()[i].gc.id), cuddleQueue: () => CUDDLE_ALL.slice(), nightBtn: () => nightBtn(), goodnight: () => goodnightRound(), nightBubble: () => { placeBubbles(); const b = nightBubble(); return b.hidden ? null : b.textContent; }, nightRun: () => NIGHT_RUN, frogPond: () => frogPond,
   jobList: () => JOBQ.map(q => ({ key: q.key, kind: q.kind, label: q.label })), tickJobs,
   pointersDown: () => pointers.size, wantQuality: n => { wantQ = n; },
-  foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: i => tryUpgrade(gamePlots()[i]), retier: i => retier(gamePlots()[i]), greetAt: (x, z) => greetFarmer([x, z]), nearHim: i => { const P = penSpec(gamePlots()[i]), b = gamePlots()[i].birds.find(x => x.train); return P && b ? P.nearHim(b) : null; }, apples: { spot: (i, side) => appleSpot(gamePlots()[i], side || (gamePlots()[i].gc.ap || {}).side), sideFor: i => appleSideFor(gamePlots()[i], game.data.coops.find(c => c.id === gamePlots()[i].gc.id)), foot: i => footOf(game.coop(gamePlots()[i].gc.id)), why: (i, side) => { const c = game.coop(gamePlots()[i].gc.id); return coopSpot(spotOf(c), { ...c, ap: { ...(c.ap || {}), side } }).why; }, of: i => gamePlots()[i].apple, part: () => !!parts.apple_tub, plant: i => appleTree(gamePlots()[i]), eggTap: i => appleEggTap(gamePlots()[i]), treeTap: i => appleTreeTap(gamePlots()[i]) }, penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
+  foxes: () => foxes, foxLineup: () => foxLineup, dog: () => farmDog, kennel: KENNEL_AT, kennelName: () => kennelBoard && kennelBoard.mesh.userData.name, dogName: () => dogName, setDogName, cleanName, geeseLineup: () => geeseLineup, frogLineup: () => frogLineup, fishLineup: () => fishLineup, fishing: () => FISHING, fishers: () => FISHERS, fishSeq: () => FSEQ, dock: () => dockInfo(), dockGate: () => DGATE, dockCard, startFishing, fishWater, river: () => { const R = riverInfo(); return R && { stand: R.stand, face: R.face, deck: R.deck, mid: R.mid, s0: R.s0, ends: R.ends, n: [R.n.x, R.n.z], bucket: [R.bucket.x, R.bucket.y, R.bucket.z] }; }, riverCard, riverWater, riverCast, groundAt: (x, z) => groundY(x, z), streamAt: (x, z) => { const R = riverInfo(); return R && streamNear(R.S, x, z); }, farmerLineup: () => farmerLineup, frogs: () => frogPond, ducks: () => duckFlock, farmer: () => farmLife, geese: () => geeseFlock, nav: () => navGrid(), visit: () => nightVisit, onBridge, penObstacles: () => PEN.obstacles, toys: () => plots.filter(p => p.toys), startPlay, endPlay, playFxLive, upgrade: (i, show) => { const r = tryUpgrade(gamePlots()[i]); if (!show) upgradeDone(true); return r; }, upShow: () => ({ on: !!UPG.p, t: +UPG.t.toFixed(2), swapped: UPG.swapped, puffs: UPG.puffs.length, card: !!UPG.card, scale: UPG.ghost ? +UPG.ghost.scale.y.toFixed(2) : null }), retier: i => retier(gamePlots()[i]), greetAt: (x, z) => greetFarmer([x, z]), nearHim: i => { const P = penSpec(gamePlots()[i]), b = gamePlots()[i].birds.find(x => x.train); return P && b ? P.nearHim(b) : null; }, apples: { spot: (i, side) => appleSpot(gamePlots()[i], side || (gamePlots()[i].gc.ap || {}).side), sideFor: i => appleSideFor(gamePlots()[i], game.data.coops.find(c => c.id === gamePlots()[i].gc.id)), foot: i => footOf(game.coop(gamePlots()[i].gc.id)), why: (i, side) => { const c = game.coop(gamePlots()[i].gc.id); return coopSpot(spotOf(c), { ...c, ap: { ...(c.ap || {}), side } }).why; }, of: i => gamePlots()[i].apple, part: () => !!parts.apple_tub, plant: i => appleTree(gamePlots()[i]), eggTap: i => appleEggTap(gamePlots()[i]), treeTap: i => appleTreeTap(gamePlots()[i]) }, penSpecOf: i => { const P = penSpec(gamePlots()[i]), f = gamePlots()[i].frame, L = q => { const v = f.worldToLocal(new THREE.Vector3(q[0], 0, q[1])); return [+v.x.toFixed(2), +v.z.toFixed(2)]; }; return P && { feederAt: L(P.feederAt), clear: L(P.clear), throwAt: L(P.throwAt), crouchAt: L(P.crouchAt), in: P.in.map(L), yard: penOf(gamePlots()[i]).yard }; }, doorTapAt: i => doorTap(gamePlots()[i]), doorOf: i => { const d = gamePlots()[i].door; return d && { goal: d.goal, s: d.s, badge: !!(d.badge && d.badge.visible), kind: d.kind }; }, coopLook: i => coopLook(gamePlots()[i]), footOf: i => footOf(game.data.coops[i]), coopSpotAt: (sp, tier, i = 0) => coopSpot(sp, { ...game.data.coops[i], tier }), moveCoopTo: (i, sp) => { const p = gamePlots()[i]; startMove(p); moveTo(sp.x, sp.z, sp.deg, true); return placeCoop(); },
   doorTap, setDoor, doors: DOORS,
   game: () => game, gameUI: () => gameUI, openBirdCard, busyText: () => farmerBusyText(), farmerJob: () => farmerJob(), tickBusy: () => tickBusy(), billTip: b => billTip(b), bridges: () => bridgeDecks().map(B => ({ pos: B.pos, x0: B.x0, x1: B.x1, half: B.half, s: B.s, top: Math.max(...B.prof) * B.s, inv: B.inv.elements.slice() })),
   // tests (the game's eggs and feed): the upkeep at a given time, a coop's nest collected, its feeder's card, filled
