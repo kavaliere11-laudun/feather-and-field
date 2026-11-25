@@ -5,7 +5,8 @@ import GoogleMobileAds
 import UserMessagingPlatform
 
 // Free coins for a short video (24 Nov 2026, Audrey: "Ads before launch"; her 2 Nov choices: "Free coins in the shop", "5 a
-// day", "Contextual for everyone"): Google's AdMob, a rewarded video the player chooses to watch from the shop's Coins shelf.
+// day", "Contextual for everyone"): Google's AdMob (her account, 25 Nov 2026), a rewarded video the player chooses to watch
+// from the shop's Coins shelf.
 //   watch(): Google's consent message first where the law asks for it (the UK and Europe: Google's own, set in AdMob), then a
 //     video, then { earned } once it's closed: earned only if it played to the end (Google says so). Nothing of Google's is
 //     started before the first tap on Watch.
@@ -13,7 +14,8 @@ import UserMessagingPlatform
 //   hello(): the plugin is there; whether the choices form is asked for.
 // Contextual adverts only (npa: nothing about the player is used to choose them), rated for everyone (G). No tracking: the
 // app never asks to track (no IDFA). The App ID and the video's unit are in Info.plist (GADApplicationIdentifier,
-// FFRewardedUnit): public identifiers, as in any app; no keys or secrets here.
+// FFRewardedUnit; FFRewardedTestUnit, Google's test video, in TestFlight): public identifiers, as in any app; no keys or
+// secrets here.
 @objc(FFAdsPlugin)
 public class FFAdsPlugin: CAPInstancePlugin, CAPBridgedPlugin, FullScreenContentDelegate {
     public let identifier = "FFAdsPlugin"
@@ -30,7 +32,10 @@ public class FFAdsPlugin: CAPInstancePlugin, CAPBridgedPlugin, FullScreenContent
     private var showing: CAPPluginCall?
     private var earned = false
 
-    private var unit: String { (Bundle.main.object(forInfoDictionaryKey: "FFRewardedUnit") as? String) ?? "" }
+    // TestFlight and Apple's review run with a sandbox receipt: Google's test video there, never a real ad (AdMob asks that an
+    // app's makers and testers never watch its real ads); the game's own video only in the App Store's copy
+    private var testing: Bool { Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt" }
+    private var unit: String { (Bundle.main.object(forInfoDictionaryKey: testing ? "FFRewardedTestUnit" : "FFRewardedUnit") as? String) ?? "" }
     private func privacyAsked() -> Bool { ConsentInformation.shared.privacyOptionsRequirementStatus == .required }
 
     @objc func hello(_ call: CAPPluginCall) { call.resolve(["v": 1, "privacy": started && privacyAsked()]) }

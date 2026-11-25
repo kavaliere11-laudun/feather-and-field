@@ -60,11 +60,14 @@
 		<string>it</string>
 		<string>pt-BR</string>
 	</array>
-	<!-- free coins for a short video (FFAdsPlugin.swift): Google's AdMob. Google's test App ID and test video until Audrey's own
-	     AdMob account gives the game's (public identifiers, as in any app). No tracking: no NSUserTrackingUsageDescription. -->
+	<!-- free coins for a short video (FFAdsPlugin.swift): Google's AdMob, Audrey's account (25 Nov 2026): the game's App ID and
+	     its "Free coins" rewarded unit (public identifiers, as in any app); Google's test video for TestFlight and Apple's review.
+	     No tracking: no NSUserTrackingUsageDescription. -->
 	<key>GADApplicationIdentifier</key>
-	<string>ca-app-pub-3940256099942544~1458002511</string>
+	<string>ca-app-pub-4555396722789636~7747415388</string>
 	<key>FFRewardedUnit</key>
+	<string>ca-app-pub-4555396722789636/8158352610</string>
+	<key>FFRewardedTestUnit</key>
 	<string>ca-app-pub-3940256099942544/1712485313</string>
 	<key>GADDelayAppMeasurementInit</key>
 	<true/>
