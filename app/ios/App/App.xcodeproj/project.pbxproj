@@ -20,6 +20,7 @@
 		FF51A0042FF0000100AA0001 /* GameViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF51A0032FF0000100AA0001 /* GameViewController.swift */; };
 		FF51A0062FF0000100AA0001 /* FFSignInPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF51A0052FF0000100AA0001 /* FFSignInPlugin.swift */; };
 		FF51A0092FF0000100AA0001 /* FFAdsPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF51A0082FF0000100AA0001 /* FFAdsPlugin.swift */; };
+		FF51A0112FF0000100AA0001 /* FFAgePlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF51A0102FF0000100AA0001 /* FFAgePlugin.swift */; };
 		FF51A00E2FF0000100AA0001 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = FF51A00C2FF0000100AA0001 /* GoogleMobileAds */; };
 		FF51A00F2FF0000100AA0001 /* GoogleUserMessagingPlatform in Frameworks */ = {isa = PBXBuildFile; productRef = FF51A00D2FF0000100AA0001 /* GoogleUserMessagingPlatform */; };
 /* End PBXBuildFile section */
@@ -39,6 +40,7 @@
 		FF51A0012FF0000100AA0001 /* FFStorePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFStorePlugin.swift; sourceTree = "<group>"; };
 		FF51A0032FF0000100AA0001 /* GameViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameViewController.swift; sourceTree = "<group>"; };
 		FF51A0052FF0000100AA0001 /* FFSignInPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFSignInPlugin.swift; sourceTree = "<group>"; };
+		FF51A0102FF0000100AA0001 /* FFAgePlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFAgePlugin.swift; sourceTree = "<group>"; };
 		FF51A0082FF0000100AA0001 /* FFAdsPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FFAdsPlugin.swift; sourceTree = "<group>"; };
 		FF51A0072FF0000100AA0001 /* App.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = App.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -84,6 +86,7 @@
 				FF51A0012FF0000100AA0001 /* FFStorePlugin.swift */,
 				FF51A0052FF0000100AA0001 /* FFSignInPlugin.swift */,
 				FF51A0082FF0000100AA0001 /* FFAdsPlugin.swift */,
+				FF51A0102FF0000100AA0001 /* FFAgePlugin.swift */,
 				FF51A0072FF0000100AA0001 /* App.entitlements */,
 				504EC30B1FED79650016851F /* Main.storyboard */,
 				504EC30E1FED79650016851F /* Assets.xcassets */,
@@ -185,6 +188,7 @@
 				FF51A0022FF0000100AA0001 /* FFStorePlugin.swift in Sources */,
 				FF51A0062FF0000100AA0001 /* FFSignInPlugin.swift in Sources */,
 				FF51A0092FF0000100AA0001 /* FFAdsPlugin.swift in Sources */,
+				FF51A0112FF0000100AA0001 /* FFAgePlugin.swift in Sources */,
 				9582B6832FE993A70072D4E8 /* SceneDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

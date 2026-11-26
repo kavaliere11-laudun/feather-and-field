@@ -31,6 +31,7 @@ public class FFAdsPlugin: CAPInstancePlugin, CAPBridgedPlugin, FullScreenContent
     private var waiting: [(RewardedAd?) -> Void] = []
     private var showing: CAPPluginCall?
     private var earned = false
+    private var childAds: Bool?
 
     // TestFlight and Apple's review run with a sandbox receipt: Google's test video there, never a real ad (AdMob asks that an
     // app's makers and testers never watch its real ads); the game's own video only in the App Store's copy
@@ -41,9 +42,10 @@ public class FFAdsPlugin: CAPInstancePlugin, CAPBridgedPlugin, FullScreenContent
     @objc func hello(_ call: CAPPluginCall) { call.resolve(["v": 1, "privacy": started && privacyAsked()]) }
 
     // Google's consent message (if the law asks for it here), then the ads part started, once
-    private func prepare(_ done: @escaping (Bool) -> Void) {
+    private func prepare(child: Bool = false, _ done: @escaping (Bool) -> Void) {
         DispatchQueue.main.async {
             let params = RequestParameters()
+            params.isTaggedForUnderAgeOfConsent = child
             ConsentInformation.shared.requestConsentInfoUpdate(with: params, completionHandler: { _ in
                 Task { @MainActor in
                     if let vc = self.bridge?.viewController, ConsentInformation.shared.formStatus == FormStatus.available {
@@ -88,7 +90,17 @@ public class FFAdsPlugin: CAPInstancePlugin, CAPBridgedPlugin, FullScreenContent
         if showing != nil { call.reject("a video is already showing", "busy"); return }
         if unit.isEmpty { call.reject("no video unit", "noad"); return }
         let next = call.getBool("next") ?? false
-        prepare { ok in
+        let child = call.getBool("child") ?? false              // (a player under 13: child-directed, no consent asked of them: age.js)
+        if child {                                               // (literals: they suit the SDK's tri-state settings)
+            MobileAds.shared.requestConfiguration.tagForChildDirectedTreatment = true
+            MobileAds.shared.requestConfiguration.tagForUnderAgeOfConsent = true
+        } else {
+            MobileAds.shared.requestConfiguration.tagForChildDirectedTreatment = false
+            MobileAds.shared.requestConfiguration.tagForUnderAgeOfConsent = false
+        }
+        if child != (self.childAds ?? child) { self.ready = nil }      // (a video got ready for the other kind of player: not shown)
+        self.childAds = child
+        prepare(child: child) { ok in
             if !ok { call.reject("no consent to ask for videos", "noconsent"); return }
             self.load { ad in
                 guard let ad = ad, let vc = self.bridge?.viewController else { call.reject("no video just now", "noad"); return }
