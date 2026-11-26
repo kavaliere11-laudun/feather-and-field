@@ -17,7 +17,13 @@ const fill = (s, L) => s.replace(/\{(\w+)\}/g, (m, k) => {
   const w = typeof v === 'object' ? (v[L] ?? v.en) : v;
   return k === 'email' ? `<a href="mailto:${esc(w)}">${esc(w)}</a>` : esc(w);
 });
-for (const [PAGE, TITLE] of [['privacy', 'Privacy'], ['support', 'Help']]) {
+// The licences page too (26 Nov 2026, the launch review): licences/<lang>.json (its title, a line, the way back) and the
+// notices themselves, the same in every language as their authors wrote them (licences/notices.json: tools/licences.mjs).
+const notices = JSON.parse(fs.readFileSync(DIR + 'licences/notices.json', 'utf8'));
+const noticesHtml = T => notices.map(n => `<h2>${esc(n.name)}</h2>
+<p class="lic">${esc([n.v, n.lic].filter(Boolean).join(' · '))}${n.app ? ` · <span class="app">${esc(T.app)}</span>` : ''} · <a href="${esc(n.url)}" rel="noopener">${esc(n.url.replace(/^https:\/\//, ''))}</a></p>
+<pre>${esc(n.text)}</pre>`).join('\n');
+for (const [PAGE, TITLE] of [['privacy', 'Privacy'], ['support', 'Help'], ['licences', 'Licences']]) {
 const have = LANGS.filter(L => fs.existsSync(DIR + `${PAGE}/${L}.json`));
 const sections = have.map(L => {
   const T = JSON.parse(fs.readFileSync(DIR + `${PAGE}/${L}.json`, 'utf8')), f = s => fill(safe(s), L);
@@ -26,8 +32,8 @@ const sections = have.map(L => {
 <h1>${f(T.title)}</h1>
 ${T.updated ? `<p class="date">${f(T.updated)}</p>` : ''}
 <p class="intro">${f(T.intro)}</p>
-${body}
-<p class="contact">${f(T.contact)}</p>
+${body}${PAGE === 'licences' ? noticesHtml(T) : ''}
+${T.contact ? `<p class="contact">${f(T.contact)}</p>` : ''}
 <p><a class="back" href="../">${f(T.back)}</a></p>
 </section>`;
 }).join('\n');
@@ -54,6 +60,8 @@ const html = `<!doctype html>
   .intro { background: var(--sage); border-radius: 16px; padding: 12px 15px; margin-top: 12px; }
   .contact { margin-top: 26px; }
   a { color: var(--meadow); font-weight: 800; overflow-wrap: anywhere; }
+  pre { white-space: pre-wrap; overflow-wrap: anywhere; font: 500 12.5px/1.45 ui-monospace, Menlo, monospace; background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px; max-height: 260px; overflow: auto; }
+  .lic { color: var(--ink-2); font-size: 14.5px; } .lic .app { color: var(--meadow); }
   a.back { display: inline-block; margin-top: 10px; background: #c8452f; color: #fff; text-decoration: none; border-radius: 999px; padding: 11px 20px; font: 600 17px Fredoka, Nunito, sans-serif; }
 </style>
 </head>

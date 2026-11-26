@@ -38,7 +38,8 @@ const DEMO_T = {
   pt: { tab: 'Moedas', note: 'As moedas dão uma ajuda. Tudo no jogo também se ganha jogando.', purse: 'Uma bolsa de moedas', basket: 'Uma cesta de moedas', sack: 'Um saco de moedas', cart: 'Uma carroça de moedas', coins: '{n} moedas', thanks_t: 'Obrigado!', thanks_coins: '{n} moedas estão na sua bolsa.', thanks_rare: 'Bem-vindo, trio {breed}! A Pagoda deles espera em Seus galinheiros.', adopt: 'Adotar este trio · {p}', adopt_note: 'Um galo, duas galinhas e a Pagoda deles. Ou consiga-os de graça criando.', all_t: 'As quatro cores raras', all_l: 'Paint, Lavanda, Splash e Carijó: quatro trios e suas quatro Pagodas.', all: 'Adotar os quatro · {p}', thanks_all: 'Bem-vindos, os quatro trios raros! As Pagodas deles esperam em Seus galinheiros.', restore_t: 'Compras', restore: 'Restaurar compras', restore_real: 'Comprado em outro iPhone ou após reinstalar: tudo o que foi comprado para sempre volta.' },
 };
 const NOTE_KINDS = { eggs: '🥚', chicks: '🐣', crops: '🌾', shows: '🏆' };      // (the reminders one can choose: notify.js GROUPS)
-const PRIVACY_ONLINE = 'https://kavaliere11-laudun.github.io/feather-and-field/privacy.html';      // (the privacy page at the usual address: the store app's link, and the stores')
+const PRIVACY_ONLINE = 'https://kavaliere11-laudun.github.io/feather-and-field/privacy.html';
+const LICENCES_ONLINE = 'https://kavaliere11-laudun.github.io/feather-and-field/licences.html';      // (the licences page, the same way: the launch review, 26 Nov 2026)      // (the privacy page at the usual address: the store app's link, and the stores')
 function firstGameKept() { try { return !!localStorage.getItem(FIRST_SAVE); } catch (e) { return false; } }
 const SIDEWAYS = '(orientation: landscape) and (min-aspect-ratio: 5/4)';      // (as index.html: the welcome as a card on the right)
 // the welcome pictures (6 Nov 2026, painted, Audrey's choice): a wide one for a screen held sideways and a tall one held
@@ -2009,6 +2010,7 @@ export class GameUI {
   }
   // the privacy page (privacy.mjs), in the game's language, opened beside the game
   // (in the store app, the site's copy: a new window there opens in Safari, which can't reach the app's own files)
+  licencesLink() { const a = el('a', 'glink glicences', this.t('licences')); a.href = (window.__ffApp === true ? LICENCES_ONLINE : 'licences.html') + '?lang=' + this.g.lang; a.target = '_blank'; a.rel = 'noopener'; return a; }
   privacyLink() { const a = el('a', 'glink gprivacy', this.t('privacy')); a.href = (window.__ffApp === true ? PRIVACY_ONLINE : 'privacy.html') + '?lang=' + this.g.lang; a.target = '_blank'; a.rel = 'noopener'; return a; }
   // the once-only suggestion, a few days into a farm (main.js showNews; account.js nudgeDue)
   accountNudge() {
@@ -2144,7 +2146,8 @@ export class GameUI {
     b.append(st);
     if (this.o.version) b.append(el('p', 'gnote gver', this.t('settings_version', { v: this.o.version })));
     if (this.o.picDiag) { const pd = el('p', 'gnote gsound-diag gpic-diag', this.o.picDiag()); b.append(pd); }      // (how sharp the picture is drawn just now, and how smoothly: for telling Claude, 13 Nov 2026)
-    b.append(this.credits(), this.privacyLink());
+    const links = el('p', 'gnote glinks'); links.append(this.privacyLink(), document.createTextNode(' · '), this.licencesLink());
+    b.append(this.credits(), links);
   }
   // thanks to whose music and sounds these are (audio/CREDITS.txt); the peacock's recording (CC BY 4.0) asks for its
   // credit where players see it: its recordist and the licence, each a link
