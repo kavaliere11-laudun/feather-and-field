@@ -712,6 +712,21 @@
   .gbtn.gacct-apple svg { width: 1.1em; height: 1.1em; flex: none; fill: currentColor; margin-top: -3px; }
   .gacct-ins { display: flex; flex-wrap: wrap; gap: 8px; margin: 4px 0 2px; }
   .gacct .gacct-ins .gsmallbtn { margin: 0; }
+  /* the age question (age.js): the year from a list, none picked to begin with, then OK */
+  .gage { flex: 1 1 100%; margin: 2px 0; }
+  .gage .gage-q { margin: 0 0 6px; }
+  .gage-row { display: flex; gap: 8px; align-items: center; }
+  .ginput.gage-y { flex: 0 1 150px; min-width: 0; padding: 8px 34px 8px 12px; -webkit-appearance: none; appearance: none;
+            background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' fill='none' stroke='%236b5a45' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") no-repeat right 12px center / 12px 8px; }
+  .gage .gage-ok { margin: 0; } .gage .gage-ok:disabled { opacity: .45; }
+  .gage .gage-note { margin: 6px 0 0; }
+  .gacct-kids { flex: 1 1 100%; margin: 2px 0; }
+  .gfree .gage { width: 100%; margin-top: 6px; text-align: center; }
+  .gfree .gage .gage-q { font-size: 15px; margin-bottom: 6px; }
+  .gfree .gage-row { flex-direction: column; align-items: stretch; gap: 6px; }
+  .gfree .ginput.gage-y { flex: none; width: 100%; font-size: 16px; }
+  .gfree .gage .gage-ok { width: 100%; }
+  .gfree .gage .gage-note { font-size: 12px; }
   .gfox-row.gacct-nudge2 { flex-direction: column; gap: 8px; margin-top: 10px; } .gfox-row.gacct-nudge2 .gbtn { flex: none; width: 100%; }
   /* the farm code (release 1 step 9g) */
   .gcode .gsmallbtn { align-self: flex-start; margin: 4px 0 2px; }
@@ -991,6 +1006,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1795682971"></script>
+<script src="app.js?v=1795730992"></script>
 </body>
 </html>
