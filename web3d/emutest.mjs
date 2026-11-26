@@ -24,6 +24,7 @@ const farmDoc = async uid => { const r = await fetch(`${FS}/farms/${uid}`, { hea
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 async function phone(tag) {
   const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, deviceScaleFactor: 2, locale: 'en-GB' });
+  await ctx.addInitScript(() => { try { if (!localStorage.getItem('ff3d.age')) localStorage.setItem('ff3d.age', '{"b":"adult","by":"asked"}'); } catch (e) { /* */ } });      // (an adult's age group already given: agetest.mjs tests the question)
   ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);      // (a running farm's frames are slow in the test browser's software drawing, Storybook's the more)
   await ctx.addInitScript(u => { window.__emuGoogle = u; }, SAM);
   const p = await ctx.newPage(); p.errs = []; p.on('pageerror', e => p.errs.push(e.message)); p.tag = tag;

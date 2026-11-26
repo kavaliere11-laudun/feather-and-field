@@ -18,7 +18,7 @@ function plugin() {
 const within = (p, ms) => Promise.race([p, new Promise((res, rej) => setTimeout(() => rej(Object.assign(new Error('slow'), { code: 'slow' })), ms))]);
 
 export class Ads {
-  // o: { done(coins) (coins given: say it, refresh), say(text) }
+  // o: { done(coins) (coins given: say it, refresh), say(text), age (age.js) }
   constructor(game, o = {}) {
     this.g = game; this.o = o; this.P = plugin(); this.on = false; this.busy = false;
     try { this.privacy = localStorage.getItem(PRIV_KEY) === '1'; } catch (e) { this.privacy = false; }
@@ -33,7 +33,8 @@ export class Ads {
     if (!this.left()) return 'out';
     this.busy = true;
     try {
-      const r = await within(this.P.watch({ next: this.left() > 1 }), 300e3);      // (Google's consent message and the video itself are in this wait)
+      const G = this.o.age, band = G ? G.band() : null;      // (a player under 13, or not known: child-directed videos, no consent asked of them: age.js)
+      const r = await within(this.P.watch({ next: this.left() > 1, child: band !== 'adult' && band !== 'teen' }), 300e3);      // (Google's consent message and the video itself are in this wait)
       if (r && typeof r.privacy === 'boolean') this.keepPrivacy(r.privacy);
       if (!r || r.earned !== true) return 'stopped';
       if (!this.g.adWatched()) return 'out';

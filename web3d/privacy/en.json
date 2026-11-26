@@ -47,7 +47,9 @@
   {
    "h": "Children",
    "p": [
-    "Feather & Field is made for adults and young adults. Signing in needs a Google account or an Apple Account, and each sets its own minimum age. The game doesn’t knowingly collect anything from children under 13."
+    "Anyone can play. Before a first sign-in or a first video, the game asks the year you were born, or, in the iPhone app where the law asks for it, uses the age range your Apple Account shares. Only the age group (under 13, 13 to 17, or adult) is kept, on your phone; the year itself isn’t kept or sent anywhere.",
+    "Players under 13 can’t sign in, so nothing about them is kept online. If they choose to watch a video, Google is told it’s for a child: it’s suitable for children, nothing about the child is used to choose it, and Google uses the device’s data only to show it, count it and keep it safe from fraud.",
+    "If you think a child under 13 has signed in, write to us and we’ll delete the account."
    ]
   },
   {

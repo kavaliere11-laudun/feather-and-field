@@ -16,6 +16,7 @@ const accounts = async () => { const r = await fetch('http://127.0.0.1:9099/iden
 const farmDoc = async uid => { const r = await fetch(`${FS}/farms/${uid}`, { headers: { Authorization: 'Bearer owner' } }); return r.status === 200; };
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await b.newContext({ viewport: { width: 874, height: 402 }, hasTouch: true, isMobile: true, locale: 'en-GB' });
+await ctx.addInitScript(() => { try { if (!localStorage.getItem('ff3d.age')) localStorage.setItem('ff3d.age', '{"b":"adult","by":"asked"}'); } catch (e) { /* */ } });      // (an adult's age group already given: agetest.mjs tests the question)
 ctx.setDefaultTimeout(120000);
 await ctx.addInitScript(() => {
   window.__ffApp = true; window.__asked = [];

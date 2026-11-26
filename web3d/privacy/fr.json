@@ -47,7 +47,9 @@
   {
    "h": "Les enfants",
    "p": [
-    "Feather & Field est fait pour les adultes et les jeunes adultes. Se connecter demande un compte Google ou un compte Apple, et chacun fixe son propre âge minimum. Le jeu ne collecte sciemment aucune information auprès d’enfants de moins de 13 ans."
+    "Tout le monde peut jouer. Avant une première connexion ou une première vidéo, le jeu demande votre année de naissance ou, dans l’app iPhone là où la loi le demande, utilise la tranche d’âge que partage votre compte Apple. Seule la tranche d’âge (moins de 13 ans, 13 à 17 ans ou adulte) est gardée, sur votre téléphone ; l’année elle-même n’est ni gardée ni envoyée.",
+    "Les joueurs de moins de 13 ans ne peuvent pas se connecter : rien les concernant n’est gardé en ligne. S’ils choisissent de regarder une vidéo, Google est prévenu qu’elle est destinée à un enfant : elle convient aux enfants, rien sur l’enfant ne sert à la choisir, et Google n’utilise les données de l’appareil que pour la montrer, la compter et la protéger de la fraude.",
+    "Si vous pensez qu’un enfant de moins de 13 ans s’est connecté, écrivez-nous et nous supprimerons le compte."
    ]
   },
   {

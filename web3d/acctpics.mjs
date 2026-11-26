@@ -16,6 +16,7 @@ const off = p => p.evaluate(() => { const s = document.querySelector('.gsheet:no
 const shot = async (p, name, sel) => { await p.evaluate(s => { document.getAnimations().forEach(a => a.finish()); const e = s && document.querySelector(s); if (e) e.scrollIntoView({ block: 'center' }); }, sel); await p.waitForTimeout(200); await p.screenshot({ path: `${OUT}/${name}.png` }); };
 for (const L of LANGS) for (const [W, H, way] of SIZES) {
   const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, deviceScaleFactor: 2, locale: LOC[L] });
+  await ctx.addInitScript(() => { try { if (!localStorage.getItem('ff3d.age')) localStorage.setItem('ff3d.age', '{"b":"adult","by":"asked"}'); } catch (e) { /* */ } });      // (an adult's age group already given: agetest.mjs tests the question)
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11:00&account=fake`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 });

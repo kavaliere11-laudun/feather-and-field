@@ -68,6 +68,7 @@ const AUDIT = () => {
 for (const L of LANGS) for (const [W, H] of SIZES) {
   const tag = `${L} ${W}x${H}`;
   const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, locale: LOC[L], deviceScaleFactor: 1 });
+  await ctx.addInitScript(() => { try { if (!localStorage.getItem('ff3d.age')) localStorage.setItem('ff3d.age', '{"b":"adult","by":"asked"}'); } catch (e) { /* */ } });      // (an adult's age group already given: agetest.mjs tests the question)
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.addInitScript(() => { window.__T = new Date('2026-11-06T10:00:00Z').getTime(); Date.now = () => window.__T; });
   await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });

@@ -24,6 +24,7 @@ const cloud = {}; let offline = new Set();
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 async function phone(tag) {
   const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, deviceScaleFactor: 2, locale: LANG === 'fr' ? 'fr-FR' : 'en-GB' });
+  await ctx.addInitScript(() => { try { if (!localStorage.getItem('ff3d.age')) localStorage.setItem('ff3d.age', '{"b":"adult","by":"asked"}'); } catch (e) { /* */ } });      // (an adult's age group already given: agetest.mjs tests the question)
   ctx.setDefaultTimeout(120000); ctx.setDefaultNavigationTimeout(120000);      // (Storybook's outline picture is slow in the test browser's software drawing: a screenshot or a reload of a running farm can wait on it)
   await ctx.exposeFunction('__fakeCloud', (op, a) => {
     if (offline.has(tag)) throw new Error('offline');

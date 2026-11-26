@@ -363,7 +363,7 @@ export class GameUI {
         const A = this.o.account;
         // a farm saved online: "Sign in" there brings it to this phone (account.js). Google's sign-in is got ready only
         // once that's tapped (privacy: a new phone's welcome doesn't reach Google by itself), then "Sign in with Google"
-        if (A && A.on) {
+        if (A && A.on && !(this.o.age && this.o.age.child())) {      // (not for a player under 13: age.js)
           const si = el('button', 'glink gwelcome-signin', this.t('welcome_signin')); si.type = 'button';
           si.addEventListener('click', () => {
             const box = el('div', 'gwelcome-acct');
@@ -1466,6 +1466,11 @@ export class GameUI {
       const go = el('button', 'gbtn gsmallbtn gpage-go giap-watch', this.t('free_btn')); go.type = 'button';
       go.addEventListener('click', async () => {
         if (go.disabled) return;
+        const G = this.o.age;
+        if (G && !G.band()) {                              // (the age group not known yet: the question first, then the video: age.js)
+          const q = this.ageAsk(() => { const c2 = this.freeCard(); card.replaceWith(c2); const g2 = c2.querySelector('.giap-watch'); if (g2) g2.click(); });
+          go.replaceWith(q); requestAnimationFrame(() => q.scrollIntoView({ block: 'nearest', behavior: 'smooth' })); return;
+        }
         go.disabled = true; go.textContent = this.t('free_wait');
         const r = await A.watch();
         if (r === 'stopped' && this.o.say) this.o.say(this.t('free_stop'));
@@ -1925,9 +1930,11 @@ export class GameUI {
     const draw = () => {
       card.replaceChildren();
       const hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '☁️'), el('span', 'gcard-t', this.t('acct_t'))); card.append(hd);
-      if (!A.user) {
+      const kid = !A.user && this.o.age && this.o.age.child();      // (a player under 13: only the line saying the farm stays here: age.js)
+      if (kid) card.append(el('p', 'gnote gacct-kids', this.t('acct_kids')));
+      else if (!A.user) {
         card.append(el('p', 'gnote', this.t(A.native ? 'acct_how_app' : 'acct_how')));
-        const ins = el('div', 'gacct-ins'); ins.append(...this.signInBtns(A, 'gbtn gsmallbtn')); card.append(ins);
+        const ins = el('div', 'gacct-ins'); ins.append(...this.signInBtns(A, 'gbtn gsmallbtn', null, () => draw())); card.append(ins);
       } else {
         const nm = A.name();
         card.append(el('p', 'gtext gacct-who', A.by() === 'apple' ? (nm ? this.t('acct_who_apple', { name: nm }) : this.t('acct_in_apple')) : this.t('acct_who', { name: nm })));
@@ -1944,7 +1951,8 @@ export class GameUI {
         });
         row.append(out, del); card.append(row);
       }
-      card.append(el('p', 'gnote gacct-privacy', this.t(A.native ? 'acct_privacy_app' : 'acct_privacy')), this.privacyLink());
+      if (!kid) card.append(el('p', 'gnote gacct-privacy', this.t(A.native ? 'acct_privacy_app' : 'acct_privacy')));
+      card.append(this.privacyLink());
     };
     draw();
     const stop = A.watch(() => { if (!card.isConnected) { stop(); return; } draw(); });
@@ -1972,7 +1980,12 @@ export class GameUI {
   // the sign-in buttons: Google's; in the app (account.js A.native), Sign in with Apple first, in Apple's black with its logo
   // (as Apple asks), then Google's. Each ready once the online side is (Google's window opens straight from the tap);
   // then(ok) after its tap
-  signInBtns(A, cls, then) {
+  // A player under 13 (age.js): no buttons, a line saying the farm stays on this phone; the age group not known yet: the
+  // question first (ageAsk), the buttons (or that line) once it's answered (asked(): the card drawn again instead)
+  signInBtns(A, cls, then, asked) {
+    const G = this.o.age;
+    if (G && G.child()) return [el('p', 'gnote gacct-kids', this.t('acct_kids'))];
+    if (G && !G.band()) { const q = this.ageAsk(() => { if (asked) asked(); else q.replaceWith(...this.signInBtns(A, cls, then)); }); return [q]; }
     return (A.native ? ['apple', 'google'] : ['google']).map(k => {
       const b = el('button', cls + ' gacct-in' + (k === 'apple' ? ' gacct-apple' : ' gacct-google')); b.type = 'button';
       if (k === 'apple') { b.innerHTML = APPLE_LOGO; b.append(el('span', '', this.t('acct_apple'))); } else b.textContent = this.t('acct_google');
@@ -1980,6 +1993,19 @@ export class GameUI {
       b.addEventListener('click', async () => { const ok = await A.signIn(k); if (then) then(ok); });
       return b;
     });
+  }
+  // the age question (age.js), before a first sign-in or video: the year they were born, from a list with none picked to
+  // begin with; nothing says which answer opens what. then(band) once answered
+  ageAsk(then) {
+    const box = el('div', 'gage'), row = el('div', 'gage-row'), sel = el('select', 'ginput gage-y'), go = el('button', 'gbtn gsmallbtn gage-ok', this.t('age_ok'));
+    go.type = 'button'; go.disabled = true; sel.setAttribute('aria-label', this.t('age_q'));
+    const none = el('option', '', this.t('age_year')); none.value = ''; none.disabled = true; none.selected = true; sel.append(none);
+    const Y = new Date().getFullYear();
+    for (let y = Y; y >= Y - 100; y--) { const o = el('option', '', String(y)); o.value = String(y); sel.append(o); }
+    sel.addEventListener('change', () => { go.disabled = !sel.value; });
+    go.addEventListener('click', () => { if (!sel.value) return; const b = this.o.age.fromYear(+sel.value); if (b) then(b); });
+    row.append(sel, go); box.append(el('p', 'gtext gage-q', this.t('age_q')), row, el('p', 'gnote gage-note', this.t('age_note')));
+    return box;
   }
   // the privacy page (privacy.mjs), in the game's language, opened beside the game
   // (in the store app, the site's copy: a new window there opens in Safari, which can't reach the app's own files)

@@ -124,6 +124,7 @@ export class Account {
         this.cloud = c;
         c.onUser(u => {
           const was = this.user; this.user = u;
+          if (u && this.o.age && this.o.age.child()) { this.signOut(); return; }      // (a player under 13: no account kept here; the farm stays on this phone: age.js)
           if (u && (!was || was.uid !== u.uid)) this.sync('user');
           if (!u) this.set('out');
         });
@@ -250,7 +251,7 @@ export class Account {
   // the once-only suggestion (a few days into a farm, signed out, never asked: main.js showNews)
   nudgeDue(now = Date.now()) {
     const d = this.g.data;
-    return this.on && !this.user && !this.st.uid && !!d && !d.acctAsk && d.guide && d.guide.done && now - d.made >= 3 * 86400e3;
+    return this.on && !this.user && !this.st.uid && !!d && !d.acctAsk && d.guide && d.guide.done && now - d.made >= 3 * 86400e3 && !(this.o.age && this.o.age.child());      // (not for a player under 13: age.js)
   }
   nudged() { if (this.g.data) { this.g.data.acctAsk = 1; this.g.save(); } }
 }
