@@ -376,12 +376,13 @@ function dustStep(b, P, T, Q, o, next, dt) {
     if (P.wr > 0) {
       P.wr -= dt; const w = Math.sin(P.t * 11);
       b.visual.rotation.z = 0.28 * w; o.ruffle = 0.7; o.kick = (P.t % 0.9) < 0.35 ? 1 : 0;
-      P.puff = (P.puff || 0) - dt;
-      if (P.puff <= 0) { P.puff = 0.12; dustPuff(b, 0.06, 0.05); }
+      P.puff = (P.puff || 0) - dt;      // (26 Nov 2026, Audrey: "Also add more dust to the bath": thicker, bigger clouds kicked up higher)
+      if (P.puff <= 0) { P.puff = 0.07; dustPuff(b, 0.12, 0.07, 1.8); dustPuff(b, 0.16, 0.05, 1.4); }
       if (P.wr <= 0) P.rest = 0.8 + b.r() * 1.4;
     } else {
       b.visual.rotation.z *= Math.exp(-dt * 10);
       P.rest -= dt; if (P.rest <= 0) P.wr = 1.0 + b.r() * 1.2;
+      P.puff = (P.puff || 0) - dt; if (P.puff <= 0) { P.puff = 0.35; dustPuff(b, 0.12, 0.06, 0.6); }      // (a little dust still hanging about while she rests)
     }
     P.left -= dt;
     if (P.left <= 0 && P.wr <= 0) { b.visual.rotation.z = 0; next('out'); }
@@ -395,7 +396,7 @@ function dustStep(b, P, T, Q, o, next, dt) {
   }
   if (P.phase === 'shake') {                         // a big shake: the dust flies off her
     o.ruffle = Math.sin(Math.min(1, P.t / 0.9) * Math.PI);
-    if (P.t > 0.15 && !P.shook) { P.shook = true; for (let k = 0; k < 6; k++) dustPuff(b, 0.16, 0.12); }
+    if (P.t > 0.15 && !P.shook) { P.shook = true; for (let k = 0; k < 12; k++) dustPuff(b, 0.22, 0.13, 1.6); }
     if (P.t > 1.0) endPlay(b);
   }
   return o;
@@ -925,12 +926,12 @@ let dustMat = null, snowMat = null, mallowMat = null; const noteMats = {};
 function fx(mat, at, life, size, grow, drift) {
   if (!SCENE) return;
   let n = FX.find(x => x.life <= 0 && x.mat === mat);
-  if (!n) { if (FX.length > 60) return; n = { sprite: new THREE.Sprite(mat.clone()), mat, life: 0 }; n.sprite.renderOrder = 3; SCENE.add(n.sprite); FX.push(n); }
+  if (!n) { if (FX.length > 120) return; n = { sprite: new THREE.Sprite(mat.clone()), mat, life: 0 }; n.sprite.renderOrder = 3; SCENE.add(n.sprite); FX.push(n); }
   n.sprite.position.copy(at); n.size = size; n.grow = grow; n.life = n.full = life; n.drift = drift; n.sprite.visible = true; n.sprite.scale.setScalar(size);
 }
-function dustPuff(b, spread, size) {
+function dustPuff(b, spread, size, lift = 1) {      // (lift: how far and high it's kicked)
   if (!dustMat) {
-    dustMat = new THREE.SpriteMaterial({ map: fxTex(64, c => { const g = c.createRadialGradient(32, 32, 2, 32, 32, 30); g.addColorStop(0, 'rgba(232,212,165,0.85)'); g.addColorStop(1, 'rgba(232,212,165,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); }), transparent: true, depthWrite: false });
+    dustMat = new THREE.SpriteMaterial({ map: fxTex(64, c => { const g = c.createRadialGradient(32, 32, 2, 32, 32, 30); g.addColorStop(0, 'rgba(224,197,146,0.9)'); g.addColorStop(0.5, 'rgba(224,197,146,0.45)'); g.addColorStop(1, 'rgba(224,197,146,0)'); c.fillStyle = g; c.fillRect(0, 0, 64, 64); }), transparent: true, depthWrite: false });
     dustMat.userData.noGrade = true;
   }
   let mat = dustMat, mallow = false;
@@ -945,7 +946,7 @@ function dustPuff(b, spread, size) {
   const w = b.root.getWorldPosition(new THREE.Vector3()), a = Math.random() * 6.28, d = Math.random() * spread;
   w.x += Math.cos(a) * d; w.z += Math.sin(a) * d; w.y += 0.05 + Math.random() * 0.05;
   if (mallow) { fx(mat, w, 0.9 + Math.random() * 0.4, 0.07, 0.15, [Math.cos(a) * 0.35, 0.55 + Math.random() * 0.3, Math.sin(a) * 0.35]); return; }
-  fx(mat, w, 1.0 + Math.random() * 0.5, size + Math.random() * 0.04, 2.2, [Math.cos(a) * 0.08, 0.1 + Math.random() * 0.08, Math.sin(a) * 0.08]);
+  fx(mat, w, 1.0 + Math.random() * 0.5, size + Math.random() * 0.04, 2.2, [Math.cos(a) * 0.08 * lift, (0.1 + Math.random() * 0.08) * lift, Math.sin(a) * 0.08 * lift]);
 }
 let steamMat = null;
 function puffAt(plot, local) {                       // a puff of steam from the toy train's funnel
