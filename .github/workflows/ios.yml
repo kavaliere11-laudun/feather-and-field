@@ -179,6 +179,7 @@ jobs:
           if [ -d "$APP/Frameworks" ]; then find "$APP/Frameworks" -maxdepth 1 \( -name '*.framework' -o -name '*.dylib' \) -exec codesign --force --sign - {} \; ; fi
           codesign --force --sign - --entitlements App/App.entitlements --generate-entitlement-der "$APP"
           codesign -d --entitlements - --xml "$APP" | grep -q applesignin || { echo "the archive has no Sign in with Apple entitlement"; exit 1; }
+          codesign -d --entitlements - --xml "$APP" | grep -q declared-age-range || { echo "the archive has no Declared Age Range entitlement"; exit 1; }
           for dest in export upload; do
           cat > "$RUNNER_TEMP/export-$dest.plist" <<PLIST
           <?xml version="1.0" encoding="UTF-8"?>
@@ -199,6 +200,7 @@ jobs:
           codesign -d --entitlements - --xml "$RUNNER_TEMP"/ipa/Payload/*.app > "$RUNNER_TEMP/ents.xml" 2>/dev/null || true
           plutil -p "$RUNNER_TEMP/ents.xml" || true
           grep -q applesignin "$RUNNER_TEMP/ents.xml" || { echo "the signed app has no Sign in with Apple entitlement"; exit 1; }
+          grep -q declared-age-range "$RUNNER_TEMP/ents.xml" || { echo "the signed app has no Declared Age Range entitlement (the capability on the App ID?)"; exit 1; }
           xcodebuild -exportArchive -archivePath "$RUNNER_TEMP/App.xcarchive" -exportOptionsPlist "$RUNNER_TEMP/export-upload.plist" \
             -exportPath "$RUNNER_TEMP/export" "${AUTH[@]}" | tail -n 30
           rm -f "$KEY"
