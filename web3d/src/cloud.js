@@ -51,7 +51,20 @@ function make(config, emu, o = {}) {
       });
     },
     // the account deleted: Google asks who it is again first, then the farm online, then the account
-    async drop(from) { const u = auth.currentUser, c = emuCred() || (from ? credOf(from) : null); await (c ? reauthenticateWithCredential(u, c) : reauthenticateWithPopup(u, google)); await deleteDoc(ref()); await deleteUser(u); },
+    // delete the account (its farm first). An Apple account: Apple's link to the game cancelled too (Apple's rule 5.1.1(v),
+    // 26 Nov 2026): Apple's one-time code from the sign-in just made and the account's own token go to Firebase through the
+    // app (o.revoke: FFSignInPlugin.swift); a failure there doesn't stop the deletion. { revoked } for the tests
+    async drop(from) {
+      const u = auth.currentUser, c = emuCred() || (from ? credOf(from) : null);
+      await (c ? reauthenticateWithCredential(u, c) : reauthenticateWithPopup(u, google));
+      let revoked = null;
+      if (from && from.kind === 'apple' && from.code && o.revoke) {
+        try { revoked = await o.revoke({ code: from.code, idToken: await u.getIdToken(true), key: config.apiKey }); }
+        catch (e) { revoked = { ok: false, why: String(e && e.message || e).slice(0, 120) }; }
+      }
+      await deleteDoc(ref()); await deleteUser(u);
+      return { revoked };
+    },
   };
 }
 window.FFCloud = { make };

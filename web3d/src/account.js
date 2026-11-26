@@ -41,7 +41,7 @@ const NATIVE = (() => {
   if (window.__fakeNative) return window.__fakeNative;                  // (the tests: { apple({ nonce }), google() })
   const C = window.Capacitor;
   if (!C || !C.nativePromise || !C.isNativePlatform || !C.isNativePlatform()) return null;
-  return { apple: o => C.nativePromise('FFSignIn', 'apple', o), google: () => C.nativePromise('FFSignIn', 'google', {}) };
+  return { apple: o => C.nativePromise('FFSignIn', 'apple', o), google: () => C.nativePromise('FFSignIn', 'google', {}), revoke: o => C.nativePromise('FFSignIn', 'revoke', o) };
 })();
 // a one-time word for Sign in with Apple: Apple is given it hashed (FFSignInPlugin), Firebase checks the token against it
 const nonce = () => { const a = new Uint8Array(32); crypto.getRandomValues(a); return Array.from(a, b => b.toString(16).padStart(2, '0')).join(''); };
@@ -90,7 +90,7 @@ function fakeCloud() {
     async signOut() { user = null; localStorage.removeItem(UKEY); tell(); },
     get: () => io('get', { uid: user.uid }),
     put: (doc, base) => io('put', { uid: user.uid, doc, base }),
-    async drop(cred) { if (window.__fakeCreds) window.__fakeCreds.push(cred || null); await io('del', { uid: user.uid }); await this.signOut(); },
+    async drop(cred) { if (window.__fakeCreds) window.__fakeCreds.push(cred || null); await io('del', { uid: user.uid }); await this.signOut(); return { revoked: null }; },
   };
 }
 // the Firebase one: cloud.js (built by build.sh from src/cloud.js), loaded once
@@ -98,7 +98,7 @@ let cloudP = null;
 function firebaseCloud(bust) {
   if (!cloudP) cloudP = new Promise((res, rej) => {
     const s = document.createElement('script'); s.src = 'cloud.js' + (bust || ''); s.async = true;
-    s.onload = () => (window.FFCloud ? res(window.FFCloud.make(FIREBASE, EMU, { app: APP })) : rej(new Error('cloud.js')));
+    s.onload = () => (window.FFCloud ? res(window.FFCloud.make(FIREBASE, EMU, { app: APP, revoke: NATIVE && NATIVE.revoke })) : rej(new Error('cloud.js')));
     s.onerror = () => { cloudP = null; rej(Object.assign(new Error('cloud.js'), { code: 'unavailable' })); };
     document.head.append(s);
   });
@@ -151,7 +151,7 @@ export class Account {
   by() { return this.user && this.user.by === 'apple' ? 'apple' : 'google'; }
   // the app's sign-in: Apple's sheet or Google's page, then the token handed to cloud.js
   async nativeCred(kind) {
-    if (kind === 'apple') { const raw = nonce(), r = await NATIVE.apple({ nonce: raw }); return { kind, idToken: r.idToken, rawNonce: raw, name: r.name || '' }; }
+    if (kind === 'apple') { const raw = nonce(), r = await NATIVE.apple({ nonce: raw }); return { kind, idToken: r.idToken, rawNonce: raw, name: r.name || '', code: r.code || '' }; }      // (code: Apple's one-time code, to cancel its link when the account is deleted)
     const r = await NATIVE.google(); return { kind: 'google', idToken: r.idToken };
   }
   // ---- signing in (from a tap: Google's window opens at once, so the online side must be there already: prepare());
@@ -181,7 +181,7 @@ export class Account {
   async drop() {
     if (!this.cloud || !this.user) return false;
     clearTimeout(this.timer); this.timer = 0;
-    try { if (this.native) await this.cloud.drop(await this.nativeCred(this.by())); else await this.cloud.drop(); }
+    try { const r = this.native ? await this.cloud.drop(await this.nativeCred(this.by())) : await this.cloud.drop(); this.info.revoked = (r && r.revoked) || null; }
     catch (e) {
       const c = e && e.code || '';
       if (!/popup-closed|cancelled/.test(c) && this.o.say) this.o.say(this.g.t('acct_failed'));

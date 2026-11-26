@@ -9,6 +9,10 @@ import CryptoKit
 //   google(): Google's sign-in page in the system's secure sheet (ASWebAuthenticationSession, as Google's own kit does),
 //     the iOS client of the game's Firebase project, PKCE (no secret anywhere)
 // Each gives back the account's ID token; the game (web3d/src/account.js, cloud.js) signs in to Firebase with it.
+//   revoke({ code, idToken, key }) (26 Nov 2026, the launch review, blocker 3; Apple's rule 5.1.1(v)): when an Apple
+//     account is deleted, Apple's link to the game is cancelled too: Apple's one-time code from the sign-in just before
+//     goes to Firebase (Identity Toolkit accounts:revokeToken, as Firebase's own iOS kit does), which swaps it with Apple
+//     for a token and cancels it, using the Sign in with Apple key Audrey put into Firebase herself (never here).
 // Nothing is kept here; no keys or secrets: the client ID is a public identifier, as in any app.
 @objc(FFSignInPlugin)
 public class FFSignInPlugin: CAPInstancePlugin, CAPBridgedPlugin, ASAuthorizationControllerDelegate,
@@ -18,7 +22,8 @@ public class FFSignInPlugin: CAPInstancePlugin, CAPBridgedPlugin, ASAuthorizatio
     public let pluginMethods: [CAPPluginMethod] = [
         CAPPluginMethod(name: "apple", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "google", returnType: CAPPluginReturnPromise),
-        CAPPluginMethod(name: "hello", returnType: CAPPluginReturnPromise)
+        CAPPluginMethod(name: "hello", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "revoke", returnType: CAPPluginReturnPromise)
     ]
     static let googleClient = "705093854658-8h2m9uks36c190kg55o8msl5h4safb1o.apps.googleusercontent.com"
     static let googleScheme = "com.googleusercontent.apps.705093854658-8h2m9uks36c190kg55o8msl5h4safb1o"
@@ -48,7 +53,8 @@ public class FFSignInPlugin: CAPInstancePlugin, CAPBridgedPlugin, ASAuthorizatio
               let token = String(data: t, encoding: .utf8) else { call.reject("Apple gave no token", "failed"); return }
         var name = ""
         if let n = cred.fullName { name = PersonNameComponentsFormatter().string(from: n) }
-        call.resolve(["idToken": token, "name": name, "email": cred.email ?? ""])
+        let code = cred.authorizationCode.flatMap { String(data: $0, encoding: .utf8) } ?? ""      // (one use, a few minutes: for revoke)
+        call.resolve(["idToken": token, "name": name, "email": cred.email ?? "", "code": code])
     }
     public func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
         guard let call = appleCall else { return }
@@ -106,6 +112,26 @@ public class FFSignInPlugin: CAPInstancePlugin, CAPBridgedPlugin, ASAuthorizatio
     }
     public func presentationAnchor(for session: ASWebAuthenticationSession) -> ASPresentationAnchor {
         return bridge?.viewController?.view.window ?? ASPresentationAnchor()
+    }
+
+    // ---- cancelling Apple's link (account deletion)
+    @objc func revoke(_ call: CAPPluginCall) {
+        guard let code = call.getString("code"), !code.isEmpty, let idToken = call.getString("idToken"), let key = call.getString("key"),
+              let url = URL(string: "https://identitytoolkit.googleapis.com/v2/accounts:revokeToken?key=" + (key.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? ""))
+        else { call.reject("missing", "missing"); return }
+        var req = URLRequest(url: url)
+        req.httpMethod = "POST"
+        req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        if let b = Bundle.main.bundleIdentifier { req.setValue(b, forHTTPHeaderField: "X-Ios-Bundle-Identifier") }
+        req.httpBody = try? JSONSerialization.data(withJSONObject: ["providerId": "apple.com", "tokenType": "CODE", "token": code, "idToken": idToken])
+        req.timeoutInterval = 20
+        URLSession.shared.dataTask(with: req) { data, resp, _ in
+            let st = (resp as? HTTPURLResponse)?.statusCode ?? 0
+            var why = ""
+            if st != 200, let data = data, let j = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+               let e = j["error"] as? [String: Any], let m = e["message"] as? String { why = String(m.prefix(120)) }
+            call.resolve(["ok": st == 200, "status": st, "why": why])
+        }.resume()
     }
 
     static func sha256(_ s: String) -> String { SHA256.hash(data: Data(s.utf8)).map { String(format: "%02x", $0) }.joined() }
