@@ -68,6 +68,8 @@ const BASKET_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" 
 const ROS_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="9" r="6"/><circle cx="12" cy="9" r="2.4"/><path d="M8.9 14.1L7.4 21.5l2.9-1.4 1.7 2M15.1 14.1l1.5 7.4-2.9-1.4-1.7 2"/></svg>';
 
 const el = (tag, cls, text) => { const e = document.createElement(tag); if (cls) e.className = cls; if (text !== undefined) e.textContent = text; return e; };
+// a garden swing, drawn (the upgrade card's "New in the garden"): a wooden A-frame, two ropes, a red seat
+const SWING_ICON = '<svg viewBox="0 0 32 32" aria-hidden="true" class="gicon-swing"><g stroke="#8b5a2b" stroke-width="2.6" stroke-linecap="round"><path d="M6 6 2.8 29.5M6 6l3.2 23.5M26 6l-3.2 23.5M26 6l3.2 23.5"/></g><rect x="2.5" y="3.6" width="27" height="3.6" rx="1.6" fill="#a8703a"/><g stroke="#c9a46a" stroke-width="1.5" stroke-linecap="round"><path d="M12.2 7.2v14.6M19.8 7.2v14.6"/></g><rect x="9.6" y="21" width="12.8" height="3.6" rx="1.6" fill="#d9483b"/><rect x="9.6" y="21" width="12.8" height="1.4" rx="0.7" fill="#ef7a6c"/></svg>';
 // Sign in with Apple's button (the app's My account): Apple's logo on it, as Apple asks of that button
 const APPLE_LOGO = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12.152 6.896c-.948 0-2.415-1.078-3.96-1.04-2.04.027-3.91 1.183-4.961 3.014-2.117 3.675-.546 9.103 1.519 12.09 1.013 1.454 2.208 3.09 3.792 3.039 1.52-.065 2.09-.987 3.935-.987 1.831 0 2.35.987 3.96.948 1.637-.026 2.676-1.48 3.676-2.948 1.156-1.688 1.636-3.325 1.662-3.415-.039-.013-3.182-1.221-3.22-4.857-.026-3.04 2.48-4.494 2.597-4.559-1.429-2.09-3.623-2.324-4.39-2.376-2-.156-3.675 1.09-4.61 1.09zM15.53 3.83c.843-1.012 1.4-2.427 1.245-3.83-1.207.052-2.662.805-3.532 1.818-.78.896-1.454 2.338-1.273 3.714 1.338.104 2.715-.688 3.559-1.701"/></svg>';
 
@@ -1767,8 +1769,8 @@ export class GameUI {
     if (toys.length) {
       body.append(el('p', 'gsub gupd-h', this.t('up_toys')));
       const list = el('div', 'gupd-toys');
-      const ICON = { swing: '🪢', dust: '🏖️', cabbage: '🥬', ladder: '🪜', xylo: '🎶', ball: '🏐' };
-      for (const k of toys) { const r = el('div', 'gupd-toy'), h = el('p', 'gupd-tn'); r.dataset.toy = k; h.append(el('span', 'gupd-ti', ICON[k] || '✨'), document.createTextNode(this.t('toy_' + k))); r.append(h, el('p', 'gupd-tl', this.t('toyl_' + k))); list.append(r); }
+      const ICON = { swing: '', dust: '🏖️', cabbage: '🥬', ladder: '🪜', xylo: '🎶', ball: '🏐' };      // (the swing: its own little picture, SWING_ICON: there's no swing among the phone's emoji, and the knot didn't read as one: Audrey, 26 Nov 2026)
+      for (const k of toys) { const r = el('div', 'gupd-toy'), h = el('p', 'gupd-tn'); r.dataset.toy = k; const ic = el('span', 'gupd-ti', ICON[k] || '✨'); if (k === 'swing') ic.innerHTML = SWING_ICON; h.append(ic, document.createTextNode(this.t('toy_' + k))); r.append(h, el('p', 'gupd-tl', this.t('toyl_' + k))); list.append(r); }
       body.append(list);
     }
     if (onWatch) { const b = el('button', 'gbtn', this.t('up_watch')); b.type = 'button'; b.addEventListener('click', () => onWatch()); body.append(b); }
