@@ -386,9 +386,10 @@ class Intro {
     this.prop('tree_apple', -3.3, -3.9, 0); this.prop('tree_b', 4.4, -4.4, 40); this.prop('tree_a', 2.0, -6.0, 110, 0.9);
     this.prop('rustic_orp', -0.2, -3.6, 12); this.prop('bush_b', -1.5, -3.2, 0, 0.7); this.prop('bush_a', 1.3, -3.1, 0, 0.65);
     this.prop('bush_a', -2.6, -2.6, 0, 0.75); this.prop('bush_b', 3.4, -2.6, 30, 0.7); this.prop('flower_pots', -1.9, -2.2, 15, 0.8); this.prop('bush_a', 4.6, -1.6, 0, 0.6);
-    this.dress(240, { x0: -4.4, x1: 5.4, z0: -4.4, z1: 1.2, clear: [[-2.4, -1.3, 3.4, 1.2], [-1.0, -4.4, 0.8, -3.0]], seed: 71, flowers: 0.45 });
-    this.dress(90, { x0: -4.4, x1: 5.4, z0: 1.2, z1: 2.8, seed: 72, flowers: 0.65 });
-    const B = (breed, kind, colour, x, z, yaw, f) => this.bird(breed, kind, colour, x, z, yaw, f);
+    this.dress(240, { x0: -4.4, x1: 5.4, z0: -4.4, z1: 1.2, clear: [[-2.4, -1.3, 3.4, 1.7], [-1.0, -4.4, 0.8, -3.0]], seed: 71, flowers: 0.45 });
+    this.dress(90, { x0: -4.4, x1: 5.4, z0: 1.7, z1: 2.8, seed: 72, flowers: 0.65 });
+    // (Audrey, 27 Nov: "can you move the chickens down a bit there is too much green at the bottom": everyone 0.45 m nearer us)
+    const DZ = 0.45, B = (breed, kind, colour, x, z, yaw, f) => this.bird(breed, kind, colour, x, z + DZ, yaw, f);
     // (27 Nov 2026, Audrey, on the regrouped scene: "better but the scene is a bit messy + there is some clipping": two calm
     // rows, every bird clear of the others (the back row standing in the gaps of the front one), pairs turned to each other
     // with room between them, nobody pecking into anybody)
@@ -396,7 +397,7 @@ class Intro {
     // Polish peering at them, an Araucana and a Leghorn looking out at us
     B('rir', 'hen', null, -1.85, 0.5, 0.7, A => { A.lookYaw = 0.3; A.lookTilt = 0.15; });
     B('rir', 'chick', null, -1.48, 0.85, -1.9, A => { A.up = 0.6; });
-    B('rir', 'chick', null, -2.0, 1.05, 0.9, A => { A.lookTilt = 0.3; });
+    B('rir', 'chick', null, -1.62, 1.18, 0.9, A => { A.lookTilt = 0.3; });
     B('orp', 'hen', null, -0.86, 0.5, -0.75, A => { A.lookTilt = 0.2; A.lookYaw = -0.2; });
     B('sil', 'hen', 'white', -0.02, 0.66, 1.05, A => { A.lookTilt = 0.12; });
     B('sil', 'hen', 'black', 0.40, 0.74, -1.05, A => { A.lookTilt = -0.12; });
