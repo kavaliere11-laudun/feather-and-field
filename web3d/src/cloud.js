@@ -6,8 +6,9 @@
 // The rules that keep each farm its owner's own are in web3d/firestore.rules (rulestest.mjs tries them on the emulator).
 import { initializeApp } from 'firebase/app';
 import { initializeAuth, indexedDBLocalPersistence, browserLocalPersistence, browserPopupRedirectResolver, GoogleAuthProvider, OAuthProvider, signInWithPopup, reauthenticateWithPopup, signInWithCredential, reauthenticateWithCredential, updateProfile, signOut, deleteUser, onAuthStateChanged, connectAuthEmulator } from 'firebase/auth';
-import { getFirestore, doc, getDoc, runTransaction, deleteDoc, serverTimestamp, connectFirestoreEmulator } from 'firebase/firestore/lite';
+import { getFirestore, doc, getDoc, runTransaction, deleteDoc, serverTimestamp, Timestamp, connectFirestoreEmulator } from 'firebase/firestore/lite';
 
+const KEEP_MS = 1096 * 86400e3;                          // (3 years)
 function make(config, emu, o = {}) {
   if (emu) config = { ...config, projectId: 'demo-feather-and-field' };      // (the emulators: a pretend project, nothing reaches the real one)
   const app = initializeApp(config);
@@ -46,7 +47,9 @@ function make(config, emu, o = {}) {
       return runTransaction(db, async tx => {
         const s = await tx.get(ref()), cur = s.exists() ? s.data().n : 0;
         if (cur !== base) return { conflict: true };
-        tx.set(ref(), { farm: d.farm, n: base + 1, at: serverTimestamp(), lv: d.lv, coins: d.coins, made: d.made });
+        // (expireAt: an online farm not saved for 3 years is deleted by Firebase itself (its TTL policy on farms.expireAt;
+        // 27 Nov 2026, Audrey: "3 years (Recommended)"); each save moves it on)
+        tx.set(ref(), { farm: d.farm, n: base + 1, at: serverTimestamp(), lv: d.lv, coins: d.coins, made: d.made, expireAt: Timestamp.fromMillis(Date.now() + KEEP_MS) });
         return { n: base + 1, at: Date.now() };
       });
     },

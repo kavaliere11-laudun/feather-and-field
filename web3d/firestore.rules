@@ -5,6 +5,8 @@ rules_version = '2';
 //   n:     the save's number: 1 for the first, then exactly one more each time (two phones can't overwrite each other unseen)
 //   at:    when it was saved (the server's time)
 //   lv, coins, made: the farm's level, coins and when it was started, to tell two farms apart
+//   expireAt: when Firebase deletes it if it isn't saved again (3 years on: the TTL policy on farms.expireAt; 27 Nov 2026,
+//     Audrey's choice); from the phone's clock, so allowed between 1 and about 3.3 years ahead; older saves have none
 // A save at most every 2 seconds. Paste these into the Firebase console (Firestore Database, Rules) and Publish.
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -13,14 +15,17 @@ service cloud.firestore {
         return request.auth != null && request.auth.uid == uid;
       }
       function farmOk(d) {
-        return d.keys().hasOnly(['farm', 'n', 'at', 'lv', 'coins', 'made'])
+        return d.keys().hasOnly(['farm', 'n', 'at', 'lv', 'coins', 'made', 'expireAt'])
           && d.keys().hasAll(['farm', 'n', 'at', 'lv', 'coins', 'made'])
           && d.farm is string && d.farm.size() >= 20 && d.farm.size() <= 900000
           && d.n is int
           && d.at == request.time
           && d.lv is int && d.lv >= 1 && d.lv <= 999
           && d.coins is int && d.coins >= 0 && d.coins <= 1000000000
-          && d.made is int && d.made >= 0 && d.made <= request.time.toMillis() + 86400000;
+          && d.made is int && d.made >= 0 && d.made <= request.time.toMillis() + 86400000
+          && (!('expireAt' in d) || (d.expireAt is timestamp
+              && d.expireAt > request.time + duration.value(365, 'd')
+              && d.expireAt < request.time + duration.value(1200, 'd')));
       }
       allow get: if mine();
       allow list: if false;

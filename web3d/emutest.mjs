@@ -20,7 +20,7 @@ const ok = (name, cond, info) => { console.log((cond ? 'PASS ' : 'FAIL ') + name
 // the emulators emptied first
 await fetch(`${AUTH}/accounts`, { method: 'DELETE' }); await fetch('http://127.0.0.1:8080/emulator/v1/projects/demo-feather-and-field/databases/(default)/documents', { method: 'DELETE' });
 const accounts = async () => { const r = await fetch('http://127.0.0.1:9099/identitytoolkit.googleapis.com/v1/projects/demo-feather-and-field/accounts:query', { method: 'POST', headers: { Authorization: 'Bearer owner', 'Content-Type': 'application/json' }, body: '{}' }); const j = await r.json().catch(() => ({})); return j.userInfo || []; };
-const farmDoc = async uid => { const r = await fetch(`${FS}/farms/${uid}`, { headers: { Authorization: 'Bearer owner' } }); if (r.status !== 200) return null; const f = (await r.json()).fields; return { n: +f.n.integerValue, coins: +f.coins.integerValue, lv: +f.lv.integerValue, at: f.at.timestampValue, farm: JSON.parse(f.farm.stringValue) }; };
+const farmDoc = async uid => { const r = await fetch(`${FS}/farms/${uid}`, { headers: { Authorization: 'Bearer owner' } }); if (r.status !== 200) return null; const f = (await r.json()).fields; return { n: +f.n.integerValue, coins: +f.coins.integerValue, lv: +f.lv.integerValue, at: f.at.timestampValue, exp: f.expireAt && f.expireAt.timestampValue, farm: JSON.parse(f.farm.stringValue) }; };
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 async function phone(tag) {
   const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, deviceScaleFactor: 2, locale: 'en-GB' });
@@ -55,6 +55,7 @@ ok('A: signed in with Google (the emulator), the farm online', await until(A, ()
 const uid = (await acct(A)).user && (await acct(A)).user.uid;
 let d = uid && await farmDoc(uid);
 ok('the document: number 1, the farm, its coins and level, the server\'s time', d && d.n === 1 && d.coins === 321 && d.lv >= 1 && d.farm.d.coins === 321 && !!d.at, d && { n: d.n, coins: d.coins, lv: d.lv, at: d.at });
+ok('…and when Firebase deletes it if not saved again: about 3 years on', d && d.exp && Math.abs(Date.parse(d.exp) - Date.parse(d.at) - 1096 * 86400e3) < 60 * 86400e3, d && { at: d.at, exp: d.exp });
 await A.waitForTimeout(2200);                                  // (a save at most every 2 seconds: the rules)
 await setCoins(A, 400); await flush(A);
 d = await farmDoc(uid);

@@ -56,6 +56,15 @@ await wait(2300);
 ok('Sam: number 1 again: no', NO(await save('sam', 'sam', good(1))));
 ok('Sam: number 3 (skipping 2): no', NO(await save('sam', 'sam', good(3))));
 ok('Sam: number 2, two seconds on: yes', OK(await save('sam', 'sam', good(2))));
+// (27 Nov 2026: expireAt, when Firebase deletes a farm not saved again: 3 years on; older saves have none)
+const ts = days => ({ ts: new Date(Date.now() + days * 86400e3).toISOString() });
+await wait(2300);
+ok('Sam: number 3 with expireAt 3 years on: yes', OK(await save('sam', 'sam', { ...good(3), expireAt: ts(1096) })));
+await wait(2300);
+ok('Sam: expireAt 10 years on: no', NO(await save('sam', 'sam', { ...good(4), expireAt: ts(3650) })));
+ok('Sam: expireAt tomorrow: no', NO(await save('sam', 'sam', { ...good(4), expireAt: ts(1) })));
+ok('Sam: expireAt not a time: no', NO(await save('sam', 'sam', { ...good(4), expireAt: 'never' })));
+ok('Sam: number 4 without expireAt (an older app): yes', OK(await save('sam', 'sam', good(4))));
 ok('another player: can\'t delete it', NO(await del('ann', 'farms/sam')));
 ok('anything else in the database: nobody reads or writes it', NO(await get('sam', 'users/sam')) && NO((await fetch(`${base}/other/x`, { method: 'PATCH', headers: head('sam'), body: JSON.stringify({ fields: { a: { stringValue: 'b' } } }) })).status));
 ok('Sam: deletes it (his account deleted)', OK(await del('sam', 'farms/sam')));
