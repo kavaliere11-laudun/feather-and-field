@@ -10,6 +10,12 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         window = UIWindow(windowScene: windowScene)
         window?.rootViewController = GameViewController()      // (23 Nov 2026: the game's own screen, which adds the shop's plugin; Capacitor's plain one never had it, so the shop never reached Apple)
         window?.makeKeyAndVisible()
+        // (iPad, 27 Nov 2026: a window of the game is never made smaller than the smallest phone it's tested on, held
+        // sideways; the iPad check on GitHub's Mac, launched with -FFLandscape YES, turns the simulator's screen sideways)
+        windowScene.sizeRestrictions?.minimumSize = CGSize(width: 640, height: 360)
+        if UserDefaults.standard.bool(forKey: "FFLandscape"), #available(iOS 16.0, *) {
+            windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .landscapeRight)) { e in NSLog("FFLandscape: \(e)") }
+        }
 
         SceneDelegateProxy.shared.scene(scene, willConnectTo: session, options: connectionOptions)
     }

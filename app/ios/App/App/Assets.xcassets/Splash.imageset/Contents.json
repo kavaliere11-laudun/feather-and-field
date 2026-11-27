@@ -10,6 +10,11 @@
       "filename": "launch-wide.jpg",
       "height-class": "compact",
       "scale": "3x"
+    },
+    {
+      "idiom": "ipad",
+      "filename": "launch-ipad.jpg",
+      "scale": "2x"
     }
   ],
   "info": {

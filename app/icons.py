@@ -27,7 +27,12 @@ t = Image.open(f'{WEB}/welcome-tall.jpg').convert('RGB'); tw = round(t.height * 
 t.crop((x, 0, x + tw, t.height)).resize((1206, 2622), Image.LANCZOS).save(f'{SP}/launch-tall.jpg', quality=86, optimize=True)
 w = Image.open(f'{WEB}/welcome.jpg').convert('RGB'); wh = round(w.width * R); y = round((w.height - wh) / 2)
 w.crop((0, y, w.width, y + wh)).resize((2622, 1206), Image.LANCZOS).save(f'{SP}/launch-wide.jpg', quality=86, optimize=True)
+# an iPad (27 Nov 2026): the wide picture cut to 4:3 in its middle, as the loading screen shows it sideways on a tablet
+# (an iPad is "regular" both ways round, so it has a picture of its own; mostly played sideways)
+ih = w.height; iw = round(ih * 4 / 3); x = round((w.width - iw) / 2)
+w.crop((x, 0, x + iw, ih)).resize((2752, 2064), Image.LANCZOS).save(f'{SP}/launch-ipad.jpg', quality=86, optimize=True)
 json.dump({'images': [{'idiom': 'universal', 'filename': 'launch-tall.jpg', 'scale': '3x'},
-                      {'idiom': 'universal', 'filename': 'launch-wide.jpg', 'height-class': 'compact', 'scale': '3x'}],
+                      {'idiom': 'universal', 'filename': 'launch-wide.jpg', 'height-class': 'compact', 'scale': '3x'},
+                      {'idiom': 'ipad', 'filename': 'launch-ipad.jpg', 'scale': '2x'}],
            'info': {'version': 1, 'author': 'xcode'}}, open(f'{SP}/Contents.json', 'w'), indent=2)
 print('icon and launch screen written')

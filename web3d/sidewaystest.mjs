@@ -37,6 +37,19 @@ await p.setViewportSize({ width: 402, height: 874 }); await p.waitForTimeout(600
 s = await state(p);
 ok('upright again: back', s.shown && s.text === WORDS, s);
 await ctx.close();
+// a tablet held upright (27 Nov 2026, the iPad app): "tablet" in the words; a sideways tablet's narrow window: wider, please
+const TAB = fr ? 'Tournez votre tablette à l’horizontale pour jouer' : 'Turn your tablet sideways to play', WIDE = fr ? 'Élargissez la fenêtre pour jouer' : 'Make the window wider to play';
+({ ctx, p } = await open({ viewport: { width: 820, height: 1180 }, screen: { width: 820, height: 1180 }, hasTouch: true, isMobile: true }));
+s = await state(p);
+ok('a tablet held upright: covered, "' + TAB + '"', s.shown && s.text === TAB, s);
+await p.setViewportSize({ width: 1180, height: 820 }); await p.waitForTimeout(600);
+s = await state(p);
+ok('…turned sideways: gone', !s.shown, s);
+await ctx.close();
+({ ctx, p } = await open({ viewport: { width: 500, height: 820 }, screen: { width: 1180, height: 820 }, hasTouch: true, isMobile: true }));
+s = await state(p);
+ok('a sideways tablet\'s narrow window: "' + WIDE + '"', s.shown && s.text === WIDE, s);
+await ctx.close();
 // a computer's tall window
 ({ ctx, p } = await open({ viewport: { width: 600, height: 900 } }));
 s = await state(p);
@@ -51,6 +64,8 @@ const man = JSON.parse(fs.readFileSync(new URL('./play.webmanifest', import.meta
 ok('the web app\'s manifest asks for landscape', man.orientation === 'landscape', man.orientation);
 const plist = fs.readFileSync(new URL('../app/ios/App/App/Info.plist', import.meta.url), 'utf8'), o = (plist.match(/<key>UISupportedInterfaceOrientations<\/key>\s*<array>([\s\S]*?)<\/array>/) || [])[1] || '';
 ok('the iPhone app turns only sideways', /LandscapeLeft/.test(o) && /LandscapeRight/.test(o) && !/Portrait/.test(o), o.replace(/\s+/g, ' '));
+const oi = (plist.match(/<key>UISupportedInterfaceOrientations~ipad<\/key>\s*<array>([\s\S]*?)<\/array>/) || [])[1] || '';
+ok('the iPad app turns every way round (Apple\'s rule since iPadOS 26), the game asking to be sideways', ['LandscapeLeft', 'LandscapeRight', 'Portrait<', 'PortraitUpsideDown'].every(k => oi.includes(k)), oi.replace(/\s+/g, ' '));
 ok('no page errors', errs.length === 0, errs);
 console.log(fails ? fails + ' FAILED' : 'ALL PASS');
 await b.close();

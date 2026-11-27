@@ -247,7 +247,7 @@ export const TEXT = {
     nudge_later: 'Not now', nudge_note: 'It’s up to you: you can sign in any time in Settings.', welcome_signin: 'Have a farm saved online? Sign in',
     privacy: 'Privacy',                                            // (the privacy page: privacy.mjs)
     licences: 'Licences',                                          // (the licences page: privacy.mjs, licences/)
-    loading: 'Loading your farm…', sideways: 'Turn your phone sideways to play',
+    loading: 'Loading your farm…', sideways: 'Turn your phone sideways to play', sideways_tab: 'Turn your tablet sideways to play', sideways_wide: 'Make the window wider to play',
     eggs: 'Eggs', lays: 'Lays about 2 eggs a day, {p} coins each.', lays_sil: 'Lays about an egg a day, {p} coins each: Silkies are better mums than layers.',
     eggs_sold1: '1 egg sold · +{c} coins', eggs_sold: '{n} eggs sold · +{c} coins',
     eggs_fresh1: '1 fresh egg sold · +{c} coins · +{xp} XP', eggs_fresh: '{n} eggs sold · +{c} coins · {f} fresh: +{xp} XP',
@@ -636,7 +636,7 @@ export const TEXT = {
     nudge_later: 'Plus tard', nudge_note: 'C’est facultatif : vous pouvez vous connecter à tout moment dans les Réglages.', welcome_signin: 'Une ferme enregistrée en ligne ? Connectez-vous',
     privacy: 'Confidentialité',
     licences: 'Licences',
-    loading: 'Chargement de votre ferme…', sideways: 'Tournez votre téléphone à l’horizontale pour jouer',
+    loading: 'Chargement de votre ferme…', sideways: 'Tournez votre téléphone à l’horizontale pour jouer', sideways_tab: 'Tournez votre tablette à l’horizontale pour jouer', sideways_wide: 'Élargissez la fenêtre pour jouer',
     eggs: 'Œufs', lays: 'Pond environ 2 œufs par jour, à {p} pièces l’œuf.', lays_sil: 'Pond environ un œuf par jour, à {p} pièces l’œuf : les poules soie sont meilleures mères que pondeuses.',
     eggs_sold1: '1 œuf vendu · +{c} pièces', eggs_sold: '{n} œufs vendus · +{c} pièces',
     eggs_fresh1: '1 œuf tout frais vendu · +{c} pièces · +{xp} XP', eggs_fresh: '{n} œufs vendus · +{c} pièces · {f} tout frais : +{xp} XP',

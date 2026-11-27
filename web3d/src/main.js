@@ -615,7 +615,11 @@ function retireOldCache() {
 function turnSideways() {
   const el = document.getElementById('sideways'); if (!el) return;
   if (navigator.webdriver && !params.has('sideways')) document.body.classList.add('gsideways-off');
-  const say = () => { el.querySelector('.msg').textContent = game.t('sideways'); };
+  // (a tablet says "tablet"; one already sideways whose window is upright, an iPad's window made narrow, asks for a wider
+  // window: 27 Nov 2026, the app on iPad, where Apple asks every app to turn any way round and fit any window)
+  const say = () => { const tab = Math.min(screen.width, screen.height) >= 600, o = screen.orientation && screen.orientation.type,
+      wide = o ? o.startsWith('landscape') : Math.abs(+window.orientation || 0) === 90;      // (iOS keeps screen.width upright: the turn from its own)
+    el.querySelector('.msg').textContent = game.t(tab ? (wide ? 'sideways_wide' : 'sideways_tab') : 'sideways'); };
   say(); addEventListener('resize', say);
   try { if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => {}); } catch (e) { /* */ }
 }

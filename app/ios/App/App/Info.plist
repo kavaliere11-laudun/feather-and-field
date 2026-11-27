@@ -85,6 +85,16 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 		<string>UIInterfaceOrientationLandscapeLeft</string>
 	</array>
+	<!-- iPad (27 Nov 2026, Audrey: "Prepare the game for tablet"): every way round and any window size, as Apple now asks of
+	     iPad apps (UIRequiresFullScreen is deprecated since iPadOS 26); the game itself covers an upright screen with "Turn
+	     your tablet sideways to play" (index.html #sideways), so it is played sideways as on phones -->
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<true/>
 </dict>
