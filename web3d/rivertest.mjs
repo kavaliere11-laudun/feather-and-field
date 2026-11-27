@@ -62,7 +62,7 @@ await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.xp = 900;
 await p.waitForTimeout(1600); await p.evaluate(() => window.__farm.showNews()); await run(0.2);
 sh = await sheet();
 const lvl = await p.evaluate(() => { const c = [...document.querySelectorAll('.gsheet:not([hidden]) .gfishnew')].map(x => x.innerText).join(' | '); return c; });
-ok('level 9: its card: fishing in the river, tap its footbridge, a look at it', sh && sh.kind === 'levelup' && (fr ? /pêche à la rivière : touchez sa passerelle/ : /Fishing in the river: tap its footbridge/).test(lvl) && (fr ? /Voir la rivière/ : /Show me the river/).test(lvl), { kind: sh && sh.kind, lvl });
+ok('level 9: its card: fishing in the river, tap its jetty, a look at it', sh && sh.kind === 'levelup' && (fr ? /pêche à la rivière\s:\stouchez son ponton/ : /Fishing in the river: tap its jetty/).test(lvl) && (fr ? /Voir la rivière/ : /Show me the river/).test(lvl), { kind: sh && sh.kind, lvl });
 await settle(); await p.evaluate(() => [...document.querySelectorAll('.gsheet button[data-fish=show]')].pop().click()); await run(1.2);
 const va = await p.evaluate(() => { const f = window.__farm, v = f.viewAt(), R = f.river(); return { v, d: Math.hypot(v[0] - R.mid[0], v[1] - R.mid[1]) }; });
 ok('"Show me the river": the view over to the footbridge', va.d < 0.5 && !(await sheet()), va);
@@ -70,17 +70,17 @@ await p.evaluate(() => { const f = window.__farm, g = f.game(); g.data.lvSeen = 
 await p.evaluate(() => window.__farm.riverCard()); await run(0.2);
 sh = await sheet();
 const props0 = await p.evaluate(() => { const F = window.__farm.fishers().river; return F && { rod: F.deckRod.visible, bucket: F.bucket.visible, by: F.bucket.position.y }; });
-ok('level 9: his rod lying on the footbridge and his bucket by it (up on its deck)', props0 && props0.rod && props0.bucket && props0.by > 0.15, props0);
+ok('level 9: his rod lying on the jetty and his bucket by it (up on its boards)', props0 && props0.rod && props0.bucket && props0.by > 0.1, props0);
 ok('level 9: the river\'s ten fish (none caught), 6 worms, Go fishing', sh && sh.go && sh.fish === 10 && sh.got === 0 && sh.water === 'river' && /6/.test(sh.text), sh);      // (17 Nov 2026: the card's words gone)
 await shoot('1_card');
 await settle(); await p.tap('.gsheet button[data-fish=go]'); await run(0.3);
 let s = await st();
-ok('Go: the farmer off to the footbridge', s.seq && (fr ? /part à la passerelle/ : /off to the footbridge/).test(s.hint), s.hint);
+ok('Go: the farmer off to the river\'s jetty', s.seq && (fr ? /part au ponton de la rivière/ : /off to the river’s jetty/).test(s.hint), s.hint);
 for (let i = 0; i < 160; i++) { await run(1); s = await st(); if (s.state === 'ready') break; }
 // (9 Nov 2026: no fish caught yet, the how-to card comes by itself; the fish waits while it's open: Got it)
 await p.evaluate(() => { const b = document.querySelector('.gsheet:not([hidden]) button[data-fhelp=ok]'); if (b) b.click(); }); await run(0.2);
 const rodNow = await p.evaluate(() => { const F = window.__farm.fishing(), L = window.__farm.farmer(); return { water: F.o.water, onDeck: F.deckRod.visible, inHand: F.rodIn && !!L.f.rig.rod && L.f.rig.rod.visible }; });
-ok('out on the footbridge\'s middle, up on its deck, facing down the stream, the rod picked up; the worms and Stop at the bottom', s.state === 'ready' && s.water === 'river' && Math.hypot(s.pos[0] - s.R.stand[0], s.pos[2] - s.R.stand[1]) < 0.15 && Math.abs(s.pos[1] - s.R.deck) < 0.03 && s.R.deck > 0.2 && Math.abs(Math.atan2(Math.sin(s.heading - s.R.face), Math.cos(s.heading - s.R.face))) < 0.3 && rodNow.inHand && !rodNow.onDeck && s.bar, { s, rodNow });
+ok('out on the footbridge\'s middle, up on its deck, facing down the stream, the rod picked up; the worms and Stop at the bottom', s.state === 'ready' && s.water === 'river' && Math.hypot(s.pos[0] - s.R.stand[0], s.pos[2] - s.R.stand[1]) < 0.15 && Math.abs(s.pos[1] - s.R.deck) < 0.03 && s.R.deck > 0.1 && Math.abs(Math.atan2(Math.sin(s.heading - s.R.face), Math.cos(s.heading - s.R.face))) < 0.3 && rodNow.inHand && !rodNow.onDeck && s.bar, { s, rodNow });
 await p.evaluate(() => { const f = window.__farm, R = f.river(); f.lookAt(R.stand[0] + Math.sin(R.face) * 1.2, R.stand[1] + Math.cos(R.face) * 1.2, 2.2); });
 await run(0.3); await shoot('2_bridge');
 // a tap off the water, behind him: no cast
@@ -140,7 +140,7 @@ const tabs = await p.evaluate(() => [...document.querySelectorAll('.gsheet:not([
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gbooktabs button[data-tab=fish]').click()); await run(0.2); await settle();
 const book = await p.evaluate(id => { const s = document.querySelector('.gsheet:not([hidden])'); const pages = [...s.querySelectorAll('.gfishpage')];
   return { text: s.innerText.slice(0, 260), n: pages.length, dark: pages.filter(x => x.classList.contains('gpage-no')).length, first: (pages.find(x => x.dataset.fish === id) || {}).innerText, snap: (pages.find(x => x.dataset.fish === 'old_snapjaw') || {}).innerText, rudd: (pages.find(x => x.dataset.fish === 'rudd') || {}).innerText }; }, R1.id);
-ok('the Breed Book: Breeds, Fish and Milestones; the fish pages: 2 of 20 caught, the pond\'s and the river\'s, the caught ones in colour with their count and size, the others dark', tabs.length === 3 && book.n === 20 && book.dark === 18 && (fr ? /2 poissons pêchés sur 20/ : /2 of 20 fish caught/).test(book.text) && book.first && book.first.includes((fr ? 'Pêché une fois · ' : 'Caught once · ') + R1.cm + ' cm') && (fr ? /Légendaire/ : /Legendary/).test(book.snap) && (fr ? /Pas encore pêché/ : /Not caught yet/).test(book.rudd), { tabs, book });
+ok('the Breed Book: Breeds, Shelf, Fish and Milestones; the fish pages: 2 of 20 caught, the pond\'s and the river\'s, the caught ones in colour with their count and size, the others dark', tabs.length === 4 && book.n === 20 && book.dark === 18 && (fr ? /2 poissons pêchés sur 20/ : /2 of 20 fish caught/).test(book.text) && book.first && book.first.includes((fr ? 'Pêché une fois · ' : 'Caught once · ') + R1.cm + ' cm') && (fr ? /Légendaire/ : /Legendary/).test(book.snap) && (fr ? /Pas encore pêché/ : /Not caught yet/).test(book.rudd), { tabs, book });
 await shoot('7_book');
 await p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden]) .gsheet-body') || document.querySelector('.gsheet:not([hidden])'); s.scrollTop = 99999; }); await run(0.2); await shoot('8_book_river');
 await p.evaluate(() => document.querySelector('.gsheet:not([hidden]) .gbooktabs button[data-tab=birds]').click()); await run(0.2);

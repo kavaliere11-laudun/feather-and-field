@@ -1533,6 +1533,71 @@ def dock_v(seed=125, name='dock', L=1.8):
     return finish(objs, name)
 
 
+def fishing_spot_v(seed=126, name='fishing_spot'):
+    """The river's fishing spot (27 Nov 2026, Audrey: "The fishing river stop is quite hidden please make it more visible,
+    could involve moving it around"): a little fishing stage on the bank, out over the water (x from the bank, 0, to its
+    end, 1.05; y across), boards on two bearers and four piles; a painted wooden fish on a post at its land end, seen from
+    afar; a rack with two rods leaning on it, a wicker creel, a landing net."""
+    random.seed(seed); objs = []
+    planks_m = [C('vfsplank%d' % i, h, rough=0.75, var=0.1, grain=0.35, grain_scale=(1.5, 26, 26)) for i, h in enumerate(('#9a6a43', '#8f623d', '#a5744a'))]
+    dark = C('vfsdark', '#4f3624', rough=0.85, var=0.08)
+    n = 10; L = 1.3
+    for i in range(n):                                     # the boards, across it
+        x = (i + 0.5) * (L / n)
+        objs.append(box('vfsboard', (L / n - 0.014, 0.8 - random.uniform(0, 0.02), 0.04), (x, random.uniform(-0.005, 0.005), 0.12), m=random.choice(planks_m), bevel=0.005, segs=1, jitter=0.002))
+    for sy in (-1, 1):
+        objs.append(box('vfsbearer', (L + 0.04, 0.07, 0.07), (L / 2, sy * 0.31, 0.065), m=dark, bevel=0.006, segs=1))
+        for x, h in ((0.06, 0.2), (L - 0.06, 0.5)):
+            objs.append(cyl('vfspile', 0.045, h, (x, sy * 0.36, 0.1 - h / 2 + 0.06), m=dark, verts=10, bevel=0.0))
+    # the painted fish: a wooden board on two legs at the land end, tilted back to face up at you (so it reads from the
+    # farm's usual height, whichever way the farm is turned), a big blue fish on it with an orange tail and fins
+    post = C('vfspost', '#6b4a2e', rough=0.8, var=0.08)
+    fishc = C('vfsfish', '#3f93c9', rough=0.5); belly = C('vfsbelly', '#f2e6c4', rough=0.55); fin = C('vfsfin', '#e88a3a', rough=0.5)
+    eye = C('vfseye', '#fbf8f0', rough=0.4); pup = C('vfspupil', '#1d1d22', rough=0.3); board = C('vfsboard2', '#c9a26b', rough=0.7, var=0.1)
+    a = math.radians(-38); ca, sa = math.cos(a), math.sin(a); BC = Vector((-0.32, -0.95, 0.5)); F = 1.75      # (beside the way onto it, not across it)
+    W = lambda lx, ly, lz: tuple(BC + Vector((lx * ca + lz * sa, ly, -lx * sa + lz * ca)))      # (the board's own axes: x up its slope, y along it, z out of it)
+    rot = (0, a, 0)
+    objs.append(box('vfssign', (0.56, 1.02, 0.045), W(0, 0, 0), rot, m=board, bevel=0.012, segs=1))
+    for ly in (-0.52, 0.52): objs.append(box('vfssignrim', (0.6, 0.04, 0.06), W(0, ly, 0), rot, m=post, bevel=0.008, segs=1))      # (its two ends framed)
+    for ly in (-0.42, 0.42):                               # its two legs, down to the grass (the board runs along the bank)
+        top = Vector(W(-0.1, ly, -0.03)); objs.append(cyl('vfsleg', 0.025, top.z + 0.02, (top.x, top.y, (top.z + 0.02) / 2 - 0.01), m=post, verts=8, bevel=0.0))
+    for side in (1, -1):                                   # (painted on both faces: it reads whichever way you look)
+        z0 = 0.032 * side; sc = lambda x, y, zz: (x, y, zz)
+        objs.append(sphere('vfsbody', 1.0, W(0.0, -0.02, z0), (0.12 * F, 0.25 * F, 0.025), rot, m=fishc, seg=28, rings=12))
+        objs.append(sphere('vfsbellyb', 1.0, W(-0.045 * F, -0.04, z0 + 0.012 * side), (0.055 * F, 0.19 * F, 0.02), rot, m=belly, seg=24, rings=10))
+        for sx in (1, -1):                                 # the tail: two lobes spreading from its end
+            objs.append(sphere('vfstail', 1.0, W(sx * 0.06 * F, 0.3 * F, z0), (0.055 * F, 0.085 * F, 0.02), rot, m=fin, seg=16, rings=8))
+        objs.append(sphere('vfsdorsal', 1.0, W(0.12 * F, 0.02 * F, z0), (0.04 * F, 0.08 * F, 0.018), rot, m=fin, seg=16, rings=8))
+        objs.append(sphere('vfsfinb', 1.0, W(-0.1 * F, 0.05 * F, z0), (0.03 * F, 0.05 * F, 0.018), rot, m=fin, seg=14, rings=8))
+        objs.append(sphere('vfseyew', 0.034 * F, W(0.035 * F, -0.17 * F, z0 + 0.018 * side), (1, 1, 0.45), rot, m=eye, seg=16, rings=10))
+        objs.append(sphere('vfseyep', 0.017 * F, W(0.038 * F, -0.18 * F, z0 + 0.03 * side), (1, 1, 0.45), rot, m=pup, seg=12, rings=8))
+    # the rod rack beside it, two rods leaning
+    for y in (0.68, 1.04):
+        objs.append(box('vfsrackpost', (0.05, 0.05, 0.62), (-0.2, y, 0.31), m=post, bevel=0.006, segs=1))
+    objs.append(box('vfsrackbar', (0.05, 0.45, 0.04), (-0.2, 0.86, 0.56), m=post, bevel=0.006, segs=1))
+    rod = C('vfsrod', '#3b2a1e', rough=0.4); cork = C('vfscork', '#c79a62', rough=0.8); reel = C('vfsreel', '#9aa3a8', rough=0.35, metal=0.6)
+    for y, lean in ((0.78, 14), (0.96, 18)):
+        objs.append(cyl('vfsrodcork', 0.016, 0.22, (-0.34, y, 0.16), (0, math.radians(lean), 0), m=cork, verts=8, bevel=0.0))
+        objs.append(cyl('vfsrodpole', 0.008, 1.35, (-0.14, y, 0.74), (0, math.radians(lean), 0), m=rod, verts=6, r2=0.004, bevel=0.0))
+        objs.append(cyl('vfsreelb', 0.035, 0.025, (-0.3, y + 0.04, 0.3), (math.radians(90), 0, 0), m=reel, verts=12, bevel=0.0))
+    # a wicker creel with its strap on the boards, a landing net leaning on the rack
+    wick = C('vfswicker', '#c9a25e', rough=0.85, var=0.15, grain=0.5, grain_scale=(40, 40, 6))
+    objs.append(box('vfscreel', (0.26, 0.17, 0.17), (0.3, 0.2, 0.225), m=wick, bevel=0.03, segs=2))
+    objs.append(box('vfscreellid', (0.27, 0.18, 0.03), (0.3, 0.2, 0.325), m=C('vfswicker2', '#b48c4e', rough=0.85), bevel=0.012, segs=1))
+    objs.append(box('vfsstrap', (0.02, 0.19, 0.2), (0.3, 0.2, 0.24), m=C('vfsstrap', '#7a3f26', rough=0.6), bevel=0.004, segs=1))
+    # (no stool: he stands to fish, near the end, his rod lying along the boards beside him when he's not)
+    netm = C('vfsnet', '#d9d3c2', rough=0.9)
+    objs.append(cyl('vfsnetpole', 0.009, 0.9, (-0.26, 1.18, 0.42), (math.radians(-12), math.radians(6), 0), m=rod, verts=6, bevel=0.0))
+    bpy.ops.mesh.primitive_torus_add(major_radius=0.12, minor_radius=0.01, major_segments=18, minor_segments=5, location=(-0.24, 1.26, 0.92), rotation=(math.radians(80), 0, 0))
+    o = bpy.context.object; o.name = 'vfsnetring'; setmat(o, rod); objs.append(o)
+    objs.append(sphere('vfsnetbag', 1.0, (-0.24, 1.28, 0.84), (0.11, 0.05, 0.1), m=netm, seg=12, rings=8))
+    for o in objs:                                         # (rotation and scale put into the shapes themselves: the tilted,
+        if o.rotation_euler[:] != (0, 0, 0) or o.scale[:] != (1, 1, 1):      # flattened fish kept its tilt in the browser only so)
+            bpy.ops.object.select_all(action='DESELECT'); o.select_set(True); bpy.context.view_layer.objects.active = o
+            bpy.ops.object.transform_apply(location=False, rotation=True, scale=True)
+    return finish(objs, name)
+
+
 def bale(objs, c, size, yaw, ms, twine):
     """A square straw bale: rounded block, straw strands on its faces, two twines round it."""
     sx, sy, sz = size; R = Matrix.Rotation(yaw, 4, 'Z'); C0 = Vector(c)
