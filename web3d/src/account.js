@@ -165,7 +165,10 @@ export class Account {
     } catch (e) {
       const c = e && e.code || ''; this.info.err = c || String(e && e.message || e).slice(0, 160);      // (for the tests)
       if (c === 'auth/popup-closed-by-user' || c === 'auth/cancelled-popup-request' || c === 'auth/user-cancelled' || c === 'cancelled') return false;
-      if (this.o.say) this.o.say(this.g.t(c === 'auth/popup-blocked' ? 'acct_popup' : c === 'auth/account-exists-with-different-credential' ? 'acct_other' : 'acct_failed'));
+      // (27 Nov 2026, Audrey's "Signing in didn't work" with Apple: the reason in small after the words, so a picture of it says
+      // what went wrong: Firebase's code, or the phone's own words when the app's sign-in failed)
+      const why = (c && c !== 'failed' ? c : String(e && e.message || '')).slice(0, 110);
+      if (this.o.say) this.o.say(this.g.t(c === 'auth/popup-blocked' ? 'acct_popup' : c === 'auth/account-exists-with-different-credential' ? 'acct_other' : 'acct_failed') + (why && c !== 'auth/popup-blocked' ? ' (' + why + ')' : ''));
       return false;
     }
   }
