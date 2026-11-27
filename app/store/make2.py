@@ -14,7 +14,7 @@ for L in LANGS:
     plan = []
     for i, (scene, (title, sub)) in enumerate(zip(C['scenes'], C[L])):
         own = os.path.join(SC, L, scene + '.png')
-        plan.append({'img': own if os.path.exists(own) else os.path.join(SC, scene + '.png'), 'title': title, 'sub': sub, 'name': '%02d' % (i + 1), 'screen': scene in C['screens'], 'side': C.get('sides', {}).get(scene, 'left'), 'size': 108})
+        plan.append({'img': own if os.path.exists(own) else os.path.join(SC, scene + '.png'), 'title': title, 'sub': sub, 'name': '%02d' % (i + 1), 'screen': scene in C['screens'], 'side': C.get('sides', {}).get(scene, 'left'), 'size': 100})
     pf = os.path.join(d, 'plan.json'); json.dump(plan, open(pf, 'w', encoding='utf-8'), ensure_ascii=False)
     subprocess.run(['node', os.path.join(HERE, 'compose2.mjs'), pf, d, 'sign'], check=True)
     for q in plan:

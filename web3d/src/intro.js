@@ -330,8 +330,9 @@ class Intro {
     // the farmer on her other side, holding up a frame of honey from his hives, a bee or two after it (the store's picture,
     // Audrey: "not too sure what the farmer is showing, looks like honey board": there he claps for her instead)
     if (STORE_SHOW) {
-      this.farmer('m', P.x - 0.78, 1.42, 0.3, t => ({ pose: 'clap', face: 'happy', props: {}, anim: (Q, Fc) => { Q.head[2] += 4; Q.head[1] -= 10; Fc.look = [0.2, 0.05]; } }));
-      this.heartsFrom([P.bird[0] + 0.02, 1.4, P.bird[2] + 0.25], 0.5, [0.02, 0.3, 0.12], 0.13);
+      // (and, Audrey: "farmer hands clipping, heart on the winning chicken cut": his hands on his hips, proud, nothing
+      // through anything; no hearts rising into the sign)
+      this.farmer('m', P.x - 0.78, 1.42, 0.3, t => ({ pose: 'hips', face: 'happy', props: {}, anim: (Q, Fc) => { Q.head[2] += 4; Q.head[1] -= 10; Fc.look = [0.2, 0.05]; } }));
       return;
     }
     const A = this.farmer('m', P.x - 0.78, 1.42, 0.3, t => ({ pose: 'hold', face: 'happy', props: {},
@@ -381,39 +382,34 @@ class Intro {
   // a mum and her chicks, two hens sharing a treat, three Silkies huddled with a Polish peering at them, a Brahma and a Marans
   // face to face, the peahen admiring the peacock's fan; the tall ones to the right, clear of the sign
   mingle() {
-    this.cam = { at: [0.25, 0.46, 0.1], el: 14, dist: 6.0, fov: 23, shadowReach: 4.8 };
+    this.cam = { at: [0.12, 0.46, 0.1], el: 14, dist: 6.0, fov: 23, shadowReach: 4.8 };
     this.prop('tree_apple', -3.3, -3.9, 0); this.prop('tree_b', 4.4, -4.4, 40); this.prop('tree_a', 2.0, -6.0, 110, 0.9);
     this.prop('rustic_orp', -0.2, -3.6, 12); this.prop('bush_b', -1.5, -3.2, 0, 0.7); this.prop('bush_a', 1.3, -3.1, 0, 0.65);
     this.prop('bush_a', -2.6, -2.6, 0, 0.75); this.prop('bush_b', 3.4, -2.6, 30, 0.7); this.prop('flower_pots', -1.9, -2.2, 15, 0.8); this.prop('bush_a', 4.6, -1.6, 0, 0.6);
     this.dress(240, { x0: -4.4, x1: 5.4, z0: -4.4, z1: 1.2, clear: [[-2.4, -1.3, 3.4, 1.2], [-1.0, -4.4, 0.8, -3.0]], seed: 71, flowers: 0.45 });
     this.dress(90, { x0: -4.4, x1: 5.4, z0: 1.2, z1: 2.8, seed: 72, flowers: 0.65 });
     const B = (breed, kind, colour, x, z, yaw, f) => this.bird(breed, kind, colour, x, z, yaw, f);
-    const to = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);          // (the yaw that faces (tx, tz))
-    // a Rhode Island Red mum, her three chicks round her: one looking up at her, one pecking, one peeping out from behind
-    B('rir', 'hen', null, -2.0, 0.5, 0.75, A => { A.lookYaw = 0.35; A.lookTilt = 0.2; });
-    B('rir', 'chick', null, -1.6, 0.82, to(-1.6, 0.82, -2.0, 0.5) + 0.5, A => { A.up = 0.9; });
-    B('rir', 'chick', null, -2.35, 0.92, 0.5, A => { A.peck = 1; });
-    B('rir', 'chick', null, -1.62, 0.3, 1.1, A => { A.lookTilt = 0.35; A.lookYaw = -0.3; });
-    // two hens sharing a treat, heads together over it: the Orpington and the Speckled Sussex
-    B('orp', 'hen', null, -0.98, 0.35, 1.25, A => { A.peck = 1; });
-    B('sus', 'hen', null, -0.4, 0.42, -1.3, A => { A.peck = 0.7; A.lookTilt = 0.1; });
-    // the Silkies huddled together, the white one turned to the black, the buff looking out at us; a Polish peering at them
-    B('sil', 'hen', 'white', 0.22, 0.68, 0.9, A => { A.lookYaw = 0.35; A.lookTilt = 0.15; });
-    B('sil', 'hen', 'black', 0.6, 0.78, -0.9, A => { A.lookYaw = -0.25; A.lookTilt = -0.2; });
-    B('sil', 'hen', 'buff', 0.42, 0.38, 0.15, A => { A.lookTilt = 0.3; });
-    B('pol', 'hen', null, 0.05, -0.22, to(0.05, -0.22, 0.42, 0.55), A => { A.lookTilt = 0.45; A.up = 0.1; });
-    // an Ayam Cemani rooster crowing at the back
-    B('aya', 'rooster', null, -1.05, -0.72, 0.55, A => { A.crow = 1; A.proud = 0.6; });
-    // a Brahma rooster and a Marans hen face to face, chatting
-    B('bra', 'rooster', null, 1.72, -0.32, -1.35, A => { A.proud = 0.6; A.lookTilt = 0.15; });
-    B('mar', 'hen', null, 1.2, -0.26, 1.4, A => { A.lookTilt = -0.2; A.cluck = 0.6; });
-    // the peacock in full fan, the peahen beside him looking up at it
-    B('pea', 'rooster', null, 2.3, -1.35, -0.4, A => { A.fan = 1; A.proud = 1; A.lookYaw = -0.15; });
-    B('pea', 'hen', null, 1.75, -0.95, to(1.75, -0.95, 2.3, -1.35) + 0.5, A => { A.up = 0.6; A.lookYaw = -0.4; });
-    // at the front right: an Araucana trotting over to join in, a Leghorn and a Cochin looking out at us
-    B('ara', 'hen', null, 1.25, 1.0, -1.0, A => { A.walk = 1; A.phase = 0.5; A.lookYaw = -0.15; });
-    B('leg', 'hen', null, 2.15, 0.42, -0.5, A => { A.lookYaw = 0.25; A.lookTilt = 0.15; });
-    B('coc', 'hen', null, 2.4, 0.95, -0.8, A => { A.lookYaw = 0.2; A.lookTilt = 0.1; });
+    // (27 Nov 2026, Audrey, on the regrouped scene: "better but the scene is a bit messy + there is some clipping": two calm
+    // rows, every bird clear of the others (the back row standing in the gaps of the front one), pairs turned to each other
+    // with room between them, nobody pecking into anybody)
+    // the front row: a Rhode Island Red mum and her two chicks, an Orpington watching them, two Silkies face to face, a
+    // Polish peering at them, an Araucana and a Leghorn looking out at us
+    B('rir', 'hen', null, -1.85, 0.5, 0.7, A => { A.lookYaw = 0.3; A.lookTilt = 0.15; });
+    B('rir', 'chick', null, -1.48, 0.85, -1.9, A => { A.up = 0.6; });
+    B('rir', 'chick', null, -2.0, 1.05, 0.9, A => { A.lookTilt = 0.3; });
+    B('orp', 'hen', null, -0.86, 0.5, -0.75, A => { A.lookTilt = 0.2; A.lookYaw = -0.2; });
+    B('sil', 'hen', 'white', -0.02, 0.66, 1.05, A => { A.lookTilt = 0.12; });
+    B('sil', 'hen', 'black', 0.40, 0.74, -1.05, A => { A.lookTilt = -0.12; });
+    B('pol', 'hen', null, 0.84, 0.47, -1.1, A => { A.lookTilt = 0.42; });
+    B('ara', 'hen', null, 1.53, 0.62, -0.35, A => { A.lookYaw = 0.2; A.lookTilt = 0.1; });
+    B('leg', 'hen', null, 2.13, 0.5, -0.6, A => { A.lookYaw = 0.25; A.lookTilt = 0.12; });
+    // the back row, in the front row's gaps: an Ayam Cemani rooster and a Marans hen chatting, a Light Brahma rooster proud
+    // in the middle, a Cochin, the peacock's fan up behind (the peahen left out: Audrey, "please remove the female peacock from in front of the male one")
+    B('aya', 'rooster', null, -1.36, -0.55, 1.3, A => { A.proud = 0.6; A.lookTilt = 0.1; });
+    B('mar', 'hen', null, -0.53, -0.5, -1.35, A => { A.lookTilt = -0.15; A.cluck = 0.5; });
+    B('bra', 'rooster', null, 0.42, -0.75, 0.15, A => { A.proud = 0.8; A.lookYaw = -0.2; });
+    B('coc', 'hen', null, 1.46, -0.32, -0.5, A => { A.lookYaw = 0.2; A.lookTilt = 0.1; });
+    B('pea', 'rooster', null, 2.25, -1.45, -0.35, A => { A.fan = 1; A.proud = 1; A.lookYaw = -0.15; });
   }
   // ------------------------------------------------------------------ 8. A flock to love (27 Nov 2026, the App Store's first
   // picture; Audrey: "the chickens are not really looking at the farmer, and there is some clipping with farmer arm. also the

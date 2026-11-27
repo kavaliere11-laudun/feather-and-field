@@ -48,16 +48,40 @@ const SCENES = {
   },
   // the farm from above: every coop at its Deluxe look, the grand decorations, late-afternoon light
   farm: {
-    time: process.env.FTIME || '16:00', arg: { size: +(process.env.SIZE || 7.2), at: process.env.AT ? process.env.AT.split(',').map(Number) : null, az: +(process.env.AZ || 0),
-      // (Audrey: "big piece of green space on it, not great": the grand decorations brought into the lawns between the coops)
-      put: process.env.PUT ? JSON.parse(process.env.PUT) : [['fountain', -13.2, -15.2], ['hot_air_balloon', -16.1, -20.6], ['beehives', -19, -11]] },
+    time: process.env.FTIME || '16:00', arg: { size: +(process.env.SIZE || 11.2), at: process.env.AT ? process.env.AT.split(',').map(Number) : [-17.6, -24.4],      // (the farmhouse left of the sign, which hangs on the right here)
+      az: +(process.env.AZ || 0),
+      // (27 Nov 2026, Audrey: "I can see you just filled the gaps, can you reorganise it so it looks nice": the coops laid out
+      // in tidy columns either side of the lane from the farmhouse, all the same way round, the grand decorations in the
+      // places left for them. Places are given in the picture's own terms (u across, w down the screen: x = (u + w)/√2,
+      // z = (w - u)/√2); each coop goes to the nearest spot the game itself allows (coopSpot), checked against the coops
+      // already placed and those left where they are; each decoration likewise (its free spot nearby))
+      layout: process.env.LAYOUT ? JSON.parse(process.env.LAYOUT) : [['rir', -12.3, -29.6, 0], ['sil', -5.9, -29.6, 0], ['aya', -12.3, -22.8, 0], ['call', -5.9, -22.8, 0],
+        ['orp', 5.9, -29.6, 0], ['bra', 12.3, -29.6, 0], ['sil_black', 5.9, -22.8, 0], ['pea', 12.6, -22.6, 0]],
+      put: process.env.PUT ? JSON.parse(process.env.PUT) : [['fountain', 0, -19.6], ['orchard', 9.6, -16.9], ['hot_air_balloon', -17.5, -24.5]] },
     prep: (f, arg) => {
-      const g = f.game(); g.data.acctAsk = 1; const out = [];
-      for (const [id, x, z] of arg.put || []) {
-        const F = f.deco.free(id, x, z); if (!F) { out.push([id, 'none']); continue; }
+      const g = f.game(), R = Math.SQRT1_2, all = g.data.coops, mine = (arg.layout || []).map(L => L[0]), out = [];
+      const placed = all.filter(c => !mine.includes(c.breed));
+      for (const [br, u, w, deg] of arg.layout || []) {
+        const c = all.find(x => x.breed === br); if (!c) continue;
+        const tx = (u + w) * R, tz = (w - u) * R; let best = null;
+        g.data.coops = [...placed, c];
+        for (let r = 0; r <= 4 && !best; r += 0.25) for (let k = 0, n = Math.max(1, Math.round(r * 8)); k < n && !best; k++) {
+          const a = k / n * 2 * Math.PI, x = Math.round((tx + Math.cos(a) * r) * 4) / 4, z = Math.round((tz + Math.sin(a) * r) * 4) / 4;
+          const S = f.coopSpotAt({ x, z, deg }, c.tier, placed.length); if (S && S.ok) best = { x, z, clear: (S.clear || []).map(o => o.id).filter(Boolean) };
+        }
+        g.data.coops = all;
+        if (best) { c.x = best.x; c.z = best.z; c.deg = deg; g.cleared(best.clear); placed.push(c); out.push([br, best.x, best.z]); } else { placed.push(c); out.push([br, 'none']); }
+      }
+      g.data.acctAsk = 1; g.save(); sessionStorage.setItem('ff.layout', JSON.stringify(out));
+    },
+    // (the decorations once the coops stand in their new places: after a reload, so the game's free spots know them)
+    prep2: (f, arg) => {
+      const g = f.game(), R = Math.SQRT1_2, out = [];
+      for (const [id, u, w] of arg.put || []) {
+        const x = (u + w) * R, z = (w - u) * R, F = f.deco.free(id, x, z); if (!F) { out.push([id, 'none']); continue; }
         const S = f.deco.spot(id, F.x, F.z); if (S.ok) { g.moveDecor(id, { x: F.x, z: F.z }, S.clear); out.push([id, F.x, F.z]); } else out.push([id, S.why]);
       }
-      g.save(); window.__put = out;
+      g.save(); sessionStorage.setItem('ff.decor', JSON.stringify(out));
     },
     setup: (f, arg) => {
       const C = f.gamePlots().filter(p => p.gc).map(p => { const w = p.frame.getWorldPosition(new f.THREE.Vector3()); return [p.gc.breed, +w.x.toFixed(1), +w.z.toFixed(1)]; });
@@ -151,10 +175,14 @@ const SCENES = {
     } },
   // a dream coop: one breed's Deluxe garden close up through a perspective camera, the birds at play
   coop: {
-    time: '10:40', arg: { breed: process.env.BREED || 'sil', chicks: +(process.env.CHICKS ?? 3) },
+    time: '10:40', arg: { breed: process.env.BREED || 'sil', chicks: +(process.env.CHICKS ?? 3), swap: (process.env.CSWAP ?? 'sil,pol').split(',').filter(Boolean) },
     // (Audrey: "Would be good to see each of them trying a different toy, and add chicks": a brood hatched this morning,
     // the mum with her chicks, the others each at a different toy)
     prep: (f, arg) => { const g = f.game(); g.data.acctAsk = 1;
+      // (Audrey: "please find a better angle": the Silkies' coop moved, for the picture, to the Polish's corner of the farm,
+      // the woods behind it and no neighbour in the way)
+      const sw = (arg.swap || []).map(br => g.data.coops.find(x => x.breed === br));
+      if (sw.length === 2 && sw[0] && sw[1]) { const [A, B] = sw, k = ['x', 'z', 'deg'], a = k.map(q => A[q]); k.forEach((q, i) => { A[q] = B[q]; B[q] = a[i]; }); }
       const c = g.data.coops.find(x => x.breed === arg.breed), hen = c && g.data.birds.find(b => b.coop === c.id && b.sex === 'h');
       if (c && hen && arg.chicks) c.brood = { hen: hen.id, start: Date.now() - 24 * 3600e3 - 3 * 3600e3, n: arg.chicks, hatched: true, kids: Array.from({ length: arg.chicks }, (_, i) => ({ sex: i % 2 ? 'r' : 'h', stars: 2 })) };
       g.save(); },
@@ -169,7 +197,7 @@ const SCENES = {
       const pl = window.__pl, T = pl.toys; if (!T) return;
       window.__TOYS.filter(q => T[q]).forEach((kind, k) => { if (!T[kind] || t < 0.5 + k * 0.9 || T[kind].sent) return; const bd = pl.birds.find(x => !x.busy() && !x.cuddle); if (bd && !T[kind].by && f.startPlay(bd, kind)) T[kind].sent = true; });
     },
-    shot: { rel: [0.45, 0.3, 1.0], dist: 7.2, el: 26, fov: 30, az: 38 },      // (the whole coop and garden in: "the coop is cut")
+    shot: { rel: [2.0, 0.3, 0.8], dist: 12, el: 26, fov: 32, az: 125 },      // (Audrey: "the coop is cut on the right bottom corner": the whole garden, right of the sign)      // (the whole coop and garden in, from its garden side: "the coop is cut", "a better angle")
   },
   // a winter themed building (the Silkies' Ice Palace) worn by its coop, the hens at play in its snowy garden
   theme: {
@@ -207,6 +235,14 @@ for (const name of ONLY) {
     await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 300000 });
     await p.evaluate(live => { const u = window.__farm.gameUI(); if (u.isOpen) u.close(); window.__farm.pause(!live); window.__farm.wind(3); }, !!S.live);
   }
+  if (S.prep2) {
+    await p.evaluate(([fn, arg]) => new Function('f', 'arg', fn)(window.__farm, arg), [S.prep2.toString().replace(/^[^{]*{/, '').replace(/}\s*$/, ''), S.arg || {}]);
+    await p.evaluate(() => sessionStorage.setItem('show', '1'));
+    await p.reload({ waitUntil: 'domcontentloaded' });
+    await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 300000 });
+    await p.evaluate(live => { const u = window.__farm.gameUI(); if (u.isOpen) u.close(); window.__farm.pause(!live); window.__farm.wind(3); }, !!S.live);
+  }
+  if (S.prep) console.log('staged', await p.evaluate(() => [sessionStorage.getItem('ff.layout'), sessionStorage.getItem('ff.decor')].filter(Boolean).join(' ')));
   if (!S.hud) await p.addStyleTag({ content: HIDE });
   else await p.addStyleTag({ content: '#hint { display: none !important; }' });      // (the game's passing words, e.g. the golden egg's, off)
   if (process.env.FS) await p.evaluate(v => { window.__FS = v; }, +process.env.FS);

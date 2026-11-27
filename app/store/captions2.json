@@ -17,7 +17,8 @@
   "fish"
  ],
  "sides": {
-  "show": "center"
+  "show": "center",
+  "farm": "right"
  },
  "en-GB": [
   [
@@ -29,7 +30,7 @@
    "Restore the land, build coops, make it yours"
   ],
   [
-   "24 breeds and colours to adopt",
+   "Breeds and colours to adopt",
    "From fluffy Silkies to a peacock in full fan"
   ],
   [
@@ -67,7 +68,7 @@
    "Restaurez les terres, bâtissez vos poulaillers"
   ],
   [
-   "24 races et couleurs à adopter",
+   "Trouvez votre race préférée",
    "Des Soies duveteuses au paon qui fait la roue"
   ],
   [
@@ -105,7 +106,7 @@
    "Land herrichten, Ställe bauen, ganz nach deinem Geschmack"
   ],
   [
-   "24 Rassen und Farben zum Adoptieren",
+   "Rassen und Farben zum Adoptieren",
    "Vom flauschigen Seidenhuhn bis zum Pfau, der ein Rad schlägt"
   ],
   [
@@ -143,7 +144,7 @@
    "Recupera la tierra y construye gallineros"
   ],
   [
-   "24 razas y colores para adoptar",
+   "Razas y colores para adoptar",
    "De las Sedosas al pavo real con la cola abierta"
   ],
   [
@@ -181,7 +182,7 @@
    "Recupera i campi e costruisci i pollai"
   ],
   [
-   "24 razze e colori da adottare",
+   "Razze e colori da adottare",
    "Dalle Moroseta al pavone che fa la ruota"
   ],
   [
@@ -219,7 +220,7 @@
    "Recupere a terra e construa galinheiros"
   ],
   [
-   "24 raças e cores para adotar",
+   "Raças e cores para adotar",
    "Das Sedosas ao pavão de cauda aberta"
   ],
   [
@@ -247,5 +248,5 @@
    "Vinte peixes e algumas lendas"
   ]
  ],
- "_notes": "27 Nov 2026, Audrey: picture 3 says adopt, not collect (\"change collectioner for adopter\"); picture 7 is the seasonal coops (\"this one should be special coops instead\")"
+ "_notes": "27 Nov 2026, Audrey: picture 3 says adopt, not collect (\"change collectioner for adopter\"); picture 7 is the seasonal coops (\"this one should be special coops instead\"); no number on picture 3 (\"this number will increase so better to not mention it\"); French picture 3: her choice \"Trouvez votre race préférée\""
 }
