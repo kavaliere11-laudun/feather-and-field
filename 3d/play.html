@@ -74,8 +74,8 @@
      wide sideways, placed just as the iPhone app's launch screen shows it (app/icons.py crops the same part), so the app
      opens on the picture and the name, the words and the bar come on over it; the farm fades in from it */
   body.game #loading { justify-content: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 34px); box-sizing: border-box;
-                       background: #5d8fb6 url("welcome-tall.jpg?v=1795801140") 34% 50% / cover no-repeat; }
-  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1795801140") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
+                       background: #5d8fb6 url("welcome-tall.jpg?v=1795801237") 34% 50% / cover no-repeat; }
+  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1795801237") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
   body.game #loading::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                                font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
   body.game #loading::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 34%; z-index: 0;
@@ -126,7 +126,7 @@
   #sideways { display: none; }
   @media (orientation: portrait) and (pointer: coarse) {
     body.game:not(.gsideways-off) #sideways { position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 18px;
-      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1795801140") 34% 50% / cover no-repeat; }
+      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1795801237") 34% 50% / cover no-repeat; }
   }
   #sideways::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                       font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
@@ -571,9 +571,8 @@
      collection's banner, its season on each building's picture */
   .gshop-tabs .gchip[data-tab="coops"]:not(.on) { background: linear-gradient(135deg, #e6f1fc, #fbfdff 75%); box-shadow: inset 0 0 0 1.5px #cfe2f3, 0 1px 3px rgba(30, 52, 38, 0.13); }
   .gshop-tabs .gchip[data-tab="coops"].on { border-color: #5b9bd1; background: #e2effb; }
-  .gcoops-ban { grid-column: 1 / -1; position: relative; border-radius: 16px; padding: 11px 16px 12px; background: linear-gradient(135deg, #dcebfa 0%, #f6faff 58%, #e4effa 100%); box-shadow: inset 0 0 0 1.5px #cbdff2; color: #24527f; }
-  .gcoops-ban::after { content: "❄ ❅ ❆"; position: absolute; right: 12px; top: 2px; font-size: 30px; letter-spacing: 6px; color: rgba(91, 155, 209, 0.28); pointer-events: none; }
-  .gcoops-ban-t { font: 600 20px/1.15 var(--display); } .gcoops-ban-l { margin: 4px 0 0; font-size: 13.5px; font-weight: 600; line-height: 1.35; color: #2e4a63; max-width: 92%; } .gcoops-ban-d { margin: 4px 0 0; font-size: 13px; font-weight: 800; }
+  .gcoops-ban { grid-column: 1 / -1; position: relative; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 12px; row-gap: 2px; border-radius: 12px; padding: 6px 14px; background: linear-gradient(135deg, #dcebfa 0%, #f6faff 58%, #e4effa 100%); box-shadow: inset 0 0 0 1.5px #cbdff2; color: #24527f; }      /* (27 Nov 2026: one slim line, Audrey: "we need to see products") */
+  .gcoops-ban-t { font: 600 16px/1.2 var(--display); } .gcoops-ban-d { margin: 0; font-size: 12.5px; font-weight: 800; }
   .gcoop-ribbon { position: absolute; top: 6px; left: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(226, 239, 251, 0.95); color: #24527f; font: 800 11.5px/16px Nunito, system-ui, sans-serif; box-shadow: 0 1px 2px rgba(30, 52, 38, 0.2); pointer-events: none; }
   .gdress-h { margin: 8px 0 0; }
   .gviewable { cursor: pointer; } .gviewable .gtheme-pic { position: relative; }
@@ -1007,6 +1006,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1795801140"></script>
+<script src="app.js?v=1795801237"></script>
 </body>
 </html>

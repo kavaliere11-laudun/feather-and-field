@@ -570,9 +570,8 @@
      collection's banner, its season on each building's picture */
   .gshop-tabs .gchip[data-tab="coops"]:not(.on) { background: linear-gradient(135deg, #e6f1fc, #fbfdff 75%); box-shadow: inset 0 0 0 1.5px #cfe2f3, 0 1px 3px rgba(30, 52, 38, 0.13); }
   .gshop-tabs .gchip[data-tab="coops"].on { border-color: #5b9bd1; background: #e2effb; }
-  .gcoops-ban { grid-column: 1 / -1; position: relative; border-radius: 16px; padding: 11px 16px 12px; background: linear-gradient(135deg, #dcebfa 0%, #f6faff 58%, #e4effa 100%); box-shadow: inset 0 0 0 1.5px #cbdff2; color: #24527f; }
-  .gcoops-ban::after { content: "❄ ❅ ❆"; position: absolute; right: 12px; top: 2px; font-size: 30px; letter-spacing: 6px; color: rgba(91, 155, 209, 0.28); pointer-events: none; }
-  .gcoops-ban-t { font: 600 20px/1.15 var(--display); } .gcoops-ban-l { margin: 4px 0 0; font-size: 13.5px; font-weight: 600; line-height: 1.35; color: #2e4a63; max-width: 92%; } .gcoops-ban-d { margin: 4px 0 0; font-size: 13px; font-weight: 800; }
+  .gcoops-ban { grid-column: 1 / -1; position: relative; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 12px; row-gap: 2px; border-radius: 12px; padding: 6px 14px; background: linear-gradient(135deg, #dcebfa 0%, #f6faff 58%, #e4effa 100%); box-shadow: inset 0 0 0 1.5px #cbdff2; color: #24527f; }      /* (27 Nov 2026: one slim line, Audrey: "we need to see products") */
+  .gcoops-ban-t { font: 600 16px/1.2 var(--display); } .gcoops-ban-d { margin: 0; font-size: 12.5px; font-weight: 800; }
   .gcoop-ribbon { position: absolute; top: 6px; left: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(226, 239, 251, 0.95); color: #24527f; font: 800 11.5px/16px Nunito, system-ui, sans-serif; box-shadow: 0 1px 2px rgba(30, 52, 38, 0.2); pointer-events: none; }
   .gdress-h { margin: 8px 0 0; }
   .gviewable { cursor: pointer; } .gviewable .gtheme-pic { position: relative; }
@@ -1006,6 +1005,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1795801140"></script>
+<script src="app.js?v=1795801237"></script>
 </body>
 </html>
