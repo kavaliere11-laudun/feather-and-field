@@ -1334,7 +1334,9 @@ export class GameUI {
     // (23 Nov 2026, Audrey: "the coops should have a special coops mention somehow and make it more obvious that's the seasonal
     // one": the collection's own banner, frosty, and its season on each building's picture)
     const ban = el('div', 'gcoops-ban'); ban.dataset.theme = list[0].t;
-    ban.append(el('div', 'gcoops-ban-t', this.t('coops_coll_' + list[0].t)), el('p', 'gcoops-ban-l', this.t('coops_sub')), el('p', 'gcoops-ban-d', '📅 ' + this.t(list[0].season ? 'coops_until' : 'coops_back', { d: this.seasonDay(list[0].season ? T0.to : T0.from) })));
+    // (27 Nov 2026, Audrey: "Winter collection message takes too much space on the screen. Shorten it we need to see
+    // products": one slim line, the collection and its date; what a seasonal coop is stays on each building's own page)
+    ban.append(el('div', 'gcoops-ban-t', this.t('coops_coll_' + list[0].t)), el('p', 'gcoops-ban-d', '📅 ' + this.t(list[0].season ? 'coops_until' : 'coops_back', { d: this.seasonDay(list[0].season ? T0.to : T0.from) })));
     b.append(ban);
     for (const S of list) {
       const name = g.themeName(S.t, S.b), card = el('div', 'gcard gpage gdec gshopcoop' + (!S.coops.length || !S.season ? ' glock' : '') + (S.owned ? ' gdec-own' : '')), info = el('div', 'gpage-i');
