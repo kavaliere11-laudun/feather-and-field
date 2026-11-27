@@ -9318,10 +9318,10 @@ function sowWheat(k = 0) {
   const r = game.sowWheat(undefined, k); if (!r) return false;
   if (r.broke) { hint(game.t('wheat_broke')); return false; }
   gameUI.close(); gameUI.refresh(); gameUI.bumpCoins();
-  const F = FIELD.f[k]; F.hold = 'soil';
-  const done = () => { F.hold = null; tickWheat(); };
-  if (farmerWork('sow', done, k)) hint(game.t('wheat_sowing', { farmer: farmerName(), c: r.cost }));
-  else { done(); seedsOver(k); hint(game.t('wheat_sowed', { c: r.cost })); }
+  // (27 Nov 2026, Audrey: "Harvesting wheat should be the same as for the beds, not waiting for the farmer": sown and
+  // harvested at once, as the beds since 20 Nov; the seed and the straw fly from the field itself)
+  const F = FIELD.f[k]; F.hold = null;
+  seedsOver(k); hint(game.t('wheat_sowed', { c: r.cost }));
   guideDid('sow');
   tickWheat();
   return true;
@@ -9330,12 +9330,8 @@ function harvestWheat(k = 0) {
   if (FIELD.work && FIELD.work.kind !== 'honey') FIELD.work.seq.finish();
   const r = game.harvestWheat(undefined, k); if (!r) return false;
   gameUI.close(); gameUI.refresh();
-  const F = FIELD.f[k]; F.hold = 'ripe';
-  const said = game.t(r.grain ? 'wheat_done' : 'wheat_full', { g: r.grain, xp: r.xp });
-  const done = () => { F.hold = null; tickWheat(); harvestPuff(k); hint(said); gameUI.refresh(); };
-  if (farmerWork('harvest', done, k)) hint(game.t('wheat_cutting', { farmer: farmerName() }));
-  else done();
-  tickWheat();
+  const F = FIELD.f[k]; F.hold = null;
+  tickWheat(); harvestPuff(k); hint(game.t(r.grain ? 'wheat_done' : 'wheat_full', { g: r.grain, xp: r.xp })); gameUI.refresh();
   return true;
 }
 // the second field, bought from the first one's card (game.js WHEAT.second): put down at the nearest good spot to the first
