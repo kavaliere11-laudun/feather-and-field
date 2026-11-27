@@ -1,0 +1,248 @@
+{
+ "_about": "The App Store's second set of pictures (27 Nov 2026, Audrey: \"they need better finishing and polish\"; her picks: the wooden farm sign, \"My 8\" and fishing). Each picture: [scene, title, line under it], in order; compose2.mjs puts them on the farm sign. Scenes from web3d/storescenes.mjs (hero, farm, coop, snow, groom, shop, fish) and web3d/intropics.mjs (7 the breeds mingling, 4 the show).",
+ "scenes": [
+  "hero",
+  "farm",
+  "mingle",
+  "coop",
+  "groom",
+  "show",
+  "snow",
+  "shop",
+  "fish"
+ ],
+ "screens": [
+  "groom",
+  "shop",
+  "fish"
+ ],
+ "sides": {},
+ "en-GB": [
+  [
+   "A flock to love for good",
+   "Cuddles, play and a farmer they trust"
+  ],
+  [
+   "Bring Grandma’s farm back to life",
+   "Restore the land, build coops, make it yours"
+  ],
+  [
+   "24 breeds and colours to collect",
+   "From fluffy Silkies to a peacock in full fan"
+  ],
+  [
+   "A dream coop for every breed",
+   "Five looks each, with toys they love"
+  ],
+  [
+   "Groom your star for the show",
+   "Wash, brush and polish"
+  ],
+  [
+   "Win rosettes at the village show",
+   "Your best bird in front of the judge"
+  ],
+  [
+   "Snow days and winter coops",
+   "Every season brings surprises"
+  ],
+  [
+   "See every breed in 3D",
+   "Everything can be earned by playing"
+  ],
+  [
+   "Fish the pond and the river",
+   "Twenty fish, and a few legends"
+  ]
+ ],
+ "fr-FR": [
+  [
+   "Une basse-cour à aimer pour toujours",
+   "Câlins, jeux et un fermier de confiance"
+  ],
+  [
+   "Redonnez vie à la ferme de Mamie",
+   "Restaurez les terres, bâtissez vos poulaillers"
+  ],
+  [
+   "24 races et couleurs à collectionner",
+   "Des Soies duveteuses au paon qui fait la roue"
+  ],
+  [
+   "Un poulailler de rêve pour chaque race",
+   "Cinq looks chacun, et des jeux qu’elles adorent"
+  ],
+  [
+   "Pomponnez votre star pour le concours",
+   "Laver, brosser, faire briller"
+  ],
+  [
+   "Gagnez des cocardes au concours du village",
+   "Votre plus bel oiseau devant le juge"
+  ],
+  [
+   "Jours de neige et poulaillers d’hiver",
+   "Chaque saison apporte ses surprises"
+  ],
+  [
+   "Découvrez chaque race en 3D",
+   "Tout peut se gagner en jouant"
+  ],
+  [
+   "Pêchez dans l’étang et la rivière",
+   "Vingt poissons, et quelques légendes"
+  ]
+ ],
+ "de-DE": [
+  [
+   "Eine Hühnerschar für immer",
+   "Kuscheln, Spielen und ein Bauer, dem sie vertrauen"
+  ],
+  [
+   "Erwecke Omas Hof wieder zum Leben",
+   "Land herrichten, Ställe bauen, ganz nach deinem Geschmack"
+  ],
+  [
+   "24 Rassen und Farben zum Sammeln",
+   "Vom flauschigen Seidenhuhn bis zum Pfau, der ein Rad schlägt"
+  ],
+  [
+   "Ein Traumstall für jede Rasse",
+   "Je fünf Looks, mit Spielzeug, das sie lieben"
+  ],
+  [
+   "Mach deinen Star schön für die Schau",
+   "Waschen, bürsten, polieren"
+  ],
+  [
+   "Gewinne Rosetten bei der Dorfschau",
+   "Dein schönstes Huhn vor dem Preisrichter"
+  ],
+  [
+   "Schneetage und Winterställe",
+   "Jede Jahreszeit bringt Überraschungen"
+  ],
+  [
+   "Sieh dir jede Rasse in 3D an",
+   "Alles lässt sich auch erspielen"
+  ],
+  [
+   "Angle im Teich und im Fluss",
+   "Zwanzig Fische und ein paar Legenden"
+  ]
+ ],
+ "es-ES": [
+  [
+   "Gallinas para querer siempre",
+   "Mimos, juegos y un granjero de confianza"
+  ],
+  [
+   "Devuelve la vida a la granja de la abuela",
+   "Recupera la tierra y construye gallineros"
+  ],
+  [
+   "24 razas y colores para coleccionar",
+   "De las Sedosas al pavo real con la cola abierta"
+  ],
+  [
+   "Un gallinero de ensueño para cada raza",
+   "Cinco estilos cada uno, con juguetes que les encantan"
+  ],
+  [
+   "Prepara a tu estrella para el concurso",
+   "Lavar, cepillar y dar brillo"
+  ],
+  [
+   "Gana escarapelas en el concurso del pueblo",
+   "Tu mejor ave ante el juez"
+  ],
+  [
+   "Días de nieve y gallineros de invierno",
+   "Cada estación trae sorpresas"
+  ],
+  [
+   "Mira cada raza en 3D",
+   "Todo se puede ganar jugando"
+  ],
+  [
+   "Pesca en el estanque y en el río",
+   "Veinte peces y algunas leyendas"
+  ]
+ ],
+ "it": [
+  [
+   "Un’aia da amare per sempre",
+   "Coccole, giochi e un contadino di cui fidarsi"
+  ],
+  [
+   "Ridai vita alla fattoria della nonna",
+   "Recupera i campi e costruisci i pollai"
+  ],
+  [
+   "24 razze e colori da collezionare",
+   "Dalle Moroseta al pavone che fa la ruota"
+  ],
+  [
+   "Un pollaio da sogno per ogni razza",
+   "Cinque look ciascuno, con giochi che adorano"
+  ],
+  [
+   "Fai bella la tua star per la mostra",
+   "Lava, spazzola e lucida"
+  ],
+  [
+   "Vinci coccarde alla mostra del villaggio",
+   "Il tuo pennuto migliore davanti al giudice"
+  ],
+  [
+   "Giornate di neve e pollai d’inverno",
+   "Ogni stagione porta sorprese"
+  ],
+  [
+   "Guarda ogni razza in 3D",
+   "Tutto si può guadagnare giocando"
+  ],
+  [
+   "Pesca nello stagno e nel fiume",
+   "Venti pesci e qualche leggenda"
+  ]
+ ],
+ "pt-BR": [
+  [
+   "Galinhas para amar sempre",
+   "Carinho, brincadeiras e um fazendeiro de confiança"
+  ],
+  [
+   "Traga a fazenda da vovó de volta à vida",
+   "Recupere a terra e construa galinheiros"
+  ],
+  [
+   "24 raças e cores para colecionar",
+   "Das Sedosas ao pavão de cauda aberta"
+  ],
+  [
+   "Um galinheiro dos sonhos para cada raça",
+   "Cinco visuais cada, com brinquedos que elas amam"
+  ],
+  [
+   "Prepare sua estrela para a exposição",
+   "Lavar, escovar e dar brilho"
+  ],
+  [
+   "Ganhe rosetas na exposição da vila",
+   "Sua melhor ave diante do juiz"
+  ],
+  [
+   "Dias de neve e galinheiros de inverno",
+   "Cada estação traz surpresas"
+  ],
+  [
+   "Veja cada raça em 3D",
+   "Tudo pode ser conquistado jogando"
+  ],
+  [
+   "Pesque no lago e no rio",
+   "Vinte peixes e algumas lendas"
+  ]
+ ]
+}

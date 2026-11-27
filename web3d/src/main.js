@@ -102,7 +102,7 @@ const ads = GAME_MODE && !params.has('poster') ? new Ads(game, { age, done: n =>
 const POSTER = params.has('poster');                     // (the welcome picture's stage: its own cast, nobody else about)
 // the sound (sound.js): the music now and then, from the first tap; the tests' browser hears none unless it asks (?sound)
 const sound = GAME_MODE && !POSTER && !(navigator.webdriver && !params.has('sound')) ? new Sound({ base: 'audio/', hour: () => clockHour(), music: () => game.musicOn(), sounds: () => game.soundsOn(), hens: () => henHeard(), pond: () => pondHeard(), spots: () => spotsHeard() }) : null;
-const INTRO = GAME_MODE ? 0 : Math.max(0, Math.min(6, parseInt(params.get('intro') || '0', 10) || 0));      // (6: the breeds, for the App Store's pictures, 24 Nov 2026)      // (the onboarding pictures' stages, 1-5: intro.js)
+const INTRO = GAME_MODE ? 0 : Math.max(0, Math.min(7, parseInt(params.get('intro') || '0', 10) || 0));      // (7: the breeds mingling, the App Store's second set, 27 Nov 2026)      // (6: the breeds, for the App Store's pictures, 24 Nov 2026)      // (the onboarding pictures' stages, 1-5: intro.js)
 const HAS_GEESE = !GAME_MODE && !POSTER && !INTRO, HAS_DOG = !GAME_MODE && !POSTER && !INTRO, HAS_DECOR = !GAME_MODE && !POSTER && !INTRO;
 // (the game: the geese and the dog once bought, release 3)
 const geeseOwned = () => GAME_MODE ? !!(game.data && game.animalOwned('geese')) : HAS_GEESE;
