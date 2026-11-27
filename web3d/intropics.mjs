@@ -22,12 +22,13 @@ const errs = [];
 for (const S of SHOTS) {
   const p = await b.newPage({ viewport: { width: W, height: H }, deviceScaleFactor: DSF });
   p.on('pageerror', e => errs.push(S.name + ': ' + e.message + ' ' + (e.stack || '').split('\n').slice(0, 3).join(' / ')));
-  await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&intro=${S.n}&coops=0&time=${TIME[S.n] || '10:30'}${S.lang !== 'en' ? '&lang=' + S.lang : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&intro=${S.n}&coops=0&time=${TIME[S.n] || '10:30'}${S.lang !== 'en' ? '&lang=' + S.lang : ''}${process.env.STORE ? '&store' : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
   await p.addStyleTag({ content: '#hint, #readout, .top, #replaybtn, #farmerbtn, #foxbtn, #tag, .vignette { display: none !important; }' });
   await p.evaluate(([T, aspect, CAM]) => {
     const f = window.__farm; f.pause(true); f.wind(4.2); window.__noBlink = true; f.intro().restart();
     for (let i = 0; i < T * 30; i++) f.step(1 / 30, 1);
+    if (f.sharp) f.sharp(window.devicePixelRatio);      // (the screen's full sharpness: the game keeps to 2x)
     f.posterShot({ ...f.intro().cam, ...CAM, aspect });
   }, [process.env.T ? T : S.n === 5 ? 3.1 : T, W / H, CAM]);
   const png = tmp + S.name + '.png';

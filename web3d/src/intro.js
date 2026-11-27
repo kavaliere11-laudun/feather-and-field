@@ -30,7 +30,9 @@ function mirrorArms(P) {
 }
 // each scene's stage and camera turned together by this much (degrees) from the game's view, so the late-morning sun
 // comes from in front and to the left: faces in the light, shadows falling away behind (?turn=N tries another)
-const TURNS = [0, -50, -50, -50, -72, -40, -50, -50];
+const TURNS = [0, -50, -50, -50, -72, -40, -50, -50, -50];
+// (?store: the App Store's pictures' version of a scene where it differs from the onboarding card's: the show)
+const STORE_SHOW = typeof location !== 'undefined' && /[?&]store\b/.test(location.search);
 const TURN_Q = typeof location !== 'undefined' && /[?&]turn=(-?\d+)/.test(location.search) ? +RegExp.$1 : null;
 // every pose field a bird's rig reads, at rest: a scene's pose starts from these, so nothing the bird does by herself shows
 const REST = { walk: 0, peck: 0, sit: 0, kick: 0, kickT: 0, flap: 0, crow: 0, ruffle: 0, hopT: -1, wag: 0, turn: 0, sing: 0, cluck: 0, kawk: 0,
@@ -61,7 +63,7 @@ class Intro {
     if (this.n === 4) await loadShow(C.loadGLB, C.loadJSON);
     // (the sale sign's words are drawn once, in the game's own type: wait for it, a few seconds at most)
     if (this.n === 3 && document.fonts) await Promise.race([document.fonts.load('800 58px Nunito').catch(() => null), new Promise(ok => setTimeout(ok, 4000))]);
-    [null, () => this.flock(), () => this.chicks(), () => this.land(), () => this.show(), () => this.fox(), () => this.breeds(), () => this.mingle()][this.n]();
+    [null, () => this.flock(), () => this.chicks(), () => this.land(), () => this.show(), () => this.fox(), () => this.breeds(), () => this.mingle(), () => this.love()][this.n]();
     C.allBirds.push(...this.plot.birds);
     this.update(0);
   }
@@ -292,7 +294,10 @@ class Intro {
     // the show ground on the stage (its own frame: x across, z towards the player), the camera on coop k
     const G = this.G = new ShowGround(this.g, { x: 0, z: 0, deg: 0, grade: this.ctx.grade });
     G.clipboard(true);
-    this.cam = { at: [P.x - 0.08, 0.98, 1.25], el: 11, dist: 6.6, fov: 19.8, shadowReach: 4.5 };
+    if (STORE_SHOW && G.parts.show_sign) G.parts.show_sign.visible = false;      // (its words are drawn only in the game: a blank board in the picture)
+    // (27 Nov 2026, Audrey, the store's picture: "the head of the farmer is cut by the wood thing": a wider view, everyone's
+    // heads below the sign's reach at the top)
+    this.cam = STORE_SHOW ? { at: [P.x + 0.22, 1.3, 1.25], el: 11, dist: 7.7, fov: 19.8, shadowReach: 5 } : { at: [P.x - 0.08, 0.98, 1.25], el: 11, dist: 6.6, fov: 19.8, shadowReach: 4.5 };
     // her (a Light Brahma, white against her blue coop) and her neighbours in their coops (none of them changed: the Silkie as
     // she is); she stands tall, the others look over at her; the two behind the farmer and the judge settled down in the straw
     // (the coop behind the farmer an empty one, so nobody peeks out round his head)
@@ -302,8 +307,10 @@ class Intro {
     I.pens.forEach((p, i) => {
       if (!kinds[i]) return;
       const [breed, kind, colour] = kinds[i], low = i === k + 1;
-      const b = this.bird(breed, kind, colour || null, p.bird[0] + (i === k + 1 ? 0.06 : 0), p.bird[2], i === k ? 0.12 : p.birdYaw + (i < k ? 0.25 : -0.7),
-        i === k ? A => { A.proud = 1; A.flap = 0.22; A.t = 2.3; A.lookYaw = 0.25; A.lookTilt = 0.1; } : A => { A.sit = low ? 1 : 0; A.lookYaw = (i < k ? 0.45 : -0.45); A.lookTilt = 0.12; });
+      // (the store's picture, Audrey: "the chickens in their booth should look forward and happy": each facing out, chest up)
+      const b = this.bird(breed, kind, colour || null, p.bird[0] + (i === k + 1 ? 0.06 : 0), p.bird[2], i === k ? 0.12 : STORE_SHOW ? p.birdYaw : p.birdYaw + (i < k ? 0.25 : -0.7),
+        i === k ? A => { A.proud = 1; A.flap = 0.22; A.t = 2.3; A.lookYaw = 0.25; A.lookTilt = 0.1; } : STORE_SHOW ? A => { A.proud = 0.5; A.lookTilt = (i % 2 ? 0.15 : -0.12); }
+          : A => { A.sit = low ? 1 : 0; A.lookYaw = (i < k ? 0.45 : -0.45); A.lookTilt = 0.12; });
       this.ticks.push(() => { b.root.position.y = p.bird[1]; });
     });
     // the judge beside her coop, turned towards us, reaching out to his right to pin the first prize's red rosette on it
@@ -320,7 +327,13 @@ class Intro {
       const d = this.g.worldToLocal(want.clone()).sub(this.g.worldToLocal(at.clone())); J.pos.x += d.x; J.pos.z += d.z;
       if (this.t > 2.2) { aim.done = true; G.pin(k, this.held); }
     });
-    // the farmer on her other side, holding up a frame of honey from his hives, a bee or two after it
+    // the farmer on her other side, holding up a frame of honey from his hives, a bee or two after it (the store's picture,
+    // Audrey: "not too sure what the farmer is showing, looks like honey board": there he claps for her instead)
+    if (STORE_SHOW) {
+      this.farmer('m', P.x - 0.78, 1.42, 0.3, t => ({ pose: 'clap', face: 'happy', props: {}, anim: (Q, Fc) => { Q.head[2] += 4; Q.head[1] -= 10; Fc.look = [0.2, 0.05]; } }));
+      this.heartsFrom([P.bird[0] + 0.02, 1.4, P.bird[2] + 0.25], 0.5, [0.02, 0.3, 0.12], 0.13);
+      return;
+    }
     const A = this.farmer('m', P.x - 0.78, 1.42, 0.3, t => ({ pose: 'hold', face: 'happy', props: {},
       anim: (Q, Fc) => { Q.head[2] += 4; Q.head[1] -= 6; Fc.look = [0, 0.05]; } }));
     const frame = this.ctx.honeyFrame(); this.g.add(frame);
@@ -363,36 +376,73 @@ class Intro {
   // finishing and polish"): a mixed flock out on the meadow by an apple tree, each doing its own thing at its own depth
   // (pecking, strolling, looking about, a mum with chicks), the peacock off to one side with his fan up;
   // the top-left left calm for the farm sign (a wide picture: W x H about 956 x 440)
+  // (27 Nov 2026, Audrey: "the chickens should look like they have a personality, interact with each others, there is
+  // currently a lot of space between them"; "the head of the brahma is cut"): close little groups, each busy with the others:
+  // a mum and her chicks, two hens sharing a treat, three Silkies huddled with a Polish peering at them, a Brahma and a Marans
+  // face to face, the peahen admiring the peacock's fan; the tall ones to the right, clear of the sign
   mingle() {
-    this.cam = { at: [0.7, 0.5, -0.2], el: 13, dist: 6.5, fov: 23, shadowReach: 5 };
-    this.prop('tree_apple', -3.3, -3.9, 0); this.prop('tree_b', 4.6, -4.4, 40); this.prop('tree_a', 2.2, -6.0, 110, 0.9);
-    this.prop('rustic_orp', 0.4, -3.7, 12); this.prop('bush_b', -0.9, -3.4, 0, 0.7); this.prop('bush_a', 1.7, -3.3, 0, 0.65);
-    this.prop('bush_a', -2.2, -2.7, 0, 0.75); this.prop('bush_b', 3.2, -2.4, 30, 0.7); this.prop('flower_pots', -1.3, -2.3, 15, 0.8); this.prop('bush_a', 5.1, -1.6, 0, 0.6);
-    this.dress(240, { x0: -4.4, x1: 5.4, z0: -4.4, z1: 1.2, clear: [[-3.8, -1.8, 5.2, 1.0], [-0.6, -4.4, 1.4, -3.0]], seed: 71, flowers: 0.45 });
-    this.dress(90, { x0: -4.4, x1: 5.4, z0: 1.0, z1: 2.8, seed: 72, flowers: 0.65 });
+    this.cam = { at: [0.25, 0.46, 0.1], el: 14, dist: 6.0, fov: 23, shadowReach: 4.8 };
+    this.prop('tree_apple', -3.3, -3.9, 0); this.prop('tree_b', 4.4, -4.4, 40); this.prop('tree_a', 2.0, -6.0, 110, 0.9);
+    this.prop('rustic_orp', -0.2, -3.6, 12); this.prop('bush_b', -1.5, -3.2, 0, 0.7); this.prop('bush_a', 1.3, -3.1, 0, 0.65);
+    this.prop('bush_a', -2.6, -2.6, 0, 0.75); this.prop('bush_b', 3.4, -2.6, 30, 0.7); this.prop('flower_pots', -1.9, -2.2, 15, 0.8); this.prop('bush_a', 4.6, -1.6, 0, 0.6);
+    this.dress(240, { x0: -4.4, x1: 5.4, z0: -4.4, z1: 1.2, clear: [[-2.4, -1.3, 3.4, 1.2], [-1.0, -4.4, 0.8, -3.0]], seed: 71, flowers: 0.45 });
+    this.dress(90, { x0: -4.4, x1: 5.4, z0: 1.2, z1: 2.8, seed: 72, flowers: 0.65 });
     const B = (breed, kind, colour, x, z, yaw, f) => this.bird(breed, kind, colour, x, z, yaw, f);
-    // the peacock, fan up, back right
-    B('pea', 'rooster', null, 3.15, -1.45, -0.35, A => { A.fan = 1; A.proud = 1; A.lookYaw = -0.2; });
-    B('pea', 'hen', null, 3.85, -0.75, -1.0, A => { A.peck = 1; });
-    // further back: a Brahma rooster strutting, a Marans hen pecking, a Polish looking about
-    B('bra', 'rooster', null, -2.1, -1.35, 0.8, A => { A.walk = 1; A.phase = 0.6; A.proud = 0.7; });
-    B('mar', 'hen', null, -0.6, -1.55, 1.6, A => { A.peck = 1; });
-    B('pol', 'hen', null, 0.75, -1.25, -0.6, A => { A.lookTilt = 0.25; A.lookYaw = 0.3; });
-    B('coc', 'hen', null, 1.9, -0.75, -1.2, A => { A.lookYaw = -0.2; A.lookTilt = 0.1; });
-    // the middle: an Ayam Cemani rooster, a Sussex, the Silkies, an Araucana
-    B('aya', 'rooster', null, -2.95, -0.2, 1.3, A => { A.proud = 0.8; A.lookYaw = -0.3; });
-    B('sus', 'hen', null, -1.35, -0.3, 0.2, A => { A.walk = 1; A.phase = 1.2; });
-    B('sil', 'hen', 'white', 0.05, -0.15, -0.3, A => { A.lookTilt = 0.3; A.lookYaw = 0.15; });
-    B('sil', 'hen', 'black', 0.65, 0.2, -1.0, A => { A.peck = 0.35; });
-    B('ara', 'hen', null, 2.6, 0.15, -0.9, A => { A.walk = 1; A.phase = 0.5; A.lookYaw = -0.15; });
-    // the front: a Rhode Island Red mum with three chicks, an Orpington, two call ducks
-    B('rir', 'hen', null, -1.85, 0.75, 0.6, A => { A.lookYaw = 0.25; A.lookTilt = 0.15; });
-    B('rir', 'chick', null, -1.55, 1.05, 0.2, A => { A.peck = 1; });
-    B('rir', 'chick', null, -2.15, 1.2, 0.9, A => { A.lookTilt = 0.3; });
-    B('rir', 'chick', null, -1.35, 0.6, -0.4, A => { A.walk = 1; A.phase = 0.6; });
-    B('orp', 'hen', null, -0.35, 0.85, 0.3, A => { A.lookTilt = 0.15; A.lookYaw = -0.2; });
-    B('leg', 'hen', null, 1.45, 0.95, -0.7, A => { A.lookYaw = 0.2; A.lookTilt = 0.1; });
-    B('sil', 'hen', 'buff', 1.95, 1.3, -1.1, A => { A.peck = 0.5; });
+    const to = (x, z, tx, tz) => Math.atan2(tx - x, tz - z);          // (the yaw that faces (tx, tz))
+    // a Rhode Island Red mum, her three chicks round her: one looking up at her, one pecking, one peeping out from behind
+    B('rir', 'hen', null, -2.0, 0.5, 0.75, A => { A.lookYaw = 0.35; A.lookTilt = 0.2; });
+    B('rir', 'chick', null, -1.6, 0.82, to(-1.6, 0.82, -2.0, 0.5) + 0.5, A => { A.up = 0.9; });
+    B('rir', 'chick', null, -2.35, 0.92, 0.5, A => { A.peck = 1; });
+    B('rir', 'chick', null, -1.62, 0.3, 1.1, A => { A.lookTilt = 0.35; A.lookYaw = -0.3; });
+    // two hens sharing a treat, heads together over it: the Orpington and the Speckled Sussex
+    B('orp', 'hen', null, -0.98, 0.35, 1.25, A => { A.peck = 1; });
+    B('sus', 'hen', null, -0.4, 0.42, -1.3, A => { A.peck = 0.7; A.lookTilt = 0.1; });
+    // the Silkies huddled together, the white one turned to the black, the buff looking out at us; a Polish peering at them
+    B('sil', 'hen', 'white', 0.22, 0.68, 0.9, A => { A.lookYaw = 0.35; A.lookTilt = 0.15; });
+    B('sil', 'hen', 'black', 0.6, 0.78, -0.9, A => { A.lookYaw = -0.25; A.lookTilt = -0.2; });
+    B('sil', 'hen', 'buff', 0.42, 0.38, 0.15, A => { A.lookTilt = 0.3; });
+    B('pol', 'hen', null, 0.05, -0.22, to(0.05, -0.22, 0.42, 0.55), A => { A.lookTilt = 0.45; A.up = 0.1; });
+    // an Ayam Cemani rooster crowing at the back
+    B('aya', 'rooster', null, -1.05, -0.72, 0.55, A => { A.crow = 1; A.proud = 0.6; });
+    // a Brahma rooster and a Marans hen face to face, chatting
+    B('bra', 'rooster', null, 1.72, -0.32, -1.35, A => { A.proud = 0.6; A.lookTilt = 0.15; });
+    B('mar', 'hen', null, 1.2, -0.26, 1.4, A => { A.lookTilt = -0.2; A.cluck = 0.6; });
+    // the peacock in full fan, the peahen beside him looking up at it
+    B('pea', 'rooster', null, 2.3, -1.35, -0.4, A => { A.fan = 1; A.proud = 1; A.lookYaw = -0.15; });
+    B('pea', 'hen', null, 1.75, -0.95, to(1.75, -0.95, 2.3, -1.35) + 0.5, A => { A.up = 0.6; A.lookYaw = -0.4; });
+    // at the front right: an Araucana trotting over to join in, a Leghorn and a Cochin looking out at us
+    B('ara', 'hen', null, 1.25, 1.0, -1.0, A => { A.walk = 1; A.phase = 0.5; A.lookYaw = -0.15; });
+    B('leg', 'hen', null, 2.15, 0.42, -0.5, A => { A.lookYaw = 0.25; A.lookTilt = 0.15; });
+    B('coc', 'hen', null, 2.4, 0.95, -0.8, A => { A.lookYaw = 0.2; A.lookTilt = 0.1; });
+  }
+  // ------------------------------------------------------------------ 8. A flock to love (27 Nov 2026, the App Store's first
+  // picture; Audrey: "the chickens are not really looking at the farmer, and there is some clipping with farmer arm. also the
+  // focus should be on the affection they have for each others, there is too much of other things in"): the farmer holding
+  // his hen against his chest, her eyes shut, hearts rising; the rooster, the other hen and two chicks round his feet, all
+  // looking up at him; a soft green garden behind and nothing else. She sits on his forearms as in the game's own cuddle
+  // (main.js STRAY_SEAT: between his wrists and just above, a little ahead), so his arms go under her, not through her.
+  love() {
+    this.cam = { at: [0.22, 0.72, 0.05], el: 13, dist: 4.5, fov: 24, shadowReach: 3.5 };
+    this.prop('rustic_rir', -1.7, -2.9, 10); this.prop('tree_apple', -3.4, -4.2, 0); this.prop('bush_b', -0.4, -2.7, 0, 0.8); this.prop('bush_a', 1.9, -2.5, 0, 0.75);
+    this.prop('flower_pots', 1.25, -1.75, 15, 0.8); this.prop('bush_a', 3.3, -3.0, 30, 0.7); this.prop('tree_b', 3.6, -5.0, 30); this.prop('bush_b', 4.4, -1.8, 0, 0.7);
+    this.dress(260, { x0: -4.2, x1: 5.0, z0: -4.6, z1: 1.0, clear: [[-0.7, -0.8, 1.7, 1.1], [-2.6, -3.9, -0.8, -1.9]], seed: 81, flowers: 0.5 });
+    this.dress(70, { x0: -3.6, x1: 4.2, z0: 1.0, z1: 2.4, seed: 82, flowers: 0.6 });
+    const FX = 0.55, FZ = -0.2, FY = -0.35, to = (x, z) => Math.atan2(FX - x, FZ - z);
+    const F = this.farmer('m', FX, FZ, FY, t => ({ pose: 'cuddle', face: 'cuddle', hug: 0.5, hugK: 0, props: {}, anim: (P, Fc) => { Fc.look = [0.15, -0.45]; } }));
+    const pet = this.bird('rir', 'hen', null, FX, FZ, FY + Math.PI / 2, A => { A.sit = 1; A.lookYaw = -0.35; A.lookTilt = 0.2; A.wag = 0.3; });
+    pet.rig.sleepy(true);
+    this.ticks.push(() => {
+      this.g.updateMatrixWorld(true);
+      const R = F.rig.B, wl = this.g.worldToLocal(R.wristL.getWorldPosition(new THREE.Vector3())), wr = this.g.worldToLocal(R.wristR.getWorldPosition(new THREE.Vector3())), h = F.root.rotation.y;
+      pet.root.position.set((wl.x + wr.x) / 2 + Math.sin(h) * 0.12, Math.max(wl.y, wr.y) - 0.06, (wl.z + wr.z) / 2 + Math.cos(h) * 0.12);      // (a little further out than the game's seat: her head by his cheek, not in it)
+      pet.root.rotation.y = h + Math.PI / 2;
+    });
+    // round his feet, each turned to him, looking up: the rooster on his left, the other hen on his right, two chicks
+    this.bird('rir', 'rooster', null, -0.32, 0.12, to(-0.32, 0.12) - 0.35, A => { A.up = 0.75; A.proud = 0.3; });
+    this.bird('rir', 'hen', null, 1.38, 0.18, to(1.38, 0.18) + 0.35, A => { A.up = 0.7; A.lookTilt = 0.2; });
+    this.bird('rir', 'chick', null, 0.12, 0.42, to(0.12, 0.42) - 0.6, A => { A.up = 1; });
+    this.bird('rir', 'chick', null, 0.98, 0.5, to(0.98, 0.5) + 0.6, A => { A.up = 1; A.lookTilt = 0.25; });
+    this.heartsFrom(() => { const p = pet.root.position; return [p.x + 0.28, p.y + 0.42, p.z + 0.16]; }, 0.42, [0.08, 0.34, 0.05], 0.16);      // (over them, clear of his face)
   }
   fox() {
     this.cam = { at: [0.2, 0.4, -0.25], el: 13, dist: 6.9, fov: 22, shadowReach: 4.5 };

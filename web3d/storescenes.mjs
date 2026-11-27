@@ -10,6 +10,9 @@ const [FARM, OUT = '/tmp/claude-0/storescenes'] = process.argv.slice(2); fs.mkdi
 const farm = JSON.parse(fs.readFileSync(FARM, 'utf8'));
 const W = +(process.env.W || 956), H = +(process.env.H || 440), DSF = +(process.env.DSF || 3);
 const ONLY = (process.env.ONLY || 'hero').split(',');
+// the play things in a garden, in the order the birds are sent to them (a coop's toys object also holds its bookkeeping:
+// 'P', 'clock', 'garden', 'prints' are not things to play with: a bird sent to 'clock' stood about "busy")
+const TOYS = (process.env.TOYS || 'chute,igloo,ice,swing,xylo,dust,cabbage,pool,ball').split(',');
 const HIDE = '#hint, #tag, #foxbtn, #replaybtn, #farmerbtn, #henbtns, #compass, #findfarmer, .gbar, .gacts, .gguide, .gbub, .vignette, .gpill, #moment { display: none !important; }';
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const errs = [];
@@ -45,7 +48,17 @@ const SCENES = {
   },
   // the farm from above: every coop at its Deluxe look, the grand decorations, late-afternoon light
   farm: {
-    time: process.env.FTIME || '16:00', arg: { size: +(process.env.SIZE || 7.2), at: process.env.AT ? process.env.AT.split(',').map(Number) : null, az: +(process.env.AZ || 0) },
+    time: process.env.FTIME || '16:00', arg: { size: +(process.env.SIZE || 7.2), at: process.env.AT ? process.env.AT.split(',').map(Number) : null, az: +(process.env.AZ || 0),
+      // (Audrey: "big piece of green space on it, not great": the grand decorations brought into the lawns between the coops)
+      put: process.env.PUT ? JSON.parse(process.env.PUT) : [['fountain', -13.2, -15.2], ['hot_air_balloon', -16.1, -20.6], ['beehives', -19, -11]] },
+    prep: (f, arg) => {
+      const g = f.game(); g.data.acctAsk = 1; const out = [];
+      for (const [id, x, z] of arg.put || []) {
+        const F = f.deco.free(id, x, z); if (!F) { out.push([id, 'none']); continue; }
+        const S = f.deco.spot(id, F.x, F.z); if (S.ok) { g.moveDecor(id, { x: F.x, z: F.z }, S.clear); out.push([id, F.x, F.z]); } else out.push([id, S.why]);
+      }
+      g.save(); window.__put = out;
+    },
     setup: (f, arg) => {
       const C = f.gamePlots().filter(p => p.gc).map(p => { const w = p.frame.getWorldPosition(new f.THREE.Vector3()); return [p.gc.breed, +w.x.toFixed(1), +w.z.toFixed(1)]; });
       const cx = arg.at ? arg.at[0] : C.reduce((a, c) => a + c[1], 0) / C.length, cz = arg.at ? arg.at[1] : C.reduce((a, c) => a + c[2], 0) / C.length;
@@ -54,19 +67,27 @@ const SCENES = {
     },
     secs: 3,
   },
-  // a snowy day across the farm: the flakes falling, the ground and roofs white, footprints in the yards
+  // the seasonal coops (27 Nov 2026, Audrey: "this one should be special coops instead, and the view is poor and odd"): three
+  // neighbours in their winter buildings (the Reds' Snow Chalet, the Silkies' Ice Palace, the Ayam Cemani's Barrel Sauna) on
+  // a snowy day once the flakes have stopped, the ground and roofs white, the birds at their winter toys; a close view
+  // through the perspective camera (WINTER: the breeds; SHOT for another view)
   snow: {
-    time: '11:00', date: '2026-12-15T11:00:00Z', arg: { size: +(process.env.SIZE || 2.1), at: process.env.AT ? process.env.AT.split(',').map(Number) : [-26.2, -16.3] },
-    prep: (f) => { const g = f.game(), c = g.data.coops.find(x => x.breed === 'sil'); g.data.themes = [...(g.data.themes || []), 'winter_sil']; c.tier0 = c.tier; c.theme = 'winter'; c.tier = 4; g.data.acctAsk = 1; g.save(); },
+    time: process.env.WTIME || '11:00', date: '2026-12-15T11:00:00Z', arg: { size: +(process.env.SIZE || 2.1), at: process.env.AT ? process.env.AT.split(',').map(Number) : [-26.8, -15.7], breeds: (process.env.WINTER || 'rir,sil,orp').split(','), swap: (process.env.SWAP ?? 'orp,aya').split(',').filter(Boolean) },
+    prep: (f, arg) => { const g = f.game();
+      // (SWAP=orp,aya: two coops change places first, so a third winter building stands with the other two)
+      const sw = (arg.swap || []).map(br => g.data.coops.find(x => x.breed === br));
+      if (sw.length === 2 && sw[0] && sw[1]) { const [A, B] = sw, k = ['x', 'z', 'deg'], a = k.map(q => A[q]); k.forEach((q, i) => { A[q] = B[q]; B[q] = a[i]; }); }
+      for (const br of arg.breeds) { const c = g.data.coops.find(x => x.breed === br); if (!c) continue; g.data.themes = [...(g.data.themes || []), 'winter_' + br]; c.tier0 = c.tier; c.theme = 'winter'; c.tier = 4; } g.data.acctAsk = 1; g.save(); },
+    shot: { at: [-26.0, 0.5, -12.6], dist: 10.5, el: 25, fov: 30, az: -40 },      // (from the south: the Chalet, the Palace behind, the Gingerbread Cottage)
     setup: (f, arg) => {
-      f.snow.start(); f.lookAt(arg.at[0], arg.at[1], arg.size);
-      const P = f.gamePlots(); window.__pls = P.filter(p => p.gc && ['sil', 'rir', 'aya'].includes(p.gc.breed));
+      f.snow.start(); window.__T += 186e3; f.lookAt(arg.at[0], arg.at[1], arg.size);      // (the clock on past the snowfall: the farm white by the clock, the flakes fading out)
+      const P = f.gamePlots(); window.__pls = P.filter(p => p.gc && arg.breeds.includes(p.gc.breed)); window.__pl = window.__pls[0];
       return f.snow.state();
     },
-    secs: +(process.env.SECS || 150),
+    secs: +(process.env.SECS || 14),
     each: (f, t) => {
       for (const pl of window.__pls) { const T = pl.toys; if (!T) continue;
-        Object.keys(T).forEach((kind, k) => { if (!T[kind] || t < 100 + k * 1.5 || T[kind].sent) return; const bd = pl.birds.find(x => !x.busy() && !x.cuddle); if (bd && !T[kind].by && f.startPlay(bd, kind)) T[kind].sent = true; }); }
+        window.__TOYS.filter(q => T[q]).forEach((kind, k) => { if (!T[kind] || t < 1 + k * 1.2 || T[kind].sent) return; const bd = pl.birds.find(x => !x.busy() && !x.cuddle); if (bd && !T[kind].by && f.startPlay(bd, kind)) T[kind].sent = true; }); }
     },
   },
   // the game's own screens: the Breed Book, the shop's 3D page, the grooming game, fishing
@@ -77,20 +98,40 @@ const SCENES = {
       await p.evaluate(() => window.__farm.shopSheet('hens')); await p.waitForTimeout(1000);
       await p.evaluate(want => { const tiles = [...document.querySelectorAll('.gsheet:not([hidden]) .gviewable')]; const t = tiles.find(x => x.textContent.includes(want)) || tiles[0]; const pic = t && (t.querySelector('.gprev-open') || t); if (pic) pic.click(); }, process.env.WANT || 'Cochin');
       await p.waitForTimeout(6000);
+      // (Audrey: "the mouse is on the head of the chickens": the trio turned a little by a finger, as a player would, so the
+      // swiping hand that says it can be turned has gone, and their faces come round)
+      const r = await p.evaluate(() => { const c = document.querySelector('.gprev-stage canvas'); if (!c) return null; const b = c.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height * 0.75]; });
+      if (r) { const dx = +(process.env.PDRAG || 60); await p.mouse.move(r[0], r[1]); await p.mouse.down(); for (let k = 1; k <= 12; k++) { await p.mouse.move(r[0] + dx * k / 12, r[1], { steps: 2 }); await p.waitForTimeout(40); } await p.mouse.up(); }
+      await p.waitForTimeout(2500);
     } },
-  groom: { time: '10:30', hud: true, live: true, prep: (f) => { const g = f.game(); g.data.acctAsk = 1; g.save(); }, setup: (f) => { window.__FF_GROOM_SECS = 120; return {}; }, secs: 1,
+  groom: { time: '10:30', hud: true, live: true, prep: (f) => { const g = f.game(); g.data.acctAsk = 1; g.save(); }, setup: (f) => { window.__FF_GROOM_SECS = 3000; return {}; }, secs: 1,
     ui: async p => {
+      // (Audrey: "the chicken has no eyes": a Silkie's dark face hides them, so a hen of another breed is groomed, her eyes
+      // in sight; GBREED, the Buff Orpington by default: golden and fluffy)
       await p.evaluate(() => window.__farm.showsSheet()); await p.waitForTimeout(500);
-      await p.evaluate(() => { const bt = [...document.querySelectorAll('.gsheet .gshow .gbtn')].find(x => !x.disabled); if (bt) bt.click(); }); await p.waitForTimeout(2500);
-      const st = await p.evaluate(() => { const G = window.__farm.groom.now(); return G ? G.state() : null; });
-      const r = await p.evaluate(() => { const q = document.querySelector('.groom-pic'); if (!q) return null; const b = q.getBoundingClientRect(); return [b.left, b.top, b.width, b.height]; });
-      if (r && st && st.spots) for (const sp of st.spots.slice(0, 2)) {
-        const x = r[0] + sp[0] * r[2], y = r[1] + sp[1] * r[3];
-        await p.mouse.move(x - 25, y); await p.mouse.down();
-        for (let k = 0; k < 16; k++) { await p.mouse.move(x + (k % 2 ? 25 : -25), y + (k % 3) * 4, { steps: 3 }); await p.waitForTimeout(30); }
-        await p.mouse.up();
+      const who = await p.evaluate(want => { const g = window.__farm.game(), s = g.openShows(Date.now()).find(x => !x.locked); if (!s) return null; const L = g.showBirds(s); const x = L.find(q => g.baseOf(q.b.breed) === want && q.b.sex === 'h') || L[0]; return x && { name: x.b.name, first: L[0].b.name === x.b.name }; }, process.env.GBREED || 'orp');
+      if (who && !who.first) { await p.evaluate(() => { const o = document.querySelector('.gsheet .gshow .glink'); if (o) o.click(); }); await p.waitForTimeout(500);
+        await p.evaluate(n => { const row = [...document.querySelectorAll('.gsheet .gshowrow')].find(r => r.textContent.includes(n)); const bt = row && row.querySelector('.gbtn'); if (bt) bt.click(); }, who.name); }
+      else await p.evaluate(() => { const bt = [...document.querySelectorAll('.gsheet .gshow .gbtn')].find(x => !x.disabled); if (bt) bt.click(); });
+      await p.waitForTimeout(2500);
+      // (Audrey: "she needs to look happy": washed, brushed and polished by the finger, every place seen to: "✨ All ready!",
+      // she stands proud, gleaming; GSTOP: stop part way into the shine instead, the cloth in hand)
+      const st = () => p.evaluate(() => { const G = window.__farm.groom.now(); return G ? G.state() : null; });
+      const box = await p.evaluate(() => { const q = document.querySelector('.groom-pic'); if (!q) return null; const b = q.getBoundingClientRect(); return [b.left, b.top, b.width, b.height]; });
+      const XY = sp => [box[0] + sp[0] * box[2], box[1] + sp[1] * box[3]];
+      const rub = async (sp, n = 8) => { const [x, y] = XY(sp); await p.mouse.move(x - 22, y); await p.mouse.down(); for (let k = 0; k < n; k++) { await p.mouse.move(x + (k % 2 ? 22 : -22), y + (k % 3) * 3, { steps: 3 }); await p.waitForTimeout(25); } await p.mouse.up(); };
+      const sweep = async (sp) => { const [x, y] = XY(sp); for (let r = 0; r < 3; r++) { await p.mouse.move(x - 45, y); await p.mouse.down(); await p.mouse.move(x + 45, y + 2, { steps: 10 }); await p.mouse.up(); await p.waitForTimeout(40); } };
+      if (box) {
+        let S = await st();
+        for (let guard = 0; S && S.step === 'wash' && guard < 12; guard++) { const sp = S.spots.find(q => q[2] < 1); if (sp) await rub(sp); await p.waitForTimeout(300); S = await st(); }
+        for (let guard = 0; S && S.step === 'brush' && guard < 14; guard++) { const sp = S.spots.find(q => q[2] < 1); if (sp) await sweep(sp); await p.waitForTimeout(300); S = await st(); }
+        const stop = +(process.env.GSTOP || 9);
+        for (let k = 0; S && S.step === 'shine' && k < stop; k++) { const sp = S.spots.filter(q => q[2] < 1)[0]; if (sp) await rub(sp); await p.waitForTimeout(250); S = await st(); }
+        const sp = S && S.step === 'shine' && S.spots.find(q => q[2] < 1);
+        if (sp) { const [x, y] = XY(sp); await p.mouse.move(x - 20, y); await p.mouse.down(); for (let k = 0; k < 5; k++) { await p.mouse.move(x + (k % 2 ? 18 : -18), y, { steps: 3 }); await p.waitForTimeout(30); } }
+        await p.waitForTimeout(1600);      // (her proud hop over)
+        console.log('groom', JSON.stringify(await st()));
       }
-      const sp = r && st && st.spots && st.spots[2]; if (sp) { const x = r[0] + sp[0] * r[2], y = r[1] + sp[1] * r[3]; await p.mouse.move(x - 20, y); await p.mouse.down(); await p.mouse.move(x + 10, y + 3, { steps: 4 }); }
       await p.waitForTimeout(600);
     } },
   fish: { time: '10:30', hud: true, prep: (f) => { const g = f.game(); g.data.acctAsk = 1; if (g.data.fish) g.data.fish.worms = 20; g.save(); }, setup: (f) => { return { worms: f.game().worms() }; }, secs: 1,
@@ -102,13 +143,21 @@ const SCENES = {
       for (let i = 0; i < 160; i++) { await step(30); const s = await st(); await p.evaluate(() => { const b = document.querySelector('.gsheet button[data-fhelp=ok]'); if (b) b.click(); }); if (s === 'ready') break; }
       await p.evaluate(() => { const f = window.__farm, D = f.dock(), k = +(window.__FK || 1.1); f.lookAt(D.stand[0] + Math.sin(D.face + 0.3) * k, D.stand[1] + Math.cos(D.face + 0.3) * k, +(window.__FS || 2.3)); });
       await p.evaluate(() => { const f = window.__farm, D = f.dock(), F = f.fishing(); return F.tapWater(D.stand[0] + Math.sin(D.face + 0.3) * 2.6, D.stand[1] + Math.cos(D.face + 0.3) * 2.6); });
-      for (let i = 0; i < 60; i++) { await step(15); if (await st() === 'bite') break; }
+      // (Audrey: "make the ducks awake": a duck dabbling or up-ending looks asleep from above; each sent swimming, head up)
+      const awake = () => p.evaluate(() => { const D = window.__farm.ducks(); if (!D) return; for (const d of D.ducks) { if (d.task && d.task.act === 'swim') continue; const L = []; D.swimVia(L, [d.pos.x, d.pos.z], D.hop([d.pos.x, d.pos.z], 0.8, 1.8)); const sw = L.find(q => q.act === 'swim'); if (sw) d.task = sw; } });
+      for (let i = 0; i < 60; i++) { await awake(); await step(15); if (await st() === 'bite') break; }
+      await awake();
       await step(4); await p.evaluate(() => window.__farm.draw());
     } },
   // a dream coop: one breed's Deluxe garden close up through a perspective camera, the birds at play
   coop: {
-    time: '10:40', arg: { breed: process.env.BREED || 'sil' },
-    prep: (f) => { const g = f.game(); g.data.acctAsk = 1; g.save(); },
+    time: '10:40', arg: { breed: process.env.BREED || 'sil', chicks: +(process.env.CHICKS ?? 3) },
+    // (Audrey: "Would be good to see each of them trying a different toy, and add chicks": a brood hatched this morning,
+    // the mum with her chicks, the others each at a different toy)
+    prep: (f, arg) => { const g = f.game(); g.data.acctAsk = 1;
+      const c = g.data.coops.find(x => x.breed === arg.breed), hen = c && g.data.birds.find(b => b.coop === c.id && b.sex === 'h');
+      if (c && hen && arg.chicks) c.brood = { hen: hen.id, start: Date.now() - 24 * 3600e3 - 3 * 3600e3, n: arg.chicks, hatched: true, kids: Array.from({ length: arg.chicks }, (_, i) => ({ sex: i % 2 ? 'r' : 'h', stars: 2 })) };
+      g.save(); },
     setup: (f, arg) => {
       const P = f.gamePlots(), i = P.findIndex(p => p.gc && p.gc.breed === arg.breed), pl = P[i]; window.__i = i; window.__pl = pl;
       for (const x of pl.birds) x.layIn = 9999;
@@ -118,9 +167,9 @@ const SCENES = {
     secs: +(process.env.SECS || 12),
     each: (f, t) => {
       const pl = window.__pl, T = pl.toys; if (!T) return;
-      Object.keys(T).forEach((kind, k) => { if (!T[kind] || t < 0.5 + k * 0.9 || T[kind].sent) return; const bd = pl.birds.find(x => !x.busy() && !x.cuddle); if (bd && !T[kind].by && f.startPlay(bd, kind)) T[kind].sent = true; });
+      window.__TOYS.filter(q => T[q]).forEach((kind, k) => { if (!T[kind] || t < 0.5 + k * 0.9 || T[kind].sent) return; const bd = pl.birds.find(x => !x.busy() && !x.cuddle); if (bd && !T[kind].by && f.startPlay(bd, kind)) T[kind].sent = true; });
     },
-    shot: { rel: [0, 0.45, 0.2], dist: 6.0, el: 22, fov: 30, az: 35 },
+    shot: { rel: [0.45, 0.3, 1.0], dist: 7.2, el: 26, fov: 30, az: 38 },      // (the whole coop and garden in: "the coop is cut")
   },
   // a winter themed building (the Silkies' Ice Palace) worn by its coop, the hens at play in its snowy garden
   theme: {
@@ -150,8 +199,9 @@ for (const name of ONLY) {
   await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=${S.time || '10:30'}${process.env.LANG2 ? '&lang=' + process.env.LANG2 : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 300000 });
   await p.evaluate(live => { const u = window.__farm.gameUI(); if (u.isOpen) u.close(); window.__farm.pause(!live); window.__farm.wind(3); }, !!S.live);
-  if (S.prep) {
-    await p.evaluate(([fn, arg]) => new Function('f', 'arg', fn)(window.__farm, arg), [S.prep.toString().replace(/^[^{]*{/, '').replace(/}\s*$/, ''), S.arg || {}]);
+  if (process.env.LANG2) await p.evaluate(l => window.__farm.game().setLang(l), process.env.LANG2);      // (the farm's own language: its save keeps it)
+  if (S.prep || process.env.LANG2) {
+    if (S.prep) await p.evaluate(([fn, arg]) => new Function('f', 'arg', fn)(window.__farm, arg), [S.prep.toString().replace(/^[^{]*{/, '').replace(/}\s*$/, ''), S.arg || {}]);
     await p.evaluate(() => sessionStorage.setItem('show', '1'));
     await p.reload({ waitUntil: 'domcontentloaded' });
     await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 300000 });
@@ -161,6 +211,8 @@ for (const name of ONLY) {
   else await p.addStyleTag({ content: '#hint { display: none !important; }' });      // (the game's passing words, e.g. the golden egg's, off)
   if (process.env.FS) await p.evaluate(v => { window.__FS = v; }, +process.env.FS);
   const info = await p.evaluate(([fn, arg]) => new Function('f', 'arg', fn)(window.__farm, arg), [S.setup.toString().replace(/^[^{]*{/, '').replace(/}\s*$/, ''), S.arg || {}]);
+  await p.evaluate(([t, d]) => { window.__TOYS = t; window.__sharp = d; }, [TOYS, DSF]);      // (the play things, for the scenes' steps in the page)
+  if (process.env.EVAL) console.log('eval', JSON.stringify(await p.evaluate(process.env.EVAL)));      // (a look at the farm, for staging)
   const shot = process.env.SHOT ? JSON.parse(process.env.SHOT) : S.shot;
   const SNAPS = process.env.SNAPS ? process.env.SNAPS.split(',').map(Number) : [S.secs || 4];
   let done = 0;
@@ -173,7 +225,8 @@ for (const name of ONLY) {
     const out = { birds: pl ? pl.birds.map(x => [x.kind, !!x.cuddle, x.busy && x.busy() ? (x.busy().kind || 'busy') : '']) : null, hugAll: pl && pl.hugAll, went: window.__went, life: (() => { const L = f.farmLife(); return L ? { home: L.home, running: L.running } : null; })() };
     if (o && o.rel && window.__at) { o = { ...o, at: [window.__at[0] + o.rel[0], o.rel[1], window.__at[1] + o.rel[2]] }; }
     const L = f.farmLife && f.farmLife(); if (o && o.relF && L) { o = { ...o, at: [L.pos.x + o.relF[0], o.relF[1], L.pos.z + o.relF[2]] }; out.farmer = [+L.pos.x.toFixed(2), +L.pos.z.toFixed(2)]; }
-    if (o) f.closeShot(o); else if (!window.__keepUI) f.draw();
+    const sh = window.__sharp && f.sharp; if (sh) f.sharp(window.__sharp);      // (drawn at the screen's full sharpness, 3x: the game keeps to 2x)
+    if (o) f.closeShot(o); else if (!window.__keepUI || sh) f.draw();
     return out;
   }, shot || null);
   const file = SNAPS.length > 1 ? `${name}_${at}` : name;

@@ -23,13 +23,13 @@ const STYLES = {
   // a painted board: oak planks with grain, a darker rim, cream lettering with a soft painted shadow, two ropes up to the
   // top edge, a nail head at each rope; tilted a hair
   sign: s => `
-.hang { position: absolute; ${s.side === 'right' ? 'right' : 'left'}: ${s.x || 140}px; top: 0; width: fit-content; max-width: ${s.w || 1380}px; }
+.hang { position: absolute; ${s.side === 'center' ? 'left: 0; right: 0; margin: 0 auto' : (s.side === 'right' ? 'right' : 'left') + ': ' + (s.x || 140) + 'px'}; top: 0; width: fit-content; max-width: ${s.w || 1380}px; }
 .ropes { position: absolute; left: 0; right: 0; top: 0; height: 120px; }
 .ropes i { position: absolute; top: -10px; width: 14px; height: 140px; border-radius: 7px;
   background: repeating-linear-gradient(160deg, #c9a46a 0 9px, #a98249 9px 16px); box-shadow: 2px 3px 6px rgba(40,25,10,.35); }
 .ropes i:first-child { left: 90px; } .ropes i:last-child { right: 90px; }
 .sign { position: relative; margin-top: 108px; padding: 46px 70px 52px; box-sizing: border-box;
-  transform: rotate(${s.side === 'right' ? 1.1 : -1.2}deg); transform-origin: 50% 0; border-radius: 26px;
+  transform: rotate(${s.side === 'right' ? 1.1 : s.side === 'center' ? 0.6 : -1.2}deg); transform-origin: 50% 0; border-radius: 26px;
   background:
     repeating-linear-gradient(180deg, rgba(255,255,255,0) 0 74px, rgba(60,30,10,.28) 74px 77px, rgba(255,255,255,.06) 77px 80px),
     repeating-linear-gradient(92deg, rgba(255,235,200,.06) 0 3px, rgba(70,35,10,.07) 3px 9px, rgba(255,235,200,0) 9px 23px),

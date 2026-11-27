@@ -16,7 +16,9 @@
   "shop",
   "fish"
  ],
- "sides": {},
+ "sides": {
+  "show": "center"
+ },
  "en-GB": [
   [
    "A flock to love for good",
@@ -27,7 +29,7 @@
    "Restore the land, build coops, make it yours"
   ],
   [
-   "24 breeds and colours to collect",
+   "24 breeds and colours to adopt",
    "From fluffy Silkies to a peacock in full fan"
   ],
   [
@@ -43,8 +45,8 @@
    "Your best bird in front of the judge"
   ],
   [
-   "Snow days and winter coops",
-   "Every season brings surprises"
+   "Special seasonal coops",
+   "The winter collection, snow and all"
   ],
   [
    "See every breed in 3D",
@@ -65,7 +67,7 @@
    "Restaurez les terres, bâtissez vos poulaillers"
   ],
   [
-   "24 races et couleurs à collectionner",
+   "24 races et couleurs à adopter",
    "Des Soies duveteuses au paon qui fait la roue"
   ],
   [
@@ -81,8 +83,8 @@
    "Votre plus bel oiseau devant le juge"
   ],
   [
-   "Jours de neige et poulaillers d’hiver",
-   "Chaque saison apporte ses surprises"
+   "Des poulaillers de saison uniques",
+   "La collection d’hiver, neige comprise"
   ],
   [
    "Découvrez chaque race en 3D",
@@ -103,7 +105,7 @@
    "Land herrichten, Ställe bauen, ganz nach deinem Geschmack"
   ],
   [
-   "24 Rassen und Farben zum Sammeln",
+   "24 Rassen und Farben zum Adoptieren",
    "Vom flauschigen Seidenhuhn bis zum Pfau, der ein Rad schlägt"
   ],
   [
@@ -119,8 +121,8 @@
    "Dein schönstes Huhn vor dem Preisrichter"
   ],
   [
-   "Schneetage und Winterställe",
-   "Jede Jahreszeit bringt Überraschungen"
+   "Besondere Saison-Ställe",
+   "Die Winterkollektion, mit Schnee"
   ],
   [
    "Sieh dir jede Rasse in 3D an",
@@ -141,7 +143,7 @@
    "Recupera la tierra y construye gallineros"
   ],
   [
-   "24 razas y colores para coleccionar",
+   "24 razas y colores para adoptar",
    "De las Sedosas al pavo real con la cola abierta"
   ],
   [
@@ -157,8 +159,8 @@
    "Tu mejor ave ante el juez"
   ],
   [
-   "Días de nieve y gallineros de invierno",
-   "Cada estación trae sorpresas"
+   "Gallineros de temporada únicos",
+   "La colección de invierno, con nieve"
   ],
   [
    "Mira cada raza en 3D",
@@ -179,7 +181,7 @@
    "Recupera i campi e costruisci i pollai"
   ],
   [
-   "24 razze e colori da collezionare",
+   "24 razze e colori da adottare",
    "Dalle Moroseta al pavone che fa la ruota"
   ],
   [
@@ -195,8 +197,8 @@
    "Il tuo pennuto migliore davanti al giudice"
   ],
   [
-   "Giornate di neve e pollai d’inverno",
-   "Ogni stagione porta sorprese"
+   "Pollai stagionali speciali",
+   "La collezione invernale, neve compresa"
   ],
   [
    "Guarda ogni razza in 3D",
@@ -217,7 +219,7 @@
    "Recupere a terra e construa galinheiros"
   ],
   [
-   "24 raças e cores para colecionar",
+   "24 raças e cores para adotar",
    "Das Sedosas ao pavão de cauda aberta"
   ],
   [
@@ -233,8 +235,8 @@
    "Sua melhor ave diante do juiz"
   ],
   [
-   "Dias de neve e galinheiros de inverno",
-   "Cada estação traz surpresas"
+   "Galinheiros sazonais especiais",
+   "A coleção de inverno, com neve"
   ],
   [
    "Veja cada raça em 3D",
@@ -244,5 +246,6 @@
    "Pesque no lago e no rio",
    "Vinte peixes e algumas lendas"
   ]
- ]
+ ],
+ "_notes": "27 Nov 2026, Audrey: picture 3 says adopt, not collect (\"change collectioner for adopter\"); picture 7 is the seasonal coops (\"this one should be special coops instead\")"
 }
