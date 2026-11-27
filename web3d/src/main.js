@@ -7708,7 +7708,7 @@ function upgradedCard(p, fresh) {
   if (!p.gc || gameUI.isOpen || MOVE.plot || DMOVE.id) return;
   const kind = fresh.includes('swing') ? 'swing' : fresh.includes('xylo') ? 'xylo' : fresh.find(k => k !== 'ball') || null;
   const who = kind && !nightAt(p) ? playWho(p) : null;
-  gameUI.upgradedCard(game.coop(p.gc.id), fresh, who ? () => { gameUI.close(); if (startPlay(who, kind)) { who.wait = 0; wake(2000); } } : null);
+  gameUI.upgradedCard(game.coop(p.gc.id), fresh, who ? () => watchPlay(p, fresh, kind) : null);
   if (sideways()) {                                         // (the card on the right half: the coop in the middle of the left half)
     const B = penOf(p).pen, c = p.frame.localToWorld(new THREE.Vector3(B ? (B.min[0] + B.max[0]) / 2 : 0, 0, B ? (B.min[2] + B.max[2]) / 2 : 0.4));
     const size = view.size, upp = 2 * size / Math.max(1, canvas.clientHeight), side = (gameUI.sheet.offsetWidth + 24) / 2 * upp;
@@ -7716,6 +7716,35 @@ function upgradedCard(p, fresh) {
     focusOn(c.x + right.x * side, c.z + right.z * side, size);
   }
 }
+// "Watch them play" (27 Nov 2026, Audrey: "click on the CTA watch them playing but nothing happened. Maybe when someone
+// click it does a focus on 1 chicken on the coop that immediately goes and play"): the bird was picked when the card
+// opened and sent without a second look, so if she'd found something else to do meanwhile, or couldn't get there, nothing
+// happened. Now, at the tap: a grown bird of the coop free there and then (one at play elsewhere is called over), sent to
+// the new play thing (else another of the new ones, else any of the garden's), or one already at it; and the view goes in
+// close on where she'll play (a move asked for by the tap). Nobody able to (rare): a word saying they'll play later.
+const WATCH_TOYS = ['swing', 'xylo', 'dust', 'cabbage', 'ladder', 'ice', 'igloo', 'spin', 'bounce', 'chute', 'train', 'roll', 'soak', 'lift', 'striker'];
+function watchPlay(p, fresh, kind) {
+  gameUI.close();
+  const T = p.toys, kinds = [...new Set([kind, ...fresh, ...WATCH_TOYS])].filter(k => k && k !== 'ball' && T && T[k]);
+  const ok = b => b.kind !== 'chick' && !b.train && !b.asleep && !b.mum && !b.cuddle && !b.called && !b.laying && !b.stay && !b.flight && !b.leaving && b.root.visible && !b.nightNow(0.6);
+  const birds = p.birds.filter(ok).sort((a, b) => !!a.play - !!b.play);      // (free ones first)
+  let got = null;
+  if (!nightAt(p) && !p.farmer) for (const k of kinds) {
+    const by = T[k].by;
+    if (by && by.play && by.play.kind === k) { got = by; break; }      // (one at it already: she's the one to watch)
+    if (by) continue;
+    for (const b of birds) {
+      if (b.play) endPlay(b, true);
+      if (startPlay(b, k)) { b.wait = 0; got = b; break; }
+    }
+    if (got) break;
+  }
+  WATCHED.last = got ? { kind: got.play.kind, gid: got.gid } : null;
+  if (!got) { hint(game.t('up_watch_later')); return; }
+  const at = got.root.parent.localToWorld(new THREE.Vector3(got.play.spot[0], 0, got.play.spot[1]));
+  focusOn(at.x, at.z, Math.min(view.size, 1.6)); wake(4000);
+}
+const WATCHED = { last: null };
 function playWho(p) {      // (a grown bird free to go and play now)
   return p.birds.find(b => b.kind !== 'chick' && !b.train && !b.play && !b.asleep && !b.mum && !b.cuddle && !b.called && !b.laying && !b.stay && !b.flight && !b.leaving && b.root.visible && !b.nightNow(0.6)) || null;
 }
@@ -11505,6 +11534,7 @@ window.__farm = {
   age: () => age && { band: age.band(), st: age.st, api: age.api },
   account: () => account && { on: account.on, user: account.user, status: account.status, savedAt: account.savedAt, st: account.st, info: account.info, nudge: account.nudgeDue() },
   get birds() { return plots[0] ? plots[0].birds : []; }, allBirds, plots, view, renderer, scene, camera, quality: () => q, meter,
+  watched: () => WATCHED.last,
   sharp: (n) => { renderer.setPixelRatio(n); aimShadows(true); resize(); },      // (the store's pictures: the phone's full 3x, the game itself keeps to 2x)
   setQuality: (n) => { n = Math.max(0, Math.min(QUALITY.length - 1, n)); if (n > q) slowAt = view.size; wantQ = null; setQuality(n); },      // (tests; it used to wait on stepDown, which only asks for the next frame: it never returned)
   groom: { start: (id, bid) => groomFor(id, bid), now: () => GROOMING, portrait: (bid, url) => { const c = birdPortrait(typeof bid === 'object' ? bid : game.bird(bid)); return c ? (url ? { url: c.toDataURL('image/png'), head: c.head || null } : [c.width, c.height]) : null; } },      // (tests: the grooming game)

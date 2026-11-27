@@ -112,7 +112,13 @@ for (let t = 1; t <= 4; t++) {
   ok(`${look}: its card: the new look${want ? ', the new play things (' + want + ') with how they play, Watch them play' : ', no play things'}`, uc.kind === 'upgraded' && uc.look.includes(look) && uc.toys.join() === want && uc.watch === !!want, uc);
   if (t === 3) await shootCard(t);
   if (uc.watch) {
-    await p.evaluate(() => document.querySelector('.gsheet .gupd-toys ~ .gbtn').click()); await run(0.5);
+    // (27 Nov 2026, Audrey: "click on the CTA watch them playing but nothing happened": at Deluxe every bird is busy at
+    // another toy when the button's tapped: one is called over to the new one all the same, and the view goes in close)
+    if (t === 4) await p.evaluate(() => { const f = window.__farm, P = f.coopPlots().find(q => q.gc && q.gc.id === f.game().data.coops[0].id); ['swing', 'dust', 'cabbage'].forEach((k, i) => { const b = P.birds.filter(x => x.kind !== 'chick')[i]; if (b) f.startPlay(b, k); }); });
+    const size0 = (await p.evaluate(() => window.__farm.viewAt()))[2];
+    await p.evaluate(() => document.querySelector('.gsheet .gupd-toys ~ .gbtn').click()); await run(1.0);
+    const w = await p.evaluate(() => ({ watched: window.__farm.watched(), size: window.__farm.viewAt()[2] }));
+    ok(`${look}: Watch them play: a bird picked at the tap${t === 4 ? ' (all busy elsewhere: one called over)' : ''}, the view in close on her`, !!w.watched && w.watched.kind === (t === 3 ? 'swing' : 'xylo') && w.size <= 1.61 && w.size <= size0, { w, size0 });
     const pl = await p.evaluate(() => { const f = window.__farm, P = f.coopPlots().find(q => q.gc && q.gc.id === f.game().data.coops[0].id); return { open: f.gameUI().isOpen, kinds: P.birds.filter(b => b.play).map(b => b.play.kind) }; });
     ok(`${look}: Watch them play: the card closed, a bird off to the ${t === 3 ? 'swing' : 'xylophone'}`, !pl.open && pl.kinds.includes(t === 3 ? 'swing' : 'xylo'), pl);
   }
