@@ -223,7 +223,7 @@ export class GameUI {
     this.sheet.classList.toggle('gbird', kind === 'bird'); document.body.classList.toggle('gbirdopen', kind === 'bird');      // (a bird's card: beside her, not over her: index.html, 13 Nov 2026)
     this.sheet.classList.toggle('modal', modal); this.sheet.classList.toggle('gcongrats', kind === 'congrats' || kind === 'showres'); document.body.classList.toggle('gcong', kind === 'congrats' || kind === 'showres'); this.sheet.classList.remove('in'); void this.sheet.offsetWidth; this.sheet.classList.add('in');
     this.sheet.classList.toggle('gbook', kind === 'book');          // (the Breed Book: a taller sheet, upright)
-    this.sheet.classList.toggle('gintro', kind === 'intro'); this.sheet.classList.toggle('gcoop', kind === 'coop'); this.sheet.classList.toggle('gshop2', kind === 'shop');
+    this.sheet.classList.toggle('gintro', kind === 'intro'); this.sheet.classList.toggle('gcoop', kind === 'coop'); this.sheet.classList.toggle('gshop2', kind === 'shop' || kind === 'settings');
     this.sheet.classList.toggle('gcenter', CENTER_CARDS.includes(kind));      // (sideways: a message in the middle of the screen; a card about something on the farm on the right, beside it)
     return this.body;
   }
@@ -2065,12 +2065,39 @@ export class GameUI {
     if (N.pref() === 'on') N.allowed().then(ok => { if (!ok) { show(false); note.textContent = this.t('notes_denied'); } });
     return [row, pick, note];
   }
-  settings() {
-    const g = this.g, b = this.open('settings', this.t('settings'));
+  // (27 Nov 2026, Audrey: "Review the setting popup to organise it better please": it had become one long narrow column,
+  // seven screenfuls sideways. Now the shop's wide card: four sections, their names down the left (a tap goes to it; the one
+  // in view lit up as you scroll), each section's things grouped in cards: the game (language, music and sounds, reminders),
+  // my account (sign-in, the farm code, purchases), my farm (its story, the first game, starting again), about (ad choices,
+  // privacy, licences, thanks, the version). Everything is still there, in one scroll, so nothing is ever a tab away.)
+  settings(at) {
+    const g = this.g, body = this.open('settings', this.t('settings'));
+    const wrap = el('div', 'gshop-wrap gset-wrap'), rail = el('div', 'gshop-rail'), main = el('div', 'gshop-main gset-main'), tabs = el('div', 'gchips gshop-tabs gset-tabs');
+    const SEC = [['game', '⚙️', 'set_sec_game'], ['acct', '☁️', 'acct_t'], ['farm', '🏡', 'set_sec_farm'], ['about', 'ℹ️', 'set_sec_about']], sec = {};
+    for (const [k, icon, word] of SEC) {
+      const c = el('button', 'gchip' + (k === (at || 'game') ? ' on' : '')); c.type = 'button'; c.dataset.tab = k; c.append(el('span', 'gset-ic', icon), el('span', 'gset-w', ' ' + this.t(word)));      // (upright, the picture over the name: four tabs in a row on every phone)
+      c.addEventListener('click', () => { const S = sec[k]; if (S) { this.setScroll = true; S.scrollIntoView({ block: 'start' }); for (const x of tabs.children) x.classList.toggle('on', x === c); setTimeout(() => { this.setScroll = false; }, 120); } });
+      tabs.append(c);
+      const S = sec[k] = el('section', 'gset-sec gset-' + k); S.dataset.sec = k; S.append(el('h3', 'gset-h', icon + ' ' + this.t(word))); main.append(S);
+    }
+    rail.append(tabs); wrap.append(rail, main); body.append(wrap);
+    const lit = () => {                                    // (the section in view: its name lit up on the left)
+      if (this.setScroll) return;
+      const box = (main.scrollHeight > main.clientHeight + 4 && getComputedStyle(main).overflowY !== 'visible' ? main : body).getBoundingClientRect();
+      const by = box.top + (getComputedStyle(rail).position === 'sticky' && rail.parentElement && !main.contains(rail) && main.scrollHeight <= main.clientHeight + 4 ? rail.getBoundingClientRect().height : 0);      // (upright the names sit on top: count from under them)
+      let cur = SEC[0][0]; for (const [k] of SEC) if (sec[k].getBoundingClientRect().top <= by + Math.min(60, box.height * 0.3)) cur = k;
+      if (main.scrollTop + main.clientHeight >= main.scrollHeight - 4 && main.scrollHeight > main.clientHeight + 4) cur = SEC[SEC.length - 1][0];
+      for (const x of tabs.children) x.classList.toggle('on', x.dataset.tab === cur);
+    };
+    main.addEventListener('scroll', lit, { passive: true }); body.addEventListener('scroll', lit, { passive: true });
+    let b = sec.game;
+    const group = (where, cls, icon, title) => { const c = el('div', 'gcard gset-card ' + cls); if (title) { const hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', icon), el('span', 'gcard-t', title)); c.append(hd); } where.append(c); return c; };
+    b = group(sec.game, 'gset-lang', '🌍', '');
     const langRow = el('div', 'grow'); langRow.append(el('span', 'glabel', this.t('settings_lang')));
     langRow.append(langPicker(g.lang, l => { g.setLang(l); if (this.o.reload) this.o.reload(); })); b.append(langRow);
     // the music and the farm's sounds (sound.js): each on or off, at once (Audrey, 28 Oct: the music "Now and then"; 29 Oct:
     // her own hens chatting)
+    b = group(sec.game, 'gset-sound', '🎵', '');
     for (const [key, cls, isOn, set, tell] of [['settings_music', 'gmusic', () => g.musicOn(), on => g.setMusic(on), 'music'], ['settings_sounds', 'gsounds', () => g.soundsOn(), on => g.setSounds(on), 'sounds']]) {
       const row = el('div', 'grow ' + cls); row.append(el('span', 'glabel', this.t(key)));
       const ch = el('div', 'gchips');
@@ -2085,16 +2112,17 @@ export class GameUI {
     { const tb = el('button', 'gbtn galt gsmallbtn gsound-test', '🔊 ' + this.t('sound_test')), tn = el('p', 'gnote gsound-res'); tb.type = 'button'; tn.hidden = true;      // (a way to check the sound is alive: two notes, and a word on what to look at if they aren't heard)
       tb.addEventListener('click', () => { const r = this.o.soundTest ? this.o.soundTest() : 'none'; tn.textContent = this.t(r === 'running' ? 'sound_test_ok' : r === 'none' ? 'sound_test_none' : 'sound_test_wait'); tn.hidden = false; dg.textContent = ''; setTimeout(() => { if (dg.isConnected) dg.textContent = this.o.soundDiag ? this.o.soundDiag() : ''; }, 1200); });
       const dg = el('p', 'gnote gsound-diag'); b.append(tb, tn, dg); }
-    if (this.o.notes && this.o.notes.on) b.append(...this.notesRow());      // (the store app: its reminders, notify.js)
-    if (IAP_DEMO || this.o.pay) { const c = el('div', 'gcard giap-restore'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🧾'), el('span', 'gcard-t', this.dt('restore_t'))); const r = el('button', 'gbtn galt gsmallbtn', this.dt('restore')); r.type = 'button'; if (this.o.pay) r.addEventListener('click', () => this.o.pay.restore()); c.append(hd, el('p', 'gnote', this.dt(this.o.pay ? 'restore_real' : 'restore_note')), r); b.append(c); }
+    if (this.o.notes && this.o.notes.on) group(sec.game, 'gset-notes', '🔔', '').append(...this.notesRow());      // (the store app: its reminders, notify.js)
+    if (IAP_DEMO || this.o.pay) { const c = el('div', 'gcard giap-restore'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🧾'), el('span', 'gcard-t', this.dt('restore_t'))); const r = el('button', 'gbtn galt gsmallbtn', this.dt('restore')); r.type = 'button'; if (this.o.pay) r.addEventListener('click', () => this.o.pay.restore()); c.append(hd, el('p', 'gnote', this.dt(this.o.pay ? 'restore_real' : 'restore_note')), r); this.restoreCard = c; } else this.restoreCard = null;
     if (this.o.ads && this.o.ads.on && this.o.ads.privacy) {      // (the free-coins videos: Google's ad privacy choices, where the law asks Google to offer them)
       const c = el('div', 'gcard gadchoices'), hd = el('div', 'gcard-h'); hd.append(el('span', 'gemoji', '🎬'), el('span', 'gcard-t', this.t('ad_choices_t')));
       const go = el('button', 'gbtn galt gsmallbtn', this.t('ad_choices')); go.type = 'button';
       go.addEventListener('click', async () => { go.disabled = true; await this.o.ads.choices(); go.disabled = false; });
-      c.append(hd, el('p', 'gnote', this.t('ad_choices_l')), go); b.append(c);
+      c.append(hd, el('p', 'gnote', this.t('ad_choices_l')), go); sec.about.append(c);
     }
+    b = sec.acct;
     if (this.o.account && this.o.account.on) b.append(this.accountCard());
-    b.append(el('p', 'gnote', this.t('saved_here')));
+    b.append(el('p', 'gnote gset-here', this.t('saved_here')));
     // the farm code: copy it (iPhone only lets a page copy straight from the tap, so the clipboard is handed a promise of
     // the code rather than waiting for it); shown to select by hand if copying isn't allowed; paste one and load it (two
     // taps: it replaces this farm)
@@ -2126,6 +2154,8 @@ export class GameUI {
       this.codeDraft = ''; if (this.o.loaded) this.o.loaded();
     });
     card.append(paste, load, el('p', 'gnote', this.t('code_note'))); b.append(card);
+    if (this.restoreCard) b.append(this.restoreCard);
+    b = sec.farm;
     // the first game (only if its farm is on this phone): the way to it, in classic/ beside the 3D game's own folder
     if (firstGameKept()) {
       const fc = el('div', 'gcard gfirst'), fh = el('div', 'gcard-h'); fh.append(el('span', 'gemoji', '🐔'), el('span', 'gcard-t', this.t('first_t'))); fc.append(fh, el('p', 'gnote', this.t('first_how')));
@@ -2133,6 +2163,10 @@ export class GameUI {
       open.addEventListener('click', () => { location.href = new URL('../classic/', document.baseURI).href; });
       fc.append(open); b.append(fc);
     }
+    const st = el('button', 'gbtn galt gstory-again', this.t('settings_story')); st.type = 'button';
+    st.addEventListener('click', () => { this.close(); this.story(); });
+    sec.farm.insertBefore(st, sec.farm.children[1] || null);
+    b = group(sec.farm, 'gset-again', '🌱', '');
     if (g.edited) b.append(el('p', 'gnote gwarn', this.t('settings_edited')));
     let sure = false;
     const fresh = el('button', 'gbtn galt', this.t('settings_new')); fresh.type = 'button';
@@ -2143,13 +2177,12 @@ export class GameUI {
       g.wipe(); if (this.o.reload) this.o.reload();
     });
     b.append(fresh);
-    const st = el('button', 'gbtn galt gstory-again', this.t('settings_story')); st.type = 'button';
-    st.addEventListener('click', () => { this.close(); this.story(); });
-    b.append(st);
+    b = group(sec.about, 'gset-info', 'ℹ️', '');
     if (this.o.version) b.append(el('p', 'gnote gver', this.t('settings_version', { v: this.o.version })));
     if (this.o.picDiag) { const pd = el('p', 'gnote gsound-diag gpic-diag', this.o.picDiag()); b.append(pd); }      // (how sharp the picture is drawn just now, and how smoothly: for telling Claude, 13 Nov 2026)
     const links = el('p', 'gnote glinks'); links.append(this.privacyLink(), document.createTextNode(' · '), this.licencesLink());
-    b.append(this.credits(), links);
+    b.prepend(links); b.append(this.credits());
+    if (at && at !== 'game' && sec[at]) requestAnimationFrame(() => { this.setScroll = true; sec[at].scrollIntoView({ block: 'start' }); setTimeout(() => { this.setScroll = false; }, 120); });
   }
   // thanks to whose music and sounds these are (audio/CREDITS.txt); the peacock's recording (CC BY 4.0) asks for its
   // credit where players see it: its recordist and the licence, each a link

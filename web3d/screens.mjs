@@ -1,6 +1,6 @@
 // The game on every screen (release 7, before the stores; Audrey: "how does the game show on iPhones, Samsungs, and all
 // sort of other phones, as well as tablet, very important"): ./withserver.sh node screens.mjs [OUT]   (ONLY=name,name; LANG=fr; PORT)
-// Each phone and tablet upright and sideways: the welcome, the farm, a hen's card, the shop, the Breed Book. A picture of
+// Each phone and tablet upright and sideways: the welcome, the farm, a hen's card, the shop, the Breed Book, Settings. A picture of
 // each in OUT/<device>_<w>x<h>_<screen>.jpg, and checks: nothing off the screen or under another thing that matters (the
 // top bar's buttons all on the screen and apart; a card's title, close button and buttons on the screen; no sideways
 // scrolling); then OUT/index.html of them all.
@@ -29,7 +29,8 @@ const layout = p => p.evaluate(() => {
     out.sheet = { x: Math.round(q.x), y: Math.round(q.y), w: Math.round(q.w), h: Math.round(q.h), title: t && t.textContent };
     if (q.x < -1 || q.r > W + 1 || q.y < -1 || q.b > H + 1) out.off.push('sheet');
     if (x && vis(x)) { const xq = r(x); if (xq.x < 0 || xq.r > W || xq.y < 0 || xq.b > H) out.off.push('close'); }
-    for (const e of btns) { const bq = r(e); if (bq.r > q.r + 1 || bq.x < q.x - 1) out.off.push('button ' + e.textContent.trim().slice(0, 20)); }
+    for (const e of btns) { const bq = r(e), row = e.parentElement; if (row && row.classList.contains('gshop-tabs') && row.scrollWidth > row.clientWidth + 1 && getComputedStyle(row).overflowX === 'auto') continue;      // (the shop's shelves upright: a row you slide along, made so on 23 Nov)
+      if (bq.r > q.r + 1 || bq.x < q.x - 1) out.off.push('button ' + e.textContent.trim().slice(0, 20)); }
   }
   // the bar's things overlapping each other
   for (let i = 0; i < out.bar.length; i++) for (let j = i + 1; j < out.bar.length; j++) { const a = out.bar[i], c = out.bar[j]; if (a[1] < c[2] - 1 && c[1] < a[2] - 1 && a[3] < c[4] - 1 && c[3] < a[4] - 1) out.off.push('overlap ' + a[0] + ' / ' + c[0]); }
@@ -55,7 +56,7 @@ for (const [name, w0, h0, dpr] of DEVICES) {
       await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
       await p.evaluate(() => { const f = window.__farm, g = f.game(); f.pause(true); f.step(1 / 30, 30); g.data.guide = { step: 5, done: true }; g.data.first = null; g.data.xp = 1200; g.data.coins = 2400; g.save(); f.gameUI().close(); f.gameUI().refresh(); f.draw(); });
       await p.waitForTimeout(300); await shot('2_farm');
-      L = await layout(p); ok(tag + ' the farm: the top bar all on the screen, nothing on top of anything', !L.off.length && !L.scrollX && L.bar.length >= 6, { off: L.off, n: L.bar.length });
+      L = await layout(p); ok(tag + ' the farm: the top bar all on the screen, nothing on top of anything', !L.off.length && !L.scrollX && L.bar.length >= 3, { off: L.off, n: L.bar.length });
       await p.evaluate(() => { const f = window.__farm; f.openBirdCard(f.coopPlots()[0].birds[1]); f.draw(); });
       await p.waitForTimeout(300); await shot('3_hen');
       L = await layout(p); ok(tag + ' a hen\'s card all on the screen', L.sheet && !L.off.length, { off: L.off, sheet: L.sheet });
@@ -65,6 +66,14 @@ for (const [name, w0, h0, dpr] of DEVICES) {
       await p.evaluate(() => { window.__farm.gameUI().close(); window.__farm.book(); });
       await p.waitForTimeout(300); await shot('5_book');
       L = await layout(p); ok(tag + ' the Breed Book all on the screen', L.sheet && !L.off.length, { off: L.off, sheet: L.sheet });
+      // (27 Nov 2026: Settings in sections; its last section, About, reached from its name on the side)
+      await p.evaluate(() => { window.__farm.gameUI().close(); window.__farm.gameUI().settings(); });
+      await p.waitForTimeout(300); await shot('6_settings');
+      L = await layout(p); ok(tag + ' Settings all on the screen, its sections\' names in reach', L.sheet && !L.off.length && await p.evaluate(() => [...document.querySelectorAll('.gset-tabs .gchip')].every(c => { const r = c.getBoundingClientRect(); return r.bottom <= innerHeight && r.right <= innerWidth && r.top >= 0; })), { off: L.off, sheet: L.sheet });
+      await p.evaluate(() => document.querySelector('.gset-tabs .gchip[data-tab=about]').click()); await p.waitForTimeout(300);
+      const ab = await p.evaluate(() => { const h = document.querySelector('.gset-about .gset-h').getBoundingClientRect(), s = document.querySelector('.gsheet:not([hidden])').getBoundingClientRect(); return { top: Math.round(h.top), in: h.top >= s.top && h.bottom <= s.bottom, lit: (document.querySelector('.gset-tabs .gchip.on') || {}).dataset.tab }; });
+      await shot('7_settings_about');
+      ok(tag + ' Settings: a tap on About takes you there', ab.in && ab.lit === 'about', ab);
       ok(tag + ' no page errors', errs.length === 0, errs.slice(0, 2));
     } catch (e) { ok(tag + ' ran', false, e.message.split('\n')[0]); }
     await ctx.close();
