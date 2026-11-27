@@ -56,6 +56,7 @@
    "h": "Deine Rechte",
    "p": [
     "Du kannst an {email} schreiben, um zu erfahren, was über dich gespeichert ist, es berichtigen oder löschen zu lassen oder seiner Verwendung zu widersprechen. Dein Konto und deinen Hof online kannst du außerdem jederzeit selbst in den Einstellungen löschen. Über dich wird nichts automatisch entschieden.",
+    "Wenn du uns schreibst, werden deine E-Mail und unsere Antwort ein Jahr nach unserer Antwort aufbewahrt und dann gelöscht.",
     "Wenn du nicht damit zufrieden bist, wie mit deinen Daten umgegangen wird, kannst du dich bei der Datenschutzbehörde beschweren: {authority}."
    ]
   },
