@@ -535,12 +535,31 @@
      picture is tapped (the little "i"). Upright: the shelves along the top, two tiles a row */
   .gsheet.gshop2 { max-height: 90%; }
   .gshop-wrap { display: flex; flex-direction: column; gap: 8px; }
+  /* Settings in sections (27 Nov 2026, Audrey: "organise it better"): the shop's wide card, the sections' names down the left */
+  .gset-sec { display: flex; flex-direction: column; gap: 8px; scroll-margin-top: 54px; padding-bottom: 6px; }
+  .gset-sec + .gset-sec { border-top: 1.5px solid rgba(63, 143, 78, 0.14); padding-top: 12px; }
+  .gset-h { margin: 2px 0 0; font: 600 17px/1.2 var(--display); color: var(--ink); }
+  .gset-sec > * { margin: 0; }
+  .gset-card { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; margin: 0; }
+  .gset-card > * { margin: 0; } .gset-card .grow { margin: 0; }
+  .gset-card .gsound-test { align-self: flex-start; margin-top: 2px; }
+  .gset-sec > .gstory-again { align-self: stretch; }
+  .gset-sec .gset-here { padding: 0 4px; }
+  .gset-acct > .gacct > .gcard-h { display: none; }      /* (the section's own name says it: no second "My account" just under it) */
+  .gset-tabs .gchip { font-size: 14.5px; }
+  @media (orientation: landscape) and (min-aspect-ratio: 5/4) { .gset-sec { scroll-margin-top: 4px; } }
   .gshop-rail { position: sticky; top: -4px; z-index: 2; display: flex; align-items: center; gap: 8px; background: var(--meringue); padding: 2px 0 6px; }
   .gshop-rail .gshop-c { flex: none; }
   .gchips.gshop-tabs { display: flex; flex-wrap: nowrap; overflow-x: auto; gap: 6px; margin: 0; min-width: 0; scrollbar-width: none; }
   .gshop-tabs::-webkit-scrollbar { display: none; } .gshop-tabs .gchip .gcoin { display: inline-block; width: 16px; height: 16px; vertical-align: -3px; } .gshop-tabs .gchip .gcoin::after { inset: 4.5px; }
   .gshop-tabs .gchip { flex: none; padding: 7px 12px; font-size: 14.5px; white-space: nowrap; }
   .gshop-tabs .gchip:not(.on) { border-color: transparent; box-shadow: 0 1px 3px rgba(30, 52, 38, 0.13); }      /* (only the shelf you're on outlined: lighter)*/
+  @media (orientation: portrait), (max-aspect-ratio: 5/4) {      /* (Settings upright: four even tabs in one row, the picture over the name, every name in reach) */
+    .gchips.gset-tabs { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; overflow: visible; flex: 1; min-width: 0; }
+    .gset-tabs .gchip { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 3px 5px; font-size: 12.5px; line-height: 1.1; white-space: normal; text-align: center; border-radius: 12px; }
+    .gset-tabs .gset-ic { font-size: 17px; line-height: 1; } .gset-tabs .gset-w { overflow-wrap: anywhere; }
+    .gset-sec { scroll-margin-top: 66px; }
+  }
   .gshop-main { display: grid; grid-template-columns: repeat(auto-fill, minmax(146px, 1fr)); gap: 8px; }
   .gshop-main > :not(.gpage) { grid-column: 1 / -1; margin: 0; }
   .gshop-main > .gpage { flex-direction: column; align-items: stretch; gap: 6px; padding: 7px 7px 8px; margin: 0; min-width: 0; }
@@ -1005,6 +1024,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1795806463"></script>
+<script src="app.js?v=1795810988"></script>
 </body>
 </html>
