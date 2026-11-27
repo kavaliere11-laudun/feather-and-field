@@ -1162,6 +1162,11 @@ if __name__ == '__main__':
     R_ = int(os.environ.get('RES', 500))
     scn = reset()
     root, hd = build(look, pose, expr)
+    # (27 Nov 2026, Audrey, the shop's Show day picture: "Looks like the farmer is half bald": Rosie's hair over the top of
+    # her head under a bought hat, as the 3D game has had it since 7 Nov (export_farmer.py), in the pictures too)
+    if look == 'f' and OF().get('hat') not in (None, 'straw', 'sunhat'):
+        hobj = [o for o in hd.children if o.name.startswith('headm')][0]
+        hair_top(look, hd, HC.surface_finder(hobj), mats(look))
     HC.shadow_catcher()
     lighting(scn, sun_dir=(0.5, -0.6, 0.85), sun=3.4)
     bpy.context.view_layer.update()
