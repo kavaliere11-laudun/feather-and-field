@@ -422,7 +422,7 @@ class Intro {
   // looking up at him; a soft green garden behind and nothing else. She sits on his forearms as in the game's own cuddle
   // (main.js STRAY_SEAT: between his wrists and just above, a little ahead), so his arms go under her, not through her.
   love() {
-    this.cam = { at: [0.22, 0.72, 0.05], el: 13, dist: 4.5, fov: 24, shadowReach: 3.5 };
+    this.cam = { at: [-0.05, 0.72, 0.05], el: 13, dist: 4.5, fov: 24, shadowReach: 3.5 };
     this.prop('rustic_rir', -1.7, -2.9, 10); this.prop('tree_apple', -3.4, -4.2, 0); this.prop('bush_b', -0.4, -2.7, 0, 0.8); this.prop('bush_a', 1.9, -2.5, 0, 0.75);
     this.prop('flower_pots', 1.25, -1.75, 15, 0.8); this.prop('bush_a', 3.3, -3.0, 30, 0.7); this.prop('tree_b', 3.6, -5.0, 30); this.prop('bush_b', 4.4, -1.8, 0, 0.7);
     this.dress(260, { x0: -4.2, x1: 5.0, z0: -4.6, z1: 1.0, clear: [[-0.7, -0.8, 1.7, 1.1], [-2.6, -3.9, -0.8, -1.9]], seed: 81, flowers: 0.5 });
