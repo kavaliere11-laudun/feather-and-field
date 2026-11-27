@@ -14,8 +14,12 @@ const out = path.join(HERE, 'www');
 if (!fs.existsSync(path.join(src, 'play.html')) || !fs.existsSync(path.join(src, 'app.js'))) { console.error('not the built game (no play.html / app.js): ' + src); process.exit(1); }
 fs.rmSync(out, { recursive: true, force: true });
 fs.mkdirSync(out, { recursive: true });
-const SKIP = new Set(['index.html', 'play.html', 'play.webmanifest', 'icon-192.png', 'icon-512.png', 'cloud.js']);
+// (27 Nov 2026: cloud.js, My account's online side, had been left out since the app's first day, when the app had no
+// account; so in the app Sign in with Apple and Google failed before Apple's sheet ever opened: Audrey's "Signing in
+// didn't work". It goes in now, and its absence stops the build)
+const SKIP = new Set(['index.html', 'play.html', 'play.webmanifest', 'icon-192.png', 'icon-512.png']);
 for (const f of fs.readdirSync(src)) if (!SKIP.has(f)) fs.cpSync(path.join(src, f), path.join(out, f), { recursive: true });
+if (!fs.existsSync(path.join(out, 'cloud.js'))) { console.error('no cloud.js in the built game: My account could not sign in in the app'); process.exit(1); }
 let page = fs.readFileSync(path.join(src, 'play.html'), 'utf8');
 const once = (a, b) => { if (page.split(a).length !== 2) throw new Error('not found once in play.html: ' + a); page = page.replace(a, b); };
 once('<link rel="manifest" href="play.webmanifest">\n', '');

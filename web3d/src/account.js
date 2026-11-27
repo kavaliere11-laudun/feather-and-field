@@ -157,7 +157,7 @@ export class Account {
   // ---- signing in (from a tap: Google's window opens at once, so the online side must be there already: prepare());
   // kind: 'google', or 'apple' (the app only)
   async signIn(kind = 'google') {
-    if (!this.cloud) { try { await this.prepare(); } catch (e) { if (this.o.say) this.o.say(this.g.t('acct_failed')); return false; } }
+    if (!this.cloud) { try { await this.prepare(); } catch (e) { this.info.err = 'prepare: ' + (e && (e.code || e.message) || e); if (this.o.say) this.o.say(this.g.t('acct_failed') + ' (' + String(e && (e.code || e.message) || 'offline').slice(0, 60) + ')'); return false; } }
     try {
       const u = this.native ? await this.cloud.signIn(await this.nativeCred(kind === 'apple' ? 'apple' : 'google')) : await this.cloud.signIn();
       if (u && this.user && this.user.uid === u.uid && u.name !== this.user.name) { this.user = u; this.set(this.status); }      // (Apple's name, kept just after)
