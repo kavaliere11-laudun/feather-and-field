@@ -20,6 +20,8 @@ for (const L of LANGS) for (const [W, H] of SIZES) {
   for (let i = 0; i < 6; i++) { const n = await p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); if (!s) return 0; const x = [...s.querySelectorAll('.gbtn')].find(q => !q.classList.contains('galt')); if (x) x.click(); else s.querySelector('.gsheet-x, .gx')?.click(); return 1; }); if (!n) break; await p.waitForTimeout(300); }
   await p.evaluate(() => window.__farm.gameUI().close());
   const tag = `${L} ${W}x${H}`;
+  // (German: a time after "in" in the dative: "♥ in einer Stunde", "in 2 Tagen")
+  if (L === 'de') { const w = await p.evaluate(() => { const g = window.__farm.game(); return [g.t('cuddle_in', { when: g.howLong(3600e3) }), g.t('wheat_left', { t: g.howLong(2 * 86400e3) })]; }); const good = w[0] === '♥ in einer Stunde' && w[1] === 'Reif in 2 Tagen'; if (!good) fails++; console.log((good ? 'ok   ' : 'FAIL ') + tag + ' German "in" + a time ' + JSON.stringify(w)); }
   // (French: the space before "!" never breaks, so it's never alone on a line)
   if (L === 'fr') { const w = await p.evaluate(() => window.__farm.game().t('trio_new', { breed: 'Poule soie blanche' })); const good = /blanche\u00a0!$/.test(w); if (!good) fails++; console.log((good ? 'ok   ' : 'FAIL ') + tag + ' French space before "!" ' + JSON.stringify(w)); }
   // the tag beside the coins, a card open, then the words said

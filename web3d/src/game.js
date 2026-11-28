@@ -33,7 +33,7 @@
 // 24 Oct: "In the logic that the chickens from the coop gains experience and produce better and better babies"); a brood
 // gives its parents experience.
 
-import { PACKS, LOCALE, langOk, phoneLang, register, tr, ordinal, elide, frSpaces } from './lang.js';      // (elide: French "d’Olive")
+import { PACKS, LOCALE, langOk, phoneLang, register, tr, ordinal, elide, frSpaces, deIn } from './lang.js';      // (elide: French "d’Olive")
 export const SAVE_KEY = 'ff3d.farm';
 const SAVE_V = 1;
 
@@ -1865,7 +1865,7 @@ export class Game {
   t(key, vars = {}, sexF = false) {
     const L = this.lang, s = (sexF && TEXT_F[L] && TEXT_F[L][key]) || (TEXT[L] && TEXT[L][key]) || (sexF && TEXT_F.en[key]) || TEXT.en[key] || key;
     const w = elide(L, s, vars).replace(/\{(\w+)\}/g, (m, k) => (vars[k] !== undefined ? vars[k] : m));
-    return L === 'fr' ? frSpaces(w) : w;
+    return L === 'fr' ? frSpaces(w) : L === 'de' ? deIn(w) : w;
   }
   dk(key, kind) { const k = kind === true ? 'duck' : kind; return k && TEXT.en[key + '_' + k] ? key + '_' + k : key; }      // (the call ducks' version of a brood word: ducklings, young ducks and drakes; the peafowl's: peachicks, young peahens and peacocks)
   locale() { return LOCALE[this.lang] || 'en-GB'; }                      // (numbers and dates: "1,250", "1 250", "1.250")

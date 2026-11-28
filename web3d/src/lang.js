@@ -41,8 +41,11 @@ export function tr(lang, id, vars) {
   const a = REG[id];
   let s = !a ? id : lang === 'fr' ? (a[1] ?? a[0]) : lang === 'en' ? a[0] : ((PACKS[lang] && PACKS[lang].words && PACKS[lang].words[id]) ?? a[0]);
   if (vars) s = elide(lang, s, vars).replace(/\{(\w+)\}/g, (m, x) => (vars[x] !== undefined ? vars[x] : m));
-  return lang === 'fr' ? frSpaces(s) : s;
+  return lang === 'fr' ? frSpaces(s) : lang === 'de' ? deIn(s) : s;
 }
+// German: a time after "in" takes the dative ("Reif in einer Stunde", "in 2 Tagen", not "in eine Stunde", "in 2 Tage"): 28 Nov
+// 2026, the tablet play-through (Greta): "♥ in eine Stunde" on a coop's card; howLong's words are said bare elsewhere
+export function deIn(w) { return w.replace(/\bin eine Stunde\b/g, 'in einer Stunde').replace(/\bin 1 Tag\b/g, 'in einem Tag').replace(/\bin (\d+) Tage\b/g, 'in $1 Tagen'); }
 // French: the space before ! ? : ; » and after « that never breaks, so a "!" is never left alone on a line (28 Nov 2026,
 // the tablet play-through: "Nouvelle race : Poule soie blanche" then "!" by itself under it)
 // (the automated checks read the plain spaces their words were written with, unless the page asks with ?nbsp, as the
