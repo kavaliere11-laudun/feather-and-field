@@ -967,6 +967,7 @@
     body.game .groom-card, body.game .groom-top, body.game .groom-tip, body.game .fishrow { zoom: 1.3; }
   }
   @media (min-width: 700px) and (min-height: 700px) and (orientation: landscape) { body.game .groom-card { align-self: center; } body.game .groom-card .gbtn { margin-top: 14px; } }
+  @media (min-width: 700px) and (min-height: 700px) and (orientation: landscape) { body.game .gprev { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); } }      /* (a thing's 3D view in the shop: bigger on a tablet, where the card is tall) */
   @media (min-width: 700px) and (min-height: 700px) and (max-aspect-ratio: 5/4) { body.game .gsheet { width: min(540px, 100%); margin-inline: auto; } }
   @media (min-width: 700px) and (min-height: 700px) and (orientation: landscape) and (min-aspect-ratio: 5/4) { body.game .ghero .glogo, body.game .ghero .gtag { right: calc(min(400px, 46vw) * 1.3 + 16px); } }
   /* the tip for a phone or tablet held upright: "Best played sideways", a little phone turning */
