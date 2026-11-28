@@ -223,6 +223,7 @@ export class GameUI {
     this.sheet.classList.toggle('gbird', kind === 'bird'); document.body.classList.toggle('gbirdopen', kind === 'bird');      // (a bird's card: beside her, not over her: index.html, 13 Nov 2026)
     this.sheet.classList.toggle('modal', modal); this.sheet.classList.toggle('gcongrats', kind === 'congrats' || kind === 'showres'); document.body.classList.toggle('gcong', kind === 'congrats' || kind === 'showres'); this.sheet.classList.remove('in'); void this.sheet.offsetWidth; this.sheet.classList.add('in');
     this.sheet.classList.toggle('gbook', kind === 'book');          // (the Breed Book: a taller sheet, upright)
+    this.sheet.classList.toggle('gupd', kind === 'upgraded');      // (a coop's new look: as tall as what it says, not the screen's height: index.html)
     this.sheet.classList.toggle('gintro', kind === 'intro'); this.sheet.classList.toggle('gcoop', kind === 'coop'); this.sheet.classList.toggle('gshop2', kind === 'shop' || kind === 'settings');
     this.sheet.classList.toggle('gcenter', CENTER_CARDS.includes(kind));      // (sideways: a message in the middle of the screen; a card about something on the farm on the right, beside it)
     return this.body;
@@ -2169,7 +2170,7 @@ export class GameUI {
     b = group(sec.farm, 'gset-again', '🌱', '');
     if (g.edited) b.append(el('p', 'gnote gwarn', this.t('settings_edited')));
     let sure = false;
-    const fresh = el('button', 'gbtn galt', this.t('settings_new')); fresh.type = 'button';
+    const fresh = el('button', 'gbtn galt', this.t('settings_new')); fresh.type = 'button'; fresh.dataset.fresh = '1';      // (gametest.mjs finds it by this: Settings' four sections put other buttons first)
     fresh.addEventListener('click', () => {
       const A = this.o.account && this.o.account.user ? this.o.account : null;      // (signed in: the new farm replaces the one online too)
       if (!sure) { sure = true; fresh.textContent = this.t(A ? 'acct_new_sure' : 'settings_new_sure'); fresh.classList.add('gdanger'); setTimeout(() => { sure = false; fresh.textContent = this.t('settings_new'); fresh.classList.remove('gdanger'); }, 4000); return; }

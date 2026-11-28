@@ -39,6 +39,10 @@ fs.mkdirSync(OUT, { recursive: true });
 const LOC = { en: 'en-GB', fr: 'fr-FR', de: 'de-DE', es: 'es-ES', it: 'it-IT', pt: 'pt-BR' }[LANG];
 const b = await chromium.launch({ args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'] });
 const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, locale: LOC, timezoneId: 'Europe/London', deviceScaleFactor: 2 });
+// (28 Nov 2026, the tablet QA: QA=1 puts qa-page.js in, which notes whatever's off the screen, cut, not ready or blurry as
+// it comes into sight; each new problem written to the log with a picture, and all of them to OUT/qa.json at the end)
+const QA = process.env.QA === '1';
+if (QA) await ctx.addInitScript({ path: '/home/claude/ff-source/web3d/qa-page.js'.replace('/home/claude/ff-source/web3d', process.cwd()) });
 const T0 = new Date('2026-11-09T10:00:00+00:00').getTime();
 await ctx.addInitScript(t0 => { let t = null; try { t = sessionStorage.getItem('__T'); } catch (e) { /* */ } window.__T = +(t || t0); Date.now = () => window.__T; }, T0);
 if (STORE) await ctx.addInitScript(() => {
@@ -58,11 +62,26 @@ if (STORE) await ctx.addInitScript(() => {
 const p = await ctx.newPage();
 const errs = []; p.on('pageerror', e => errs.push(e.message + ' ' + (e.stack || '').split('\n').slice(0, 2).join(' / ')));
 const log = [], seen = new Set(); let pic = 0, lastHint = '';
-const URL = `http://localhost:${process.env.PORT || 8770}/play.html?q=0&lang=${LANG}&story&moments`;
-const run = s => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < s * 30; i++) { window.__T = Math.round(window.__T + 1000 / 30); f.step(1 / 30, 1); f.gameTick(window.__T, false); } sessionStorage.setItem('__T', window.__T); }, s);      // (no drawing: the test browser draws slowly; a frame is drawn just for each picture)
+const URL = `http://localhost:${process.env.PORT || 8770}/play.html?q=0&lang=${LANG}&story&moments&nbsp`;      // (nbsp: French spaces as players see them, 28 Nov 2026)
+let qaSeen = 0, qaAll = [], qaBusy = false;
+const qaPoll = async () => {
+  if (!QA) return;
+  if (qaBusy) return; qaBusy = true;
+  try {
+    const L = await p.evaluate(() => { if (window.__qaLook) window.__qaLook(); return (window.__qa || []).slice(); }).catch(() => []); if (L.length <= qaSeen) return;
+    const fresh = L.slice(qaSeen); qaSeen = L.length; qaAll = L;
+    let n = '';
+    if (fresh.some(q => q.how === 'now')) { n = String(++pic).padStart(3, '0'); await p.screenshot({ path: `${OUT}/${n}_qa.png`, timeout: 120000 }).catch(() => {}); }      // (a picture of it as it is now)
+    for (const q of fresh) await note('QA ' + q.kind, `[${q.where}] ${q.what}` + (q.how === 'now' ? ` (picture ${n})` : ' (seen in passing)'));
+  } finally { qaBusy = false; }
+  fs.writeFileSync(`${OUT}/qa.json`, JSON.stringify(qaAll, null, 1));
+};
+const run0 = s => p.evaluate(s => { const f = window.__farm; for (let i = 0; i < s * 30; i++) { window.__T = Math.round(window.__T + 1000 / 30); f.step(1 / 30, 1); f.gameTick(window.__T, false); } sessionStorage.setItem('__T', window.__T); }, s);      // (no drawing: the test browser draws slowly; a frame is drawn just for each picture)
+const run = async s => { await run0(s); await p.waitForTimeout(QA ? 200 : 0); await qaPoll(); };
 const state = () => p.evaluate(() => { const f = window.__farm, g = f && f.game(), d = new Date(window.__T); if (!g || !g.data) return { day: 0, hm: '--:--', level: 0, coins: 0, xp: 0 }; return { day: Math.floor((window.__T - new Date('2026-11-09T00:00:00Z').getTime()) / 86400e3), hm: String(d.getUTCHours()).padStart(2, '0') + ':' + String(d.getUTCMinutes()).padStart(2, '0'), level: g.level, coins: g.data.coins, xp: g.data.xp }; });
 const note = async (kind, text) => { const s = await state(); const line = `d${s.day} ${s.hm} L${s.level} ${s.coins}c ${s.xp}xp · ${kind}: ${String(text).replace(/\s*\n\s*/g, ' | ').slice(0, 900)}`; log.push(line); console.log(line); fs.writeFileSync(`${OUT}/log.txt`, log.join('\n') + '\n'); };
-const shoot = async name => { await p.evaluate(() => { document.getAnimations().forEach(a => a.finish()); window.__farm.draw(); }).catch(() => {}); await p.waitForTimeout(250); const n = String(++pic).padStart(3, '0'); await p.screenshot({ path: `${OUT}/${n}_${name}.png`, timeout: 120000 }).catch(e => console.log('(picture skipped: ' + e.message.split('\n')[0] + ')')); };
+const shoot0 = async name => { await p.evaluate(() => { document.getAnimations().forEach(a => a.finish()); window.__farm.draw(); }).catch(() => {}); await p.waitForTimeout(250); const n = String(++pic).padStart(3, '0'); await p.screenshot({ path: `${OUT}/${n}_${name}.png`, timeout: 120000 }).catch(e => console.log('(picture skipped: ' + e.message.split('\n')[0] + ')')); };
+const shoot = async name => { await shoot0(name); await qaPoll(); };
 const once = async (key, name) => { if (seen.has(key)) return; seen.add(key); await shoot(name); };
 const hintNow = async () => { const h = await p.evaluate(() => { const e = document.getElementById('hint'); return e && e.classList.contains('on') ? e.textContent : ''; }); if (h && h !== lastHint) { lastHint = h; await note('word', h); } return h; };
 const cardNow = () => p.evaluate(() => { const s = document.querySelector('.gsheet:not([hidden])'); return s ? { kind: window.__farm.gameUI().kind, text: s.innerText } : null; });
@@ -82,7 +101,7 @@ const cards1 = async (where) => {
   for (let k = 0; k < 12; k++) {
     await run(0.6);
     const c = await cardNow(); if (!c) return;
-    await note('card ' + c.kind, c.text);
+    await note('card ' + c.kind, c.text); await qaPoll();
     if (c.kind === 'levelup') { const s = await state(); await shoot('level' + s.level); }
     else await once('card:' + c.kind, 'card_' + c.kind);
     if (c.kind === 'away' && await click('.gsheet .gbtn:not(.galt)')) { await act(2); continue; }      // ("Collect all eggs")
@@ -390,6 +409,7 @@ async function visit(first = false) {
   if (CASTS > 0 && S.fish && S.worms > 0 && (first || ANYHOUR || (await state()).hm < '12:00')) await safe('fishing', async () => {
     await waitFarmer(25);
     const t0 = await p.evaluate(() => window.__T);
+    await p.evaluate(() => { const f = window.__farm, D = f.dock(); if (D) f.focus(D.stand[0], D.stand[1], f.viewAt()[2]); }); await act(0.8);      // (a player turns the view to the dock and taps it: the view stays where they leave it)
     await p.evaluate(() => window.__farm.dockCard()); await act(0.4); await once('card:dock', 'card_dock');
     if (!(await click('.gsheet button[data-fish=go]'))) { await p.evaluate(() => window.__farm.gameUI().close()); return; }
     for (let i = 0; i < 90 && (await p.evaluate(() => (window.__farm.fishing() || {}).state)) !== 'ready'; i++) { await act(1); const c = await cardNow(); if (c && c.kind === 'fishhelp') { await note('card fishhelp', c.text); await once('card:fishhelp', 'card_fishhelp'); await click('.gsheet button[data-fhelp=ok]'); } }
@@ -449,5 +469,6 @@ for (const t of times) {
 }
 const s = await state();
 if (STORE) await note('MONEY', `bought: ${JSON.stringify(bought)} · never done: ${JSON.stringify(MONEY.filter(m => !m.done).map(m => m.what))} · first seen: ${JSON.stringify(peeked)} · farm ${JSON.stringify(await farmNow())}`);
-await note('DONE', `day ${s.day}, level ${s.level}, ${s.coins} coins; page errors: ${JSON.stringify(errs)}`);
+await qaPoll();
+await note('DONE', `day ${s.day}, level ${s.level}, ${s.coins} coins; page errors: ${JSON.stringify(errs)}${QA ? '; QA problems: ' + qaAll.length : ''}`);
 await b.close();

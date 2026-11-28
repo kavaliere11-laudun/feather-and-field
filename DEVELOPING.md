@@ -138,6 +138,11 @@ mkdir -p node_modules/.bin && ln -sfn "$PWD/../vendor/three-r170" node_modules/t
   "Turn your phone sideways to play" (`sidewaystest.mjs`). Check new work at 874x402 (`W=874 H=402`) in both languages
   first; the older checks still run upright (402x874) because automated browsers skip the turn screen unless they ask
   for it with `?sideways`. `gametest.mjs` and `eggtest.mjs` take `LANG=fr` and `W=874 H=402`.
+- Tablets (28 Nov 2026): `playthrough.mjs` and `cardaudit.mjs` take `QA=1`, which adds `qa-page.js` to the page: after
+  every step it notes what's off the screen, cut, squashed, covered, words not ready (`{c}`, `fox_brave`) and pictures
+  drawn 1.35 times or more their pixels on a 2x screen (in `qa.json` and the log, with a picture). Tablet sizes:
+  `W=1180 H=820` (iPad 11"), `W=1376 H=1032` (iPad Pro 13"), `W=1280 H=800` (Android). `hintcheck.mjs`: a word said
+  over an open card beside a moment's tag, and a coop's new look card, sideways on a tablet and two phones.
 - Deploy: `./build.sh`, then `./deploy.sh <clone of main>` (it replaces `3d/` with `dist/` and writes the usual address's
   page from it, `site.mjs`; give the 2D game's `site/` as a second folder to replace `classic/` too), commit and push.
   Since the switch (release 1 step 12, 26 Oct 2026) the usual address is the 3D game and the 2D game is in `classic/`

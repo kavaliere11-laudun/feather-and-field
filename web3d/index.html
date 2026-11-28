@@ -537,6 +537,7 @@
   .gshop-wrap { display: flex; flex-direction: column; gap: 8px; }
   /* Settings in sections (27 Nov 2026, Audrey: "organise it better"): the shop's wide card, the sections' names down the left */
   .gset-sec { display: flex; flex-direction: column; gap: 8px; scroll-margin-top: 54px; padding-bottom: 6px; }
+  .gset-info .glinks, .gset-info .gcredits { padding-bottom: 4px; }      /* (the links' underlines inside their lines: 28 Nov 2026, the tablet audit) */
   .gset-sec + .gset-sec { border-top: 1.5px solid rgba(63, 143, 78, 0.14); padding-top: 12px; }
   .gset-h { margin: 2px 0 0; font: 600 17px/1.2 var(--display); color: var(--ink); }
   .gset-sec > * { margin: 0; }
@@ -916,6 +917,7 @@
        chicken on half of the screen"; her choice "A · Half and half"): the right half of the screen, top to bottom; the bird
        close up in the middle of the left half (main.js openBirdCard) */
     .gsheet.gbird { left: 50%; right: max(12px, env(safe-area-inset-right)); width: auto; margin: 0; top: max(12px, env(safe-area-inset-top)); bottom: max(12px, env(safe-area-inset-bottom)); height: auto; max-height: none; }
+    .gsheet.gbird.gupd { height: -webkit-fit-content; height: fit-content; max-height: calc(100% - 24px); margin-block: auto; }      /* (a coop's new look, sideways: on the right half as tall as its words, in the middle; 28 Nov 2026, the tablet play-through: "Mended · More eggs" at the top of a white half-screen) */
     .gsheet-head { padding-top: 16px; }
     .gsheet-body { padding-bottom: 16px; border-radius: 0 0 24px 24px; }      /* (what scrolls, and the cream behind the buttons kept at the bottom, clipped to the card's round corners: 7 Nov, Audrey, "Still cut": its bottom corners had shown square) */
     .gsheet.in { animation-name: gspop; }
@@ -923,8 +925,9 @@
     .gsheet.gcenter { left: 0; right: 0; margin: auto; }
     .gsheet.gcenter:not(.gintro) { width: min(440px, 62vw); }
     @keyframes gspop { from { transform: translateY(14px) scale(0.94); opacity: 0; } to { transform: none; opacity: 1; } }
+    body.game.gopen:has(#hint.gover.on.mom) .gmom { opacity: 0; pointer-events: none; }      /* (no room beside a moment's tag: it fades while the words are there) */
     body.gopen #hint { opacity: 0; }                        /* (a card open: the hint would sit under it) */
-    body.game.gopen #hint.gover.on { opacity: 1; top: calc(env(safe-area-inset-top) + 8px); bottom: auto; z-index: 30; max-width: min(56vw, 520px); }      /* (but one said while the card is open: over it, at the top, between the coins and the gear) */
+    body.game.gopen #hint.gover.on { opacity: 1; top: calc(env(safe-area-inset-top) + 8px); bottom: auto; z-index: 30; left: var(--ox, 50%); max-width: var(--ow, min(56vw, 520px)); }      /* (but one said while the card is open: over it, at the top, between the coins and the gear) */
     body.game #hint { top: auto; bottom: calc(env(safe-area-inset-bottom) + 14px); }       /* (sideways: along the bottom, clear of the coop and its bubbles) */
     body.game:has(.gguide:not([hidden])) #hint { left: calc((100vw + min(42vw, 340px) + 112px) / 2); max-width: calc(100vw - min(42vw, 340px) - 136px); }      /* (the first day's guide in the bottom left corner: the hint in the room beside it) */
   }

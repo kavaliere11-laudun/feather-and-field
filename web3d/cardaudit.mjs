@@ -69,9 +69,10 @@ for (const L of LANGS) for (const [W, H] of SIZES) {
   const tag = `${L} ${W}x${H}`;
   const ctx = await b.newContext({ viewport: { width: W, height: H }, hasTouch: true, isMobile: true, locale: LOC[L], deviceScaleFactor: 1 });
   await ctx.addInitScript(() => { try { if (!localStorage.getItem('ff3d.age')) localStorage.setItem('ff3d.age', '{"b":"adult","by":"asked"}'); } catch (e) { /* */ } });      // (an adult's age group already given: agetest.mjs tests the question)
+  if (process.env.QA === '1') await ctx.addInitScript({ path: process.cwd() + '/qa-page.js' });      // (28 Nov 2026, the tablet QA: blurry pictures and words not ready too, written at the end)
   const p = await ctx.newPage(); const errs = []; p.on('pageerror', e => errs.push(e.message));
   await p.addInitScript(() => { window.__T = new Date('2026-11-06T10:00:00Z').getTime(); Date.now = () => window.__T; });
-  await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11:00`, { waitUntil: 'domcontentloaded', timeout: 120000 });
+  await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=11:00&nbsp`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForSelector('.gsheet:not([hidden])', { timeout: 120000 }); await p.waitForTimeout(600);
   const report = async (name, a) => {
     checked++;
@@ -110,7 +111,7 @@ for (const L of LANGS) for (const [W, H] of SIZES) {
     ['young', `(() => { const g = ${G}, c = g.data.coops[0], m = g.data.birds.find(x => x.sex === 'h'); ${U}.youngCard('Nutmeg', 'h', c, m, 5400e3, null); })()`],
     ['coop', `${U}.coopCard(${G}.data.coops[0], () => {}, () => {})`],
     ['feeder', `${U}.feederSheet(${G}.data.coops[0], () => {})`],
-    ['land', `${U}.landCard(3, () => {})`],
+    ['land', `${U}.landCard(${G}.landForSale() || { price: 120 }, () => {})`],      // (the field for sale, as the game gives it: 28 Nov 2026, a bare 3 had shown "{c}")
     ['level', `${U}.levelSheet()`],
     ['levelup', `${U}.levelUpCard(12, null, () => {}, [], null)`],
     ['coops', `${U}.coopsSheet({})`],
@@ -131,7 +132,7 @@ for (const L of LANGS) for (const [W, H] of SIZES) {
     ['decor', `${U}.decorCard('beehives', () => {})`],
     ['dock', `${U}.dockCard({ water: 'pond' }, {})`],
     ['fish', `${U}.fishCard({ id: 'big_bertha', cm: 84, water: 'river', rare: 1, legend: false, first: true, best: false, coins: 160, xp: 40, n: 1 }, () => {})`],
-    ['fox', `(() => { const g = ${G}; ${U}.foxCard({ key: '20261105', coop: g.data.coops[0].id, t: window.__T - 6e6, by: 'brave', open: true, eggs: 0 }, { watch() {} }); })()`],
+    ['fox', `(() => { const g = ${G}; ${U}.foxCard({ key: '20261105', coop: g.data.coops[0].id, t: window.__T - 6e6, by: 'dog', open: true, eggs: 0 }, { watch() {} }); })()`],
     ['rare', `(() => { const g = ${G}; ${U}.rareCard({ id: 'r1', coop: g.data.coops[0].id, line: 'sil_blue', sex: 'h', stars: 4 }); })()`],
     ['congrats', `(() => { const g = ${G}, h = g.data.birds.find(x => x.sex === 'h'), r = g.data.birds.find(x => x.sex === 'r'); ${U}.congratsCard({ hen: h.id, dad: r.id, coop: g.data.coops[0].id, coins: 240, xp: 46, kids: [{ sex: 'h', stars: 3, coins: 80 }, { sex: 'r', stars: 2, coins: 70 }, { sex: 'h', stars: 5, coins: 90 }] }, true); })()`],
     ['away', `(() => { const g = ${G}, h = g.data.birds.find(x => x.sex === 'h'); ${U}.awayCard({ away: 2 * 86400e3 + 5 * 3600e3, paused: true, eggs: 14, items: [{ k: 'eggs', n: 14 }, { k: 'full', n: 2 }, { k: 'hatched', name: h.name, n: 3 }, { k: 'grown', name: h.name }, { k: 'honey', n: 4 }, { k: 'feathers', n: 2 }, { k: 'apple_egg', n: 1 }, { k: 'wheat_grow', ms: 4440e3 }, { k: 'feed', coop: g.coopName(g.data.coops[0]) }, { k: 'feed_low', coop: g.coopName(g.data.coops[0]) }, { k: 'show' }, { k: 'jobs_ready', n: 3 }] }, { collectAll() {} }); })()`],
@@ -245,6 +246,7 @@ for (const L of LANGS) for (const [W, H] of SIZES) {
   await p.evaluate(() => { const s = document.querySelector('.gstory-skip'); if (s) s.click(); });
   if (errs.length) bad(`${tag}: page errors`, errs.slice(0, 3));
   console.log(`${tag}: done (${problems.length} problems so far)`);
+  if (process.env.QA === '1') { const q = await p.evaluate(() => { if (window.__qaLook) window.__qaLook(); return window.__qa || []; }).catch(() => []); for (const x of q) console.log('QA ' + L + ' ' + W + 'x' + H + ' ' + x.kind + ' [' + x.where + '] ' + x.what); }
   await ctx.close();
 }
 console.log(`\n${checked} checked`);

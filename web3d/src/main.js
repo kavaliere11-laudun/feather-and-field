@@ -10930,7 +10930,25 @@ const HINT_NEXT = [];                                    // (words to say once t
 // (said while a card is open: shown over the card, at the top. 10 Nov 2026, Audrey, the garden's card: "I click on pick but it
 // doesn't work": the answer ("Your basket is full of carrots…", or "Added to Arthur's list…") was hidden, sideways, under
 // the card)
-function hint(t) { hintEl.textContent = t; hintEl.classList.add('on'); hintEl.classList.toggle('gover', !!(gameUI && gameUI.isOpen)); hintLeft = 4.5; }      // (a new one gets its full time; it goes with the farm's own time)
+function hint(t) { hintEl.textContent = t; hintEl.classList.add('on'); hintEl.classList.toggle('gover', !!(gameUI && gameUI.isOpen)); hintLeft = 4.5;  fitOver(); }      // (a new one gets its full time; it goes with the farm's own time)
+// (over a card: in the room between the coins (and a moment's tag beside them) and the gear, not on them. 28 Nov 2026, the
+// tablet play-through: "2 new orders from the village" lay over "Mrs Potts is here!". Too little room beside the tag: the
+// tag fades for the words' time and they take the room from the coins)
+function fitOver() {
+  const s = hintEl.style; s.removeProperty('--ox'); s.removeProperty('--ow'); hintEl.classList.remove('mom');
+  if (!hintEl.classList.contains('gover') || !gameUI || !gameUI.stat || !gameUI.gear || !matchMedia('(orientation: landscape) and (min-aspect-ratio: 5/4)').matches) return;
+  const R = gameUI.gear.getBoundingClientRect().left - 10;
+  s.setProperty('--ox', '1000px'); const c = hintEl.getBoundingClientRect(), k = (c.left + c.right) / 2000 || 1; s.removeProperty('--ox');      // (its own px to the screen's as this browser measures them: a tablet's zoom 1.3)
+  const fit = L => {
+    const r = hintEl.getBoundingClientRect(); if (r.left >= L && r.right <= R) return true;
+    if (R - L < 200 * k) return false;
+    s.setProperty('--ow', ((R - L) / k) + 'px'); const w = hintEl.getBoundingClientRect().width;
+    s.setProperty('--ox', ((Math.max(L, Math.min(R - w, (L + R - w) / 2)) + w / 2) / k) + 'px'); return true;
+  };
+  const st = gameUI.stat.getBoundingClientRect().right + 10, co = gameUI.coins.getBoundingClientRect().right + 10;
+  if (fit(st)) { if (st <= co + 1) return; const h = hintEl.getBoundingClientRect().height; s.removeProperty('--ox'); s.removeProperty('--ow'); fit(co); if (hintEl.getBoundingClientRect().height < h - 2) { hintEl.classList.add('mom'); return; } s.removeProperty('--ox'); s.removeProperty('--ow'); fit(st); return; }      // (fewer lines without the tag: the tag fades)
+  s.removeProperty('--ox'); s.removeProperty('--ow'); hintEl.classList.add('mom'); fit(co);
+}
 function payEnd() { if (hintEl.textContent === game.t('pay_busy')) { hintLeft = 0; hintEl.classList.remove('on'); } }      // (15 Nov 2026: "One moment…" goes as soon as Apple has answered, not seconds after)
 // (ok: a word that's only still true while ok() says so: 22 Nov 2026, the play-through, "A new coop is waiting in your Book"
 // said just after its coop had been placed from the level's card, the word queued as the level came)
@@ -11560,6 +11578,7 @@ window.__farm = {
   groom: { start: (id, bid) => groomFor(id, bid), now: () => GROOMING, portrait: (bid, url) => { const c = birdPortrait(typeof bid === 'object' ? bid : game.bird(bid)); return c ? (url ? { url: c.toDataURL('image/png'), head: c.head || null } : [c.width, c.height]) : null; } },      // (tests: the grooming game)
   viewAt: () => [+view.target.x.toFixed(2), +view.target.z.toFixed(2), +view.size.toFixed(2)],
   focus: (x, z, size) => focusOn(x, z, size),      // (tests: the view to a place)
+  say: t => hint(t),      // (tests: words said as the game says them: hintcheck.mjs)
   xpFor: L => xpFor(L),                            // (tests: the XP a level needs)
   garden: { bedCard: i => gardenCard(i), bedTap: i => bedTap(i), tap: b => gardenTap(b), sow: (i, k) => sowBed(i, k), pick: i => pickBed(i), work: () => GARDEN_UI.work && GARDEN_UI.work.kind, open: () => openGarden(), move: () => startDecor('garden'),
     state: () => { const it = DEC.items.garden; return { at: it ? it.d.pos : null, deg: it ? it.d.deg : null, shown: GARDEN_UI.shown.slice(), loaded: !!parts.garden, bub: GARDEN_UI.bub && !GARDEN_UI.bub.hidden ? GARDEN_UI.bub.textContent : null, bubs: (GARDEN_UI.bubs || []).map(B => B.hidden ? null : B.textContent), owned: it ? owned(fieldAt(it.d.pos[0], it.d.pos[1])) : null,

@@ -41,8 +41,14 @@ export function tr(lang, id, vars) {
   const a = REG[id];
   let s = !a ? id : lang === 'fr' ? (a[1] ?? a[0]) : lang === 'en' ? a[0] : ((PACKS[lang] && PACKS[lang].words && PACKS[lang].words[id]) ?? a[0]);
   if (vars) s = elide(lang, s, vars).replace(/\{(\w+)\}/g, (m, x) => (vars[x] !== undefined ? vars[x] : m));
-  return s;
+  return lang === 'fr' ? frSpaces(s) : s;
 }
+// French: the space before ! ? : ; » and after « that never breaks, so a "!" is never left alone on a line (28 Nov 2026,
+// the tablet play-through: "Nouvelle race : Poule soie blanche" then "!" by itself under it)
+// (the automated checks read the plain spaces their words were written with, unless the page asks with ?nbsp, as the
+// play-through, the card audit and hintcheck.mjs do; nothing to draw outside a browser)
+const NBSP = typeof document !== 'undefined' && (!navigator.webdriver || /[?&]nbsp\b/.test(location.search));
+export function frSpaces(w) { return NBSP ? w.replace(/ ([!?:;»])/g, '\u00a0$1').replace(/« /g, '«\u00a0') : w; }
 // French before a name that starts with a vowel or an h: "d’Olive", "d’Arthur", "qu’Ivy", not "de Olive" (8 Nov 2026,
 // from the play-through): "de {name}" / "que {name}" in the phrase become "d’{name}" / "qu’{name}" for such a name
 export function elide(lang, s, vars) {
