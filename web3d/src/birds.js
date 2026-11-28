@@ -603,7 +603,9 @@ function showShells(f) { const u = f.userData.fur; f.setDrawRange(0, u.base + u.
 export function setFurDetail(pixelsPerMetre, most = 1) {          // most: the quality level's limit (a struggling phone draws fewer)
   // strands at least a few screen pixels wide (thinner ones break into dots and shimmer), in a few fixed sizes so they don't
   // change while zooming
-  const d = pixelsPerMetre > 600 ? 210 : pixelsPerMetre > 330 ? 150 : pixelsPerMetre > 180 ? 105 : 70;
+  // (28 Nov 2026, the grooming game on an iPad: "the quality of the chicken is low": seen that big her strands showed as
+  // coarse streaks, so very close up they're finer still)
+  const d = pixelsPerMetre > 1600 ? 360 : pixelsPerMetre > 1000 ? 280 : pixelsPerMetre > 600 ? 210 : pixelsPerMetre > 330 ? 150 : pixelsPerMetre > 180 ? 105 : 70;
   if (d !== furLook.density.value) furLook.density.value = d;
   // zoomed far out: fewer layers (at least 2), spread over the hair's length; fewest when the light models are worn
   const shown = Math.min(most, pixelsPerMetre > 330 ? 1 : pixelsPerMetre > 180 ? 0.5 : far ? 0.2 : 0.27);
