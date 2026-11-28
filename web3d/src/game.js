@@ -2955,15 +2955,33 @@ export class Game {
   birdsIn(coopId) { return this.data.birds.filter(b => b.coop === coopId); }
   id(k) { return k + (this.data.next++); }
   // a breed's forever trio: one rooster and two hens, three different personalities (only a hen can be a good mum); the very
-  // first trio meets the game's characters at once: a brave rooster, a good mum and a rebel
+  // first trio meets the game's characters at once: a brave rooster, a good mum and a rebel. A chicken trio's rooster is
+  // never the Glutton (only a hen brings the apple tree), so about one trio in two has a Glutton hen; after two new chicken
+  // trios without one, the next has one for sure (28 Nov 2026, Audrey, three collector's breeds bought, none with a Glutton:
+  // "What are the odds??"; her choice "Never 3 in a row"). Counted from the farm itself (noGlut): nothing new in the save
+  noGlut() {
+    let n = 0;
+    for (let i = this.data.coops.length - 1; i >= 0 && n < 2; i--) {
+      const c = this.data.coops[i]; if (kindOf(c.breed) || BREED_INFO[c.breed].rare || c.breed === 'rir') continue;      // (chicken trios given or bought: not the first coop, nor a rare pair's)
+      if (this.birdsIn(c.id).some(b => b.sex === 'h' && b.pers === 'glutton')) break;
+      n++;
+    }
+    return n;
+  }
   trio(breed, coopId, first, r = Math.random) {
     const used = new Set(this.data.birds.map(b => b.name));
     const pick = (list) => { const free = list.filter(n => !used.has(n)); const n = (free.length ? free : list)[Math.floor(r() * (free.length ? free : list).length)]; used.add(n); return n; };
     let pers;
     if (first) pers = ['brave', 'mum', 'rebel'];
-    else {
+    else if (kindOf(breed)) {                                        // (the ducks and the peafowl: as before, no apple tree for them)
       const roo = ['brave', 'rebel', 'diva', 'glutton'][Math.floor(r() * 4)];
       const rest = PERS.filter(p => p !== roo).sort(() => r() - 0.5);
+      pers = [roo, rest[0], rest[1]];
+    } else {
+      const roo = ['brave', 'rebel', 'diva'][Math.floor(r() * 3)];
+      const rest = PERS.filter(p => p !== roo);
+      for (let i = rest.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [rest[i], rest[j]] = [rest[j], rest[i]]; }      // (an even shuffle)
+      if (this.noGlut() >= 2 && !rest.slice(0, 2).includes('glutton')) rest[Math.floor(r() * 2)] = 'glutton';      // (two without: this one has her)
       pers = [roo, rest[0], rest[1]];
     }
     const now = Date.now();
