@@ -140,7 +140,10 @@ export function startPlay(b, kind) {
     if (Math.abs(b.root.position.x - ends[1].spot[0]) < Math.abs(b.root.position.x - ends[0].spot[0])) ends.reverse();
     C = ends.filter(e => b.free(e.to[0], e.to[1]));
   }
-  else C = [{ spot: [P.xylo.at[0] + 0.25, P.xylo.at[1] + j * 0.08], face: -Math.PI / 2 }];
+  else {      // (the xylophone reaches 0.13 out from its middle: a fluffy bird stands further off, 28 Nov 2026, Audrey: "The silkie is clipping on the xylophone")
+    const out = Math.max(0.25, 0.22 + (b.fluff || 0));      // (just outside the xylophone's keep-off ring for her: main.js Bird.fluff)
+    C = [{ spot: [P.xylo.at[0] + out, P.xylo.at[1] + j * 0.08], face: -Math.PI / 2 }];
+  }
   const Y = b.plot.pen && b.plot.pen.yard, mid = Y && [(Y.min[0] + Y.max[0]) / 2, (Y.min[2] + Y.max[2]) / 2];
   const reach = spot => {                            // a way there: straight, or by a step out in front of it, or by the middle of the yard
     let r = b.plan([spot]);

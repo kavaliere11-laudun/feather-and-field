@@ -2301,7 +2301,7 @@ function tierPen(breed, t) {
   const obstacles = [...P.hay.map(h => [h[0], 0, h[1], 0.38]), [P.feeder[0], 0, P.feeder[1], 0.22], [P.dish[0], 0, P.dish[1], P.dish_r || 0.22], [-0.31, 0, 0.75, 0.18], [-0.31, 0, 1.0, 0.16], ...(P.sack ? [[P.sack[0], 0, P.sack[1], 0.2]] : [])];
   const fit = (v, a0, a1, b0, b1) => b0 + (v - a0) / (a1 - a0) * (b1 - b0);      // (the Snug pen's start spots, fitted into this yard)
   const hens = PEN.hens.map(h => ({ ...h, pos: [fit(h.pos[0], Y0.min[0], Y0.max[0], yard.min[0], yard.max[0]), h.pos[1], fit(h.pos[2], Y0.min[2], Y0.max[2], yard.min[2], yard.max[2])] }));
-  if (P.play) obstacles.push(...P.play.keep.map(k => [k[0], 0, k[1], k[2]]));        // (the play things: release 4's Cosy and Deluxe)
+  if (P.play) obstacles.push(...P.play.keep.map(k => [k[0], 0, k[1], k[2], P.play.xylo && k[0] === P.play.xylo.at[0] && k[1] === P.play.xylo.at[1] ? 1 : 0]));        // (the play things: release 4's Cosy and Deluxe; the xylophone marked: a fluffy bird keeps further off it)
   return (TIER_PENS[breed + t] = { ...PEN, pen: { min: [P.min[0] - 0.05, 0, P.min[1] - 0.05], max: [P.max[0] + 0.05, 0, P.max[1] + 0.05] }, yard, obstacles, feeder: [P.feeder[0], 0, P.feeder[1]], gate: [P.gate - 0.1, 0, P.max[1]], hens, play: P.play || null });
 }
 // release 7, the Little Windmill (the Polish's coop; Audrey: "A little windmill (Recommended)"): its sails are their own
@@ -3599,6 +3599,9 @@ function trainBack(rig) {                // how far behind his feet his train re
 class Bird {
   constructor(plot, breed, kind, colour, pos, yaw, r) {
     this.plot = plot; this.breed = breed; this.kind = kind; this.colour = colour; this.r = r;
+    // (how far a bird's feathers stand out past where she stands, for keeping off the xylophone: 28 Nov 2026, Audrey: "The
+    // silkie is clipping on the xylophone"; a Silkie and a Cochin are balls of fluff)
+    this.fluff = (breed === 'sil' || breed === 'coc' ? 0.09 : breed === 'bra' || breed === 'orp' ? 0.05 : 0.01) + (kind === 'rooster' ? 0.01 : 0);
     this.name = kind === 'chick' ? CHICK_NAMES[nameSeed++ % CHICK_NAMES.length] : kind === 'rooster' ? ROO_NAMES[nameSeed++ % ROO_NAMES.length] : HEN_NAMES[(nameSeed++ * 7) % HEN_NAMES.length];
     if (!blobGeo) makeBlob();
     this.root = new THREE.Group(); this.visual = new THREE.Group(); this.root.add(this.visual);
@@ -3638,7 +3641,7 @@ class Bird {
     if (this.plot.kind === 'lineup') return true;
     const P = penOf(this.plot), Y = P.yard, e = this.train ? 0.3 : 0;      // (the peacock keeps off the fence: room for his tail end as he turns round)
     if (x < Y.min[0] + e || x > Y.max[0] - e || z < Y.min[2] + e || z > Y.max[2] - e) return false;
-    for (const o of P.obstacles) { const dx = x - o[0], dz = z - o[2], r = o[3] + e * 0.4; if (dx * dx + dz * dz < r * r) return false; }
+    for (const o of P.obstacles) { const dx = x - o[0], dz = z - o[2], r = o[3] + e * 0.4 + (o[4] ? this.fluff || 0 : 0); if (dx * dx + dz * dz < r * r) return false; }
     if (!this.train) { for (const b of this.flock) if (b.train && b !== this && b.onTrain(x, z)) return false; }      // (nobody walks over the peacock's train)
     else if (farmerLanes(this.plot).some(L => laneDist(x, z, L) < 0.35)) return false;      // (and he keeps off the farmer's way in and his spots)
     return !this.inBlock(x, z, notFarmer);
