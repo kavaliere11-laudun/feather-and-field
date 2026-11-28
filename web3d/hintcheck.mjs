@@ -43,14 +43,19 @@ for (const L of LANGS) for (const [W, H] of SIZES) {
     await p.screenshot({ path: `${OUT}/${L}_${W}x${H}_${name}.png`, clip: { x: 0, y: 0, width: W, height: Math.min(H, 160) } });
     await p.evaluate(() => { window.__farm.gameUI().close(); window.__farm.gameUI().momentPill(null); }); await p.waitForTimeout(200);
   }
-  // a coop's new look, sideways: as tall as its words
-  const u = await p.evaluate(() => { const g = window.__farm.game(), c = g.data.coops[0]; window.__farm.gameUI().upgradedCard(c, []); return 1; });
-  await p.waitForTimeout(600);
-  const s = await p.evaluate(() => { document.getAnimations().forEach(a => { try { a.finish(); } catch (e) { /* (the tag's endless pulse) */ } }); const s = document.querySelector('.gsheet:not([hidden])'), r = s.getBoundingClientRect(), b = s.querySelector('.gsheet-body'); return { h: Math.round(r.height), top: Math.round(r.top), bottom: Math.round(innerHeight - r.bottom), body: b.scrollHeight }; });
-  const empty = s.h > s.body + 140;
-  if (empty) fails++;
-  console.log((empty ? 'FAIL ' : 'ok   ') + tag + ' new look card ' + JSON.stringify(s));
-  await p.screenshot({ path: `${OUT}/${L}_${W}x${H}_newlook.png` });
+  // a coop's new look, sideways: as tall as its words (as the game shows it: Mended with nothing new to play with, Cosy with three)
+  for (const [look, tier, toys] of [['mended', 1, []], ['cosy', 3, ['swing', 'dust', 'cabbage']]]) {
+    await p.evaluate(([tier, toys]) => { const g = window.__farm.game(), c = g.data.coops[0]; window.__farm.gameUI().upgradedCard({ ...c, tier }, toys); }, [tier, toys]);
+    await p.waitForTimeout(600);
+    const s = await p.evaluate(() => { document.getAnimations().forEach(a => { try { a.finish(); } catch (e) { /* (endless) */ } }); const s = document.querySelector('.gsheet:not([hidden])'), r = s.getBoundingClientRect(), b = s.querySelector('.gsheet-body'), bR = b.getBoundingClientRect(), kids = [...b.children], k = bR.height / (b.clientHeight || 1);
+      const content = kids.length ? kids[kids.length - 1].getBoundingClientRect().bottom - kids[0].getBoundingClientRect().top : 0;      // (empty room in the card past its words, in the card's own px: a tablet's zoom taken out)
+      return { h: Math.round(r.height), top: Math.round(r.top), bottom: Math.round(innerHeight - r.bottom), spare: Math.round((bR.height - content) / k), raw: /(^|\s)[a-z]+_[a-z_]+/.test(s.innerText) }; });
+    const empty = s.spare > 90 || s.raw;
+    if (empty) fails++;
+    console.log((empty ? 'FAIL ' : 'ok   ') + tag + ' new look card, ' + look + ' ' + JSON.stringify(s));
+    await p.screenshot({ path: `${OUT}/${L}_${W}x${H}_newlook_${look}.png` });
+    await p.evaluate(() => window.__farm.gameUI().close()); await p.waitForTimeout(200);
+  }
   await ctx.close();
 }
 await b.close();
