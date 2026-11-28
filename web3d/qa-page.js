@@ -43,7 +43,7 @@
         if (inView && r.width > 6 && r.height > 6) {
           const x = Math.min(r.right - 3, r.left + Math.min(40, r.width / 2)), y = r.top + r.height * 0.5;
           if (x > 0 && y > 0 && x < W && y < H) {
-            const hit = document.elementFromPoint(x, y), over = hit && hit.closest('.gsheet:not([hidden]), .groom, #sideways, .gguide, #loading, .gstory, .gmodal, .gdim');
+            const hit = document.elementFromPoint(x, y), over = hit && hit.closest('.gsheet:not([hidden]), .groom, #sideways, .gguide, #loading, .gstory, .gmodal, .gdim, .ghero');
             // (the farm's own buttons under an open card are meant to be: only words covered within their own card or screen count)
             const sticky = q => { for (let a = q; a && a !== R; a = a.parentElement) if (getComputedStyle(a).position === 'sticky') return a; return null; };
             const st = hit && R.contains(hit) ? sticky(hit) : null;
