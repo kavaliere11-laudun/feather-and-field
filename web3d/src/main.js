@@ -11567,6 +11567,7 @@ window.__farm = {
   guideOff: () => { if (GUIDE_UI.card) GUIDE_UI.card.hidden = true; },
   bottomWords: () => ({ cuddle: henT('cuddle'), fill: henT('fill').replace('{c}', '120'), dog: dogT('rename', 'Bartholomew'), farmer: nightVisit ? nightVisit.T('send') : '' }),
   accountSync: why => account && (why === 'save' ? account.upNow() : account.sync(why)),
+  accountMark: () => account && (account.mark = account.snap()),      // (tests: the game as it comes back on screen, before its own save)
   notes: () => notes,                                       // (the store app's reminders: notetest.mjs)
   ads: () => ads && { on: ads.on, left: ads.left(), privacy: ads.privacy, busy: ads.busy },
   age: () => age && { band: age.band(), st: age.st, api: age.api },

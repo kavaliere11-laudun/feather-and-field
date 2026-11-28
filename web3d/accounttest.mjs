@@ -103,6 +103,14 @@ ok('B: its change goes up', cloud[UID].coins === 555 && (await acct(B)).st.n ===
 await use(A);
 ok('A comes back (nothing new there since): it takes B\'s farm', (await coins(A)) === 555 && (await acct(A)).st.n === cloud[UID].n, { coins: await coins(A), st: (await acct(A)).st, n: cloud[UID].n });
 
+// 3b. A plays and it goes up; B comes back: the game's own save as it comes back on screen (when it was last seen) is no
+// play: B takes A's farm, not asked (28 Nov 2026, Audrey: "I should be able to open the phone and the tablet and just carry on")
+await setCoins(A, 580); await flush(A);
+await B.evaluate(() => { const f = window.__farm; f.accountMark(); f.game().seenNow(Date.now() + 1000); });
+await use(B);
+ok('B comes back after A played (B\'s game saved by itself as it came back): B takes A\'s farm, not asked', (await coins(B)) === 580 && (await acct(B)).st.n === cloud[UID].n && (await acct(B)).info.asks === 0 && !(await B.evaluate(() => !!document.querySelector('.gsheet:not([hidden]) .gtwo-here'))), { coins: await coins(B), st: (await acct(B)).st, n: cloud[UID].n, asks: (await acct(B)).info.asks });
+await use(A);
+
 // 4. both change: A offline meanwhile
 offline.add('A'); await setCoins(A, 600); await flush(A);
 ok('A offline: not saved online, says so', (await acct(A)).status === 'offline', (await acct(A)).status);

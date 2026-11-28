@@ -242,7 +242,7 @@ export const TEXT = {
     acct_deleted: 'Your account is deleted, with your farm online. Your farm stays on this phone.', acct_failed: 'Signing in didn’t work. Please try again.',
     acct_popup: 'Your browser blocked Google’s window: allow pop-ups for this site, then try again.', acct_new_sure: 'Tap again to start again from nothing, here and online',
     two_t: 'Which farm to keep?', two_how: 'This phone and your account each have a different farm. Choose the one to keep: it replaces the other.',
-    two_here: 'On this phone', two_online: 'Saved online', two_farmer: '{name}’s farm', two_sum: 'Level {lv} · {c} coins', two_when: 'Last played: {when}', two_keep: 'Keep this farm',
+    two_here: 'On this phone', two_here_tab: 'On this tablet', two_how_tab: 'This tablet and your account each have a different farm. Choose the one to keep: it replaces the other.', two_online: 'Saved online', two_farmer: '{name}’s farm', two_sum: 'Level {lv} · {c} coins', two_when: 'Last played: {when}', two_keep: 'Keep this farm',
     nudge_t: 'Keep your farm safe', nudge_how: 'Sign in with Google and your farm is saved online too. You won’t lose it if you change phones, and you can play it on another phone.',
     nudge_later: 'Not now', nudge_note: 'It’s up to you: you can sign in any time in Settings.', welcome_signin: 'Have a farm saved online? Sign in',
     privacy: 'Privacy',                                            // (the privacy page: privacy.mjs)
@@ -631,7 +631,7 @@ export const TEXT = {
     acct_deleted: 'Votre compte est supprimé, avec votre ferme en ligne. Votre ferme reste sur ce téléphone.', acct_failed: 'La connexion n’a pas fonctionné. Veuillez réessayer.',
     acct_popup: 'Votre navigateur a bloqué la fenêtre de Google : autorisez les fenêtres pop-up pour ce site, puis réessayez.', acct_new_sure: 'Touchez encore pour tout recommencer, ici et en ligne',
     two_t: 'Quelle ferme garder ?', two_how: 'Ce téléphone et votre compte ont chacun une ferme différente. Choisissez celle à garder : elle remplacera l’autre.',
-    two_here: 'Sur ce téléphone', two_online: 'Enregistrée en ligne', two_farmer: 'La ferme de {name}', two_sum: 'Niveau {lv} · {c} pièces', two_when: 'Dernière partie : {when}', two_keep: 'Garder cette ferme',
+    two_here: 'Sur ce téléphone', two_here_tab: 'Sur cette tablette', two_how_tab: 'Cette tablette et votre compte ont chacun une ferme différente. Choisissez celle à garder : elle remplacera l’autre.', two_online: 'Enregistrée en ligne', two_farmer: 'La ferme de {name}', two_sum: 'Niveau {lv} · {c} pièces', two_when: 'Dernière partie : {when}', two_keep: 'Garder cette ferme',
     nudge_t: 'Mettez votre ferme à l’abri', nudge_how: 'Connectez-vous avec Google et votre ferme sera aussi enregistrée en ligne. Vous ne la perdrez pas en changeant de téléphone, et vous pourrez y jouer sur un autre téléphone.',
     nudge_later: 'Plus tard', nudge_note: 'C’est facultatif : vous pouvez vous connecter à tout moment dans les Réglages.', welcome_signin: 'Une ferme enregistrée en ligne ? Connectez-vous',
     privacy: 'Confidentialité',

@@ -15,14 +15,22 @@
 //   - online newer (another phone played) and nothing new here since: the online farm is taken (the page opens it);
 //   - no farm on this phone (the welcome; a new phone): the online farm is taken;
 //   - both changed, or a first sign-in here with a different farm on each: the player chooses which farm to keep.
-// While playing, a change goes up a little later (DEBOUNCE), and straight away when the game is put away.
+// While playing, a change goes up within SOON (not put off while the changes go on), and straight away when the game is
+// put away.
+// "Nothing new here since" is judged on the farm as this phone found it when the game opened or came back on screen
+// (mark), not on the farm a moment later: the game saves by itself as it opens (the eggs laid while away, when it was last
+// seen), and that is no play. 28 Nov 2026, Audrey, on her iPhone after playing on her iPad: "Why aren't things properly
+// synchronised? I should be able to open the phone and the tablet and just carry on": asked "Which farm to keep?" every
+// time, the game's own save on opening counted as new play.
 //
 // The online side (cloud.js, Firebase: Google sign-in, the Firestore document) is its own file, loaded only once it's
 // needed (signed in, or Settings opened); ?account=fake on the game's page puts a pretend one in its place, for the tests.
 import { SAVE_KEY, checkFarm, levelOf } from './game.js';
 import { FIREBASE, ACCOUNT_LIVE } from './firebase-config.js';
 
-export const DEBOUNCE = 45e3;             // a change goes up this long after (sooner when the game is put away)
+export const DEBOUNCE = 45e3;             // no connection: tried again this long after
+export const SOON = 10e3;                  // a change goes up this long after at most (straight away when the game is put away)
+const MARK_MS = 180e3;                     // how long after opening or coming back the farm as found counts (mark)
 const MAX = 800000;                        // the most a farm may weigh online (the rules allow a little more)
 const params = new URLSearchParams(location.search);
 const FAKE = params.get('account') === 'fake';
@@ -115,7 +123,12 @@ export class Account {
     this.busy = false; this.again = false; this.asking = false; this.taking = false; this.subs = [];
     this.st = readSync();
     this.info = { syncs: 0, ups: 0, takes: 0, asks: 0, last: '' };
+    // the farm as this phone found it, before the game's own first save (made here, before main.js starts the farm); again
+    // each time the game comes back on screen (this listener goes before the game's own)
+    this.mark = this.snap();
+    if (this.on) document.addEventListener('visibilitychange', () => { if (!document.hidden) this.mark = this.snap(); });
   }
+  snap() { const h = readLocal(); return { s: h ? h.s : '', sum: h ? h.sum : null, at: Date.now() }; }
   // the online side, loaded (once)
   prepare() {
     if (!this.on) return Promise.resolve(null);
@@ -199,19 +212,21 @@ export class Account {
   // ---- keeping the two in step
   changed() {
     if (!this.user || this.asking || this.taking || this.status === 'ask') return;
-    clearTimeout(this.timer); this.timer = setTimeout(() => this.upNow(), DEBOUNCE);
+    if (!this.timer) this.timer = setTimeout(() => this.upNow(), SOON);      // (not put off by the next change: a busy farm still goes up every few seconds)
   }
   upNow() { clearTimeout(this.timer); this.timer = 0; return this.sync('save'); }
   async sync(why) {
     if (!this.cloud || !this.user || this.asking || this.taking) return;
     if (this.busy) { this.again = true; return; }
     this.busy = true; this.info.syncs++; this.info.last = why;
-    try { await this.step(why); }
+    try { await this.step(why); if (this.status !== 'ask') this.mark = null; }      // (in step: from now on what changes here is play)
     catch (e) { this.set('offline'); if (this.user && !this.timer) this.timer = setTimeout(() => this.upNow(), /permission/.test(e && e.code || '') ? 5e3 : DEBOUNCE); }      // (no connection, or too soon after the last save: again a little later)
     finally { this.busy = false; if (this.again) { this.again = false; setTimeout(() => this.sync('again'), 50); } }
   }
   async step(why) {
     const uid = this.user.uid, st = this.st.uid === uid ? this.st : { uid }, here = readLocal();
+    const m = this.mark && Date.now() - this.mark.at < MARK_MS ? this.mark : null;
+    const found = !!(m && st.s && m.s === st.s);                        // (opened, or back on screen, with the farm last in step: only the game's own saves since)
     this.set('syncing');
     const doc = await this.cloud.get();
     const online = doc && farmOf(doc.farm);
@@ -227,11 +242,12 @@ export class Account {
     }
     if (!here) return this.take(doc, online, n);                         // a new phone: the farm online comes here
     if (here.s === online.s) { this.st = { uid, n, s: here.s }; writeSync(this.st); this.savedAt = doc.at || 0; return this.set('saved'); }
-    if (st.n !== undefined && st.s && here.s === st.s) return this.take(doc, online, n);      // (nothing new here since: the other phone's is newer)
+    if (st.n !== undefined && st.s && (here.s === st.s || found)) return this.take(doc, online, n);      // (nothing new here since: the other phone's is newer)
     // a farm on each, both changed: the player chooses
     this.asking = true; this.info.asks++; this.set('ask');
     let pick = null;
-    try { pick = this.o.ask ? await this.o.ask(here.sum, { ...online.sum, at: doc.at }) : null; } finally { this.asking = false; }
+    const hereSum = { ...here.sum, seen: (m && m.sum && m.sum.seen) || here.sum.seen };      // (last played: before this opening, not the moment it opened)
+    try { pick = this.o.ask ? await this.o.ask(hereSum, { ...online.sum, at: doc.at }) : null; } finally { this.asking = false; }
     if (pick === 'here') return this.up(readLocal() || here, n);
     if (pick === 'online') return this.take(doc, online, n);
     this.set('ask');                                                     // (not chosen yet: asked again when the game comes back)

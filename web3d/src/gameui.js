@@ -1972,10 +1972,11 @@ export class GameUI {
     return new Promise(resolve => {
       const b = this.open('twofarms', this.t('two_t'), true);
       this.twoResolve = resolve;
-      b.append(el('p', 'gtext', this.t('two_how')));
+      const tab = Math.min(screen.width, screen.height) >= 600;      // (an iPad or another tablet: "this tablet", not "this phone")
+      b.append(el('p', 'gtext', this.t(tab ? 'two_how_tab' : 'two_how')));
       for (const [k, f] of [['here', here], ['online', online]]) {
         const c = el('div', 'gcard gtwo gtwo-' + k), hd = el('div', 'gcard-h');
-        hd.append(el('span', 'gemoji', k === 'here' ? '📱' : '☁️'), el('span', 'gcard-t', this.t(k === 'here' ? 'two_here' : 'two_online'))); c.append(hd);
+        hd.append(el('span', 'gemoji', k === 'here' ? '📱' : '☁️'), el('span', 'gcard-t', this.t(k === 'here' ? (tab ? 'two_here_tab' : 'two_here') : 'two_online'))); c.append(hd);
         c.append(el('p', 'gtext gtwo-name', this.t('two_farmer', { name: f.name || this.g.defaultFarmer(f.look) })));
         c.append(el('p', 'gnote', this.t('two_sum', { lv: f.lv, c: f.coins.toLocaleString(this.g.locale()) })));
         c.append(el('p', 'gnote', this.t('two_when', { when: this.when(k === 'online' && f.at ? f.at : f.seen) })));
