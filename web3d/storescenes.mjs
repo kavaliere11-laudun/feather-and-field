@@ -247,7 +247,8 @@ for (const name of ONLY) {
   else await p.addStyleTag({ content: '#hint { display: none !important; }' });      // (the game's passing words, e.g. the golden egg's, off)
   if (process.env.FS) await p.evaluate(v => { window.__FS = v; }, +process.env.FS);
   const info = await p.evaluate(([fn, arg]) => new Function('f', 'arg', fn)(window.__farm, arg), [S.setup.toString().replace(/^[^{]*{/, '').replace(/}\s*$/, ''), S.arg || {}]);
-  await p.evaluate(([t, d]) => { window.__TOYS = t; window.__sharp = d; }, [TOYS, DSF]);      // (the play things, for the scenes' steps in the page)
+  await p.evaluate(([t, d]) => { window.__TOYS = t; window.__sharp = d; }, [TOYS, DSF]);
+  if (process.env.TALL) await p.evaluate(o => window.__farm.tall(o), { a0: +(process.env.A0 || 956 / 440), up: +process.env.TALL });      // (the iPad's pictures: the phone's framing kept, TALL the share of the extra height above it)      // (the play things, for the scenes' steps in the page)
   if (process.env.EVAL) console.log('eval', JSON.stringify(await p.evaluate(process.env.EVAL)));      // (a look at the farm, for staging)
   const shot = process.env.SHOT ? JSON.parse(process.env.SHOT) : S.shot;
   const SNAPS = process.env.SNAPS ? process.env.SNAPS.split(',').map(Number) : [S.secs || 4];

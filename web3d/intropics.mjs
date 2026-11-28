@@ -25,12 +25,13 @@ for (const S of SHOTS) {
   await p.goto(`http://localhost:${process.env.PORT || 8770}/index.html?q=0&intro=${S.n}&coops=0&time=${TIME[S.n] || '10:30'}${S.lang !== 'en' ? '&lang=' + S.lang : ''}${process.env.STORE ? '&store' : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 180000 });
   await p.addStyleTag({ content: '#hint, #readout, .top, #replaybtn, #farmerbtn, #foxbtn, #tag, .vignette { display: none !important; }' });
-  await p.evaluate(([T, aspect, CAM]) => {
+  await p.evaluate(([T, aspect, CAM, tall]) => {
     const f = window.__farm; f.pause(true); f.wind(4.2); window.__noBlink = true; f.intro().restart();
+    if (tall) f.tall(tall);      // (the iPad's pictures: the phone's framing kept, TALL the share of the extra height above it)
     for (let i = 0; i < T * 30; i++) f.step(1 / 30, 1);
     if (f.sharp) f.sharp(window.devicePixelRatio);      // (the screen's full sharpness: the game keeps to 2x)
     f.posterShot({ ...f.intro().cam, ...CAM, aspect });
-  }, [process.env.T ? T : S.n === 5 ? 3.1 : T, W / H, CAM]);
+  }, [process.env.T ? T : S.n === 5 ? 3.1 : T, W / H, CAM, process.env.TALL ? { a0: +(process.env.A0 || 956 / 440), up: +process.env.TALL } : null]);
   const png = tmp + S.name + '.png';
   await p.screenshot({ path: png });
   await p.close();

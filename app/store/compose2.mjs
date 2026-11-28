@@ -11,6 +11,7 @@ import fs from 'fs';
 import path from 'path';
 const [PLAN, OUT, STYLE = 'sign'] = process.argv.slice(2); fs.mkdirSync(OUT, { recursive: true });
 const plan = JSON.parse(fs.readFileSync(PLAN, 'utf8'));
+const CW = +(process.env.CW || 2868), CH = +(process.env.CH || 1320);      // (the picture's size: the iPad's 2752 x 2064, 27 Nov 2026)
 const FONTS = path.resolve(path.dirname(new URL(import.meta.url).pathname), '../../web3d/fonts');
 const font = f => 'data:font/woff2;base64,' + fs.readFileSync(path.join(FONTS, f)).toString('base64');
 const FACES = `
@@ -53,7 +54,7 @@ const STYLES = {
 .s { margin-top: 16px; font: 800 50px/1.2 Nunito, sans-serif; color: #3f7a2e; }`,
 };
 const b = await chromium.launch();
-const p = await b.newPage({ viewport: { width: 2868, height: 1320 }, deviceScaleFactor: 1 });
+const p = await b.newPage({ viewport: { width: CW, height: CH }, deviceScaleFactor: 1 });
 for (const s of plan) {
   const img = 'data:image/png;base64,' + fs.readFileSync(s.img).toString('base64');
   const words = `<div class="t">${esc(s.title)}</div>${s.sub ? `<div class="s">${esc(s.sub)}</div>` : ''}`;
@@ -68,7 +69,7 @@ for (const s of plan) {
 .sign { padding: 38px 90px 42px; }
 .t { font-size: ${s.size || 104}px; } .s { margin-top: 12px; font-size: 50px; }` : '';
   await p.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>${FACES}
-html, body { margin: 0; width: 2868px; height: 1320px; overflow: hidden; background: #3f7a2e; }
+html, body { margin: 0; width: ${CW}px; height: ${CH}px; overflow: hidden; background: #3f7a2e; }
 .scene { position: absolute; inset: 0; background: url(${img}) ${s.pos || 'center'} / cover no-repeat; }
 .shade { position: absolute; inset: 0; background: radial-gradient(120% 90% at 18% 0%, rgba(20,30,10,.22), rgba(20,30,10,0) 55%); }
 ${STYLES[STYLE](s)}
@@ -86,7 +87,7 @@ ${SCREEN}
     if (rows(t) === 2) t.style.textWrap = 'balance';      // (two rows: evened out, no word left alone on the second)
     if (u && rows(u) === 2) u.style.textWrap = 'balance';
     const sh = document.querySelector('.shot'), sg = document.querySelector('.sign');   // (a screen: under the sign, as big as fits)
-    if (sh) { const top = Math.round(sg.getBoundingClientRect().bottom - 26); sh.style.top = top + 'px'; sh.style.height = (1320 - top - 58) + 'px'; }
+    if (sh) { const top = Math.round(sg.getBoundingClientRect().bottom - 26); sh.style.top = top + 'px'; sh.style.height = (innerHeight - top - 58) + 'px'; }
   });
   await p.waitForTimeout(150);
   await p.screenshot({ path: `${OUT}/${s.name}.png` });

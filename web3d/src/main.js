@@ -185,10 +185,22 @@ const CLEAR = { at: -1e9, rects: [], sel: '.gbar button, .gacts button, #findfar
 const SHADOW_REACH = 15;                                  // metres round the view that get shadows
 let shadowAt = null;
 
+// the App Store's iPad pictures (27 Nov 2026, Audrey: "Prepare the game for tablet"): a picture framed for a phone held
+// sideways (aspect a0) drawn on a taller screen keeps its width, the extra height above it (up: 1) or shared (0.5); set only by
+// the picture tools (__farm.tall), never in the game
+let TALL = null;
+const tallBand = a => { const k = TALL.a0 / a, ex = 2 * k - 2; return { top: 1 + TALL.up * ex, bot: -1 - (1 - TALL.up) * ex }; };
+function tallCam(cam, a) {
+  if (!TALL) return;
+  const { top, bot } = tallBand(a), Tf = Math.max(top, -bot), H = 10000, W = H * TALL.a0 / Tf;
+  cam.aspect = TALL.a0 / Tf; cam.fov = 2 * Math.atan(Math.tan(cam.fov / 2 * DEG) * Tf) / DEG;
+  cam.setViewOffset(W, H, 0, (Tf - top) / (2 * Tf) * H, W, (top - bot) / (2 * Tf) * H); cam.updateProjectionMatrix();
+}
 function placeCamera() {
   const w = canvas.clientWidth || window.innerWidth, h = canvas.clientHeight || window.innerHeight;
   const a = w / Math.max(1, h);
   camera.top = view.size; camera.bottom = -view.size; camera.left = -view.size * a; camera.right = view.size * a;
+  if (TALL) { const { top, bot } = tallBand(a); camera.top = view.size * top; camera.bottom = view.size * bot; camera.left = -view.size * TALL.a0; camera.right = view.size * TALL.a0; }
   camera.position.copy(view.target).addScaledVector(VIEW_DIR, 80);
   camera.lookAt(view.target);
   camera.updateProjectionMatrix();
@@ -11648,13 +11660,14 @@ window.__farm = {
   viewAbove: (x, z, size) => viewAbove(x, z, size),
   penOut: i => { const P = penSpec(gamePlots()[i]); return P && P.out; }, grassIn: i => { const c = game.data.coops[i], m = new THREE.Matrix4(), v = new THREE.Vector3(); let n = 0; for (const g of VGRASS) for (let k = 0; k < g.count; k++) { g.getMatrixAt(k, m); v.setFromMatrixPosition(m); const [lx, lz] = inSpot(c, v.x, v.z); if (rectGap(footOf(c), lx, lz) <= 0) n++; } return n; }, coopAt: i => { const g = gamePlots()[i].group; return [g.position.x, g.position.z, Math.round(g.rotation.y / DEG)]; }, navFree: (x, z) => navGrid().freeAt(x, z), collectAt: i => collectAt(gamePlots()[i]), feederCard: i => feederCard(gamePlots()[i]), fillFeeder: i => fillFeeder(gamePlots()[i]),
   // tests: a close look with a perspective camera at a world point (at), from azimuth az and elevation el (degrees)
-  closeShot: (o) => { const cam = new THREE.PerspectiveCamera(o.fov || 30, canvas.clientWidth / canvas.clientHeight, 0.05, 200), t = new THREE.Vector3(...o.at);
+  tall: o => { TALL = o && o.a0 ? { a0: o.a0, up: o.up ?? 1 } : null; placeCamera(); },
+  closeShot: (o) => { const cam = new THREE.PerspectiveCamera(o.fov || 30, canvas.clientWidth / canvas.clientHeight, 0.05, 200), t = new THREE.Vector3(...o.at); tallCam(cam, canvas.clientWidth / canvas.clientHeight);
     const dir = new THREE.Vector3(0, Math.sin((o.el ?? 25) * DEG), Math.cos((o.el ?? 25) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);
     cam.position.copy(t).addScaledVector(dir, o.dist || 3); cam.lookAt(t); cam.updateMatrixWorld(); for (const p of plots) for (const b of p.birds) placeBlob(b); drawFarmerShadows(renderer); renderFarm(scene, cam); return true; },
   poster: () => poster, intro: () => intro, posterShot: (o) => {                // the welcome picture (and the onboarding pictures): a perspective camera on the stage
     const P = poster || intro, cam = new THREE.PerspectiveCamera(o.fov || 24, o.aspect || 0.93, 0.1, 200), t = new THREE.Vector3(...(o.at || [0.15, 0.4, 0.05]));
     P.g.updateMatrixWorld(true); const tw = P.g.localToWorld(t.clone()), dir = new THREE.Vector3(0, Math.sin((o.el || 26) * DEG), Math.cos((o.el || 26) * DEG)).applyAxisAngle(new THREE.Vector3(0, 1, 0), 45 * DEG + (o.az || 0) * DEG);
-    cam.position.copy(tw).addScaledVector(dir, o.dist || 9); cam.lookAt(tw); cam.updateMatrixWorld(); cam.updateProjectionMatrix();
+    cam.position.copy(tw).addScaledVector(dir, o.dist || 9); cam.lookAt(tw); cam.updateMatrixWorld(); cam.updateProjectionMatrix(); tallCam(cam, o.aspect || 0.93);
     view.target.set(tw.x, 0, tw.z); aimShadows(true); for (const p of plots) for (const b of p.birds) placeBlob(b);
     // (the best it can be: crisp shadows over just the stage, fur and fluff as fine as they come at this size)
     const sh = sun.shadow, R = o.shadowReach || 4.5; sh.mapSize.set(4096, 4096); if (sh.map) { sh.map.dispose(); sh.map = null; }

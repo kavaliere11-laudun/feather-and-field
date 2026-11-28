@@ -133,11 +133,17 @@ jobs:
           xcrun simctl launch "$PAD" $ID -AppleLanguages "(fr)" -AppleLocale fr_FR
           sleep 60; xcrun simctl io "$PAD" screenshot shots/ipad-1-upright.png
           xcrun simctl terminate "$PAD" $ID || true
-          xcrun simctl launch "$PAD" $ID -AppleLanguages "(en)" -AppleLocale en_GB -FFLandscape YES
+          # (sideways: the Simulator app turned with Cmd+Left, where GitHub's Mac lets a script press keys; the game asks to be
+          # turned otherwise, which an app can't do itself in iPadOS 26's windows)
+          open -a Simulator --args -CurrentDeviceUDID "$PAD" || true; sleep 10
+          osascript -e 'tell application "Simulator" to activate' -e 'delay 1' -e 'tell application "System Events" to key code 123 using {command down}' \
+            || echo "::notice::The iPad simulator could not be turned sideways here"
+          sleep 3
+          xcrun simctl launch "$PAD" $ID -AppleLanguages "(en)" -AppleLocale en_GB
           sleep 30; xcrun simctl io "$PAD" screenshot shots/ipad-2-farm.png
           sleep 30; xcrun simctl io "$PAD" screenshot shots/ipad-3-farm-later.png
           xcrun simctl spawn "$PAD" log show --last 5m --style compact --predicate 'process == "App"' > shots/ipad-log.txt || true
-          grep -E "FFLandscape|FFStore|rror" shots/ipad-log.txt | tail -n 20 || true
+          grep -E "FFStore" shots/ipad-log.txt | tail -n 5 || true
           if grep -q "FFStore: ready" shots/ipad-log.txt; then echo "The app runs on iPad."; else echo "::error::The app did not start on the iPad"; exit 1; fi
       - name: Keep the pictures
         if: always()
