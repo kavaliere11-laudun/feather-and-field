@@ -962,7 +962,11 @@
   @media (min-width: 700px) and (min-height: 700px) {
     body.game .gbar, body.game .gsheet, body.game .gguide, body.game #hint, body.game .fishbar, body.game #compass, body.game .gmove,
     body.game .gskip, body.game #farmerbtn, body.game #dogbtn, body.game #henbtns, body.game #replaybtn, body.game #inside-back, body.game #inside-top { zoom: 1.3; }
+    /* (27 Nov 2026, the iPad app: the grooming game's card and tip, and fishing's pills, were still phone-sized; the card sized
+       to what's in it, in the middle of the height, instead of a tall card with its button far below) */
+    body.game .groom-card, body.game .groom-top, body.game .groom-tip, body.game .fishrow { zoom: 1.3; }
   }
+  @media (min-width: 700px) and (min-height: 700px) and (orientation: landscape) { body.game .groom-card { align-self: center; } body.game .groom-card .gbtn { margin-top: 14px; } }
   @media (min-width: 700px) and (min-height: 700px) and (max-aspect-ratio: 5/4) { body.game .gsheet { width: min(540px, 100%); margin-inline: auto; } }
   @media (min-width: 700px) and (min-height: 700px) and (orientation: landscape) and (min-aspect-ratio: 5/4) { body.game .ghero .glogo, body.game .ghero .gtag { right: calc(min(400px, 46vw) * 1.3 + 16px); } }
   /* the tip for a phone or tablet held upright: "Best played sideways", a little phone turning */
@@ -1024,6 +1028,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading the village…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1795822766"></script>
+<script src="app.js?v=1795833410"></script>
 </body>
 </html>
