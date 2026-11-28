@@ -324,10 +324,14 @@ export class GameUI {
     const [x0, y0, x1, y1] = HERO.key, kw = (x1 - x0) * HERO.w, kh = (y1 - y0) * HERO.h;
     let k = Math.min((right - left) / kw, Math.max(60, bottom - top) / kh, 1);    // (never bigger than it was drawn)
     k = Math.max(k, W / HERO.w, cover / HERO.h);
+    // (sideways with room above the card, a tablet's or a computer's: the picture right to the screen's edge, moved over
+    // rather than closer, so the farmer stays in sight: 28 Nov 2026, the tablet play-through, a band of plain green down the
+    // right on 1280x800)
+    const full = side && S.offsetTop > 24;
     const iw = HERO.w * k, ih = HERO.h * k;
     let x = (left + right) / 2 - (x0 + x1) / 2 * iw, y = (top + bottom) / 2 - (y0 + y1) / 2 * ih;
     // (sideways the picture need only reach under the card's edge: past it the card covers it, round it the grass colour)
-    const reach = side ? Math.min(W, S.offsetLeft + 40) : W;
+    const reach = side && !full ? Math.min(W, S.offsetLeft + 40) : W;
     x = Math.min(0, Math.max(reach - iw, x)); y = Math.min(0, Math.max(cover - ih, y));
     Object.assign(img.style, { width: iw + 'px', height: ih + 'px', left: x + 'px', top: y + 'px' });
     this.heroFit = { kind, k: +k.toFixed(4), x: Math.round(x), y: Math.round(y), side, open: [0, Math.round(top), Math.round(right), Math.round(bottom)] };
