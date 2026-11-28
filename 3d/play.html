@@ -74,8 +74,8 @@
      wide sideways, placed just as the iPhone app's launch screen shows it (app/icons.py crops the same part), so the app
      opens on the picture and the name, the words and the bar come on over it; the farm fades in from it */
   body.game #loading { justify-content: flex-end; padding-bottom: calc(env(safe-area-inset-bottom) + 34px); box-sizing: border-box;
-                       background: #5d8fb6 url("welcome-tall.jpg?v=1795860069") 34% 50% / cover no-repeat; }
-  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1795860069") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
+                       background: #5d8fb6 url("welcome-tall.jpg?v=1795866023") 34% 50% / cover no-repeat; }
+  @media (orientation: landscape) { body.game #loading { background: #557230 url("welcome.jpg?v=1795866023") 50% 50% / cover no-repeat; padding-bottom: calc(env(safe-area-inset-bottom) + 18px); } }
   body.game #loading::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                                font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
   body.game #loading::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 34%; z-index: 0;
@@ -126,7 +126,7 @@
   #sideways { display: none; }
   @media (orientation: portrait) and (pointer: coarse) {
     body.game:not(.gsideways-off) #sideways { position: fixed; inset: 0; z-index: 10000; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 18px;
-      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1795860069") 34% 50% / cover no-repeat; }
+      padding: 0 28px calc(env(safe-area-inset-bottom) + 56px); box-sizing: border-box; touch-action: none; background: #5d8fb6 url("welcome-tall.jpg?v=1795866023") 34% 50% / cover no-repeat; }
   }
   #sideways::before { z-index: 1; content: "Feather & Field"; position: absolute; left: 0; right: 0; top: calc(env(safe-area-inset-top) + 14px); text-align: center;
                       font: 600 34px/1.05 var(--display); color: #fffdf7; text-shadow: 0 2px 0 rgba(120, 60, 20, 0.35), 0 3px 14px rgba(20, 40, 15, 0.55); }
@@ -937,7 +937,8 @@
     .gsheet.gwelcome .gsheet-head { padding-top: 16px; }
     .gsheet.gwelcome .gsheet-body { padding-bottom: 14px; gap: 9px; }
     /* (Start always in sight: if the card has to scroll, it stays at the bottom with the rest going under it) */
-    .gsheet.gwelcome .gbtn { position: sticky; bottom: 0; z-index: 1; box-shadow: 0 4px 0 12px var(--meringue), 0 4px 14px rgba(210, 70, 47, 0.35); }
+    .gsheet.gwelcome .gwelcome-acct { margin-top: 6px; }      /* (clear of Start's cream ring) */
+    .gsheet.gwelcome .gsheet-body > .gbtn { position: sticky; bottom: 0; z-index: 1; box-shadow: 0 4px 0 12px var(--meringue), 0 4px 14px rgba(210, 70, 47, 0.35); }      /* (Start only: 28 Nov 2026, Audrey's iPad, "text hidden": the sign-in buttons had it too, stuck at the bottom with their cream rings over the words) */
     .ghero .glogo, .ghero .gtag { right: calc(min(400px, 46vw) + 12px); }
   }
   @media (orientation: landscape) and (min-aspect-ratio: 5/4) and (max-height: 520px) {
@@ -967,7 +968,7 @@
        to what's in it, in the middle of the height, instead of a tall card with its button far below) */
     body.game .groom-card, body.game .groom-top, body.game .groom-tip, body.game .fishrow { zoom: 1.3; }
   }
-  @media (min-width: 700px) and (min-height: 700px) and (orientation: landscape) { body.game .groom-card { align-self: center; } body.game .groom-card .gbtn { margin-top: 14px; } }
+  @media (min-width: 700px) and (min-height: 700px) and (orientation: landscape) { body.game .groom-card { align-self: center; } body.game .groom-card .gbtn { margin-top: 14px; } body.game .groom-pic { max-width: min(100%, 600px); max-height: 600px; margin-block: auto; } }      /* (the bird no bigger than reads well: 28 Nov 2026, "the quality of the chicken is low" on her iPad) */
   @media (min-width: 700px) and (min-height: 700px) and (orientation: landscape) { body.game .gprev { grid-template-columns: minmax(0, 1.6fr) minmax(0, 1fr); } }      /* (a thing's 3D view in the shop: bigger on a tablet, where the card is tall) */
   @media (min-width: 700px) and (min-height: 700px) and (max-aspect-ratio: 5/4) { body.game .gsheet { width: min(540px, 100%); margin-inline: auto; } }
   @media (min-width: 700px) and (min-height: 700px) and (orientation: landscape) and (min-aspect-ratio: 5/4) { body.game .ghero .glogo, body.game .ghero .gtag { right: calc(min(400px, 46vw) * 1.3 + 16px); } }
@@ -1030,6 +1031,6 @@
 <button id="readout" class="pill" type="button" aria-label="How smooth the farm is (tap for details)">Starting…</button>
 <div id="loading"><div class="msg">Loading your farm…</div><div class="bar"><div class="fill"></div></div></div>
 <div id="sideways" role="alert"><div class="phone" aria-hidden="true"></div><div class="msg">Turn your phone sideways to play</div></div>
-<script src="app.js?v=1795860069"></script>
+<script src="app.js?v=1795866023"></script>
 </body>
 </html>
