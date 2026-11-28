@@ -18,7 +18,11 @@ const PRIVACY = 'https://kavaliere11-laudun.github.io/feather-and-field/privacy.
 const SUPPORT = 'https://kavaliere11-laudun.github.io/feather-and-field/support.html';      // (the help page, 24 Nov 2026: web3d/support/)
 const MARKETING = 'https://kavaliere11-laudun.github.io/';      // (the developer website, 27 Nov 2026, Audrey: "Free GitHub site": its root holds AdMob's app-ads.txt)
 const SHOTS = process.env.SHOTS !== '0';                         // (SHOTS=0: the words only, the pictures left as they are)
-const SHOT_TYPE = process.env.SHOT_TYPE || 'APP_IPHONE_67';      // (the 6.7 and 6.9-inch iPhones' screenshots: 2796 x 1290 on its side fits it)
+// the picture sets: the iPhone's (app/store/shots/<language>, 2796 x 1290 on its side, the 6.7 and 6.9-inch iPhones) and, since
+// the app runs on iPad too (27 Nov 2026), the iPad's (app/store/shots-ipad/<language>, 2752 x 2064 on its side: the 13-inch
+// iPad, Apple's APP_IPAD_PRO_3GEN_129 in the API); SETS=iphone (the default), ipad, or iphone,ipad
+const SET_DIRS = { iphone: ['shots', process.env.SHOT_TYPE || 'APP_IPHONE_67'], ipad: ['shots-ipad', 'APP_IPAD_PRO_3GEN_129'] };
+const SETS = (process.env.SETS || 'iphone').split(',').filter(k => SET_DIRS[k]);
 const b64 = o => Buffer.from(typeof o === 'string' ? o : JSON.stringify(o)).toString('base64url');
 let token = '', tokenAt = 0;
 const auth = () => {
@@ -76,7 +80,9 @@ for (const loc of LOCALES) {
   let vid;
   try { vid = await upsert('appStoreVersionLocalizations', vlocs, loc, { description: v.description, keywords: v.keywords, promotionalText: v.promo, supportUrl: `${SUPPORT}?lang=${loc.slice(0, 2)}`, marketingUrl: MARKETING }, { appStoreVersion: { data: { type: 'appStoreVersions', id: ver.id } } }); console.log(loc, 'description, keywords, promotional text, help page, website: done'); }
   catch (e) { console.log(loc, 'description, keywords, promotional text: NOT done:', e.message); continue; }
-  const dir = path.join(STORE, 'shots', loc); if (!SHOTS) continue; if (!fs.existsSync(dir)) { console.log(loc, 'no pictures'); continue; }
+  if (!SHOTS) continue;
+  for (const [folder, SHOT_TYPE] of SETS.map(k => SET_DIRS[k])) {
+  const dir = path.join(STORE, folder, loc); if (!fs.existsSync(dir)) { console.log(loc, folder, 'no pictures'); continue; }
   const files = fs.readdirSync(dir).filter(f => /\.(jpe?g|png)$/i.test(f)).sort();
   try {
     const sets = await all(`/v1/appStoreVersionLocalizations/${vid}/appScreenshotSets`);
@@ -95,8 +101,9 @@ for (const loc of LOCALES) {
       ids.push(made.id);
     }
     await api('PATCH', `/v1/appScreenshotSets/${set.id}/relationships/appScreenshots`, { data: ids.map(id => ({ type: 'appScreenshots', id })) });
-    console.log(loc, 'pictures uploaded:', ids.length);
-  } catch (e) { console.log(loc, 'pictures: NOT done:', e.message); }
+    console.log(loc, SHOT_TYPE, 'pictures uploaded:', ids.length);
+  } catch (e) { console.log(loc, SHOT_TYPE, 'pictures: NOT done:', e.message); }
+  }
 }
 // ---- Apple checking the pictures (a few seconds each): their states
 if (SHOTS) await new Promise(r => setTimeout(r, 20000));

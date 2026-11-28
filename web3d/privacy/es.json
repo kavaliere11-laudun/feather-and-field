@@ -1,7 +1,7 @@
 {
  "title": "Privacidad",
  "updated": "Última actualización: {date}",
- "intro": "Feather & Field es un acogedor juego de granja creado por {owner}. Esta página explica de forma sencilla qué guarda el juego sobre ti y por qué. En resumen: tu granja vive en tu teléfono, y nada sobre ti sale de él, a menos que decidas iniciar sesión o ver un vídeo para conseguir monedas gratis en la app para iPhone.",
+ "intro": "Feather & Field es un acogedor juego de granja creado por {owner}. Esta página explica de forma sencilla qué guarda el juego sobre ti y por qué. En resumen: tu granja vive en tu teléfono, y nada sobre ti sale de él, a menos que decidas iniciar sesión o ver un vídeo para conseguir monedas gratis en la app para iPhone y iPad.",
  "sections": [
   {
    "h": "En tu teléfono",
@@ -13,19 +13,19 @@
   {
    "h": "Si inicias sesión (opcional)",
    "p": [
-    "Mi cuenta es opcional. Puedes iniciar sesión con Google o, en la app para iPhone, también con Apple. El juego usa entonces el servicio Firebase de Google para:",
+    "Mi cuenta es opcional. Puedes iniciar sesión con Google o, en la app para iPhone y iPad, también con Apple. El juego usa entonces el servicio Firebase de Google para:",
     "• iniciar tu sesión: Google o Apple le da al juego el ID de tu cuenta, tu nombre y tu dirección de correo electrónico (con Apple puedes ocultar tu correo: Apple da entonces una dirección de reenvío que llega a la tuya). El juego nunca ve tu contraseña;",
     "• guardar una copia de tu granja en línea, para que no la pierdas y puedas seguir jugando en otro teléfono o tableta. Se conserva en la base de datos de Firebase de Google {where}, vinculada a tu cuenta, y solo tú puedes abrirla.",
     "Por qué: para darte lo que pediste, tu granja a salvo y en todos tus dispositivos (el servicio que decidiste usar).",
     "Cuánto tiempo: hasta que elimines tu cuenta. En Ajustes, en Mi cuenta, «Eliminar cuenta» elimina al instante tu cuenta y tu granja en línea; tu granja sigue en tu teléfono.",
     "Para tener listo el inicio de sesión de Google, el juego solo se conecta con Google cuando abres Ajustes o tocas «Inicia sesión» en la pantalla de bienvenida, cuando el juego te sugiere iniciar sesión (una sola vez, unos días después de empezar una granja) y, una vez que has iniciado sesión, cada vez que se abre el juego. Los servidores de inicio de sesión de Google pueden estar fuera del Reino Unido y de Europa; Google gestiona esos datos en nuestro nombre según sus condiciones de Firebase, con las garantías que exige la ley. Más información: <a href=\"https://firebase.google.com/support/privacy\">Privacidad y seguridad en Firebase</a>.",
-    "En la app para iPhone, el inicio de sesión de Apple o de Google solo se abre cuando tocas su botón, y después la app se conecta al servicio Firebase de Google como se explica arriba. Más sobre Apple: <a href=\"https://www.apple.com/legal/privacy/\">Política de privacidad de Apple</a>."
+    "En la app para iPhone y iPad, el inicio de sesión de Apple o de Google solo se abre cuando tocas su botón, y después la app se conecta al servicio Firebase de Google como se explica arriba. Más sobre Apple: <a href=\"https://www.apple.com/legal/privacy/\">Política de privacidad de Apple</a>."
    ]
   },
   {
-   "h": "Vídeos para monedas gratis (app para iPhone, opcional)",
+   "h": "Vídeos para monedas gratis (app para iPhone y iPad, opcional)",
    "p": [
-    "En la tienda de la app para iPhone puedes decidir ver un vídeo corto para conseguir monedas gratis (cinco al día). Los vídeos vienen de Google AdMob, el servicio de publicidad de Google. No se pone en marcha nada de Google hasta que tocas «Ver».",
+    "En la tienda de la app para iPhone y iPad puedes decidir ver un vídeo corto para conseguir monedas gratis (cinco al día). Los vídeos vienen de Google AdMob, el servicio de publicidad de Google. No se pone en marcha nada de Google hasta que tocas «Ver».",
     "Los vídeos son contextuales: nunca se eligen según lo que se sabe de ti, son aptos para todos y la app nunca te pide permiso para rastrearte. Para mostrar un vídeo, contarlo y protegerlo del fraude, Google recibe lo mismo que cualquier servicio de publicidad: la dirección de internet de tu dispositivo, el tipo de dispositivo y su configuración, y cómo se vio el vídeo. Google usa esos datos según su propia política de privacidad. Más información: <a href=\"https://policies.google.com/technologies/partner-sites\">Cómo usa Google la información de las aplicaciones que utilizan sus servicios</a>.",
     "En el Reino Unido y en Europa, Google te pide tu consentimiento la primera vez, y puedes cambiar tus opciones en Ajustes («Tus opciones de anuncios»)."
    ]
@@ -40,14 +40,14 @@
   {
    "h": "Lo que el juego nunca hace",
    "p": [
-    "Sin anuncios impuestos (solo los vídeos que decides ver para conseguir monedas gratis, en la app para iPhone), sin rastreo, sin estadísticas de uso, y tus datos nunca se venden. Sin cookies de rastreo: en tu dispositivo solo se guarda lo que el juego necesita para funcionar.",
-    "En la app para iPhone, algunas cosas se pueden comprar con dinero real. El pago lo gestiona Apple: el juego solo sabe por Apple lo que has comprado, para dártelo, y nunca ve tu tarjeta ni tus datos de pago. En el sitio web no hay nada que comprar."
+    "Sin anuncios impuestos (solo los vídeos que decides ver para conseguir monedas gratis, en la app para iPhone y iPad), sin rastreo, sin estadísticas de uso, y tus datos nunca se venden. Sin cookies de rastreo: en tu dispositivo solo se guarda lo que el juego necesita para funcionar.",
+    "En la app para iPhone y iPad, algunas cosas se pueden comprar con dinero real. El pago lo gestiona Apple: el juego solo sabe por Apple lo que has comprado, para dártelo, y nunca ve tu tarjeta ni tus datos de pago. En el sitio web no hay nada que comprar."
    ]
   },
   {
    "h": "Niños",
    "p": [
-    "Cualquiera puede jugar. Antes de iniciar sesión o ver un vídeo por primera vez, el juego pregunta tu año de nacimiento o, en la app de iPhone donde la ley lo exige, usa el rango de edad que comparte tu cuenta de Apple. Solo se guarda el grupo de edad (menos de 13, de 13 a 17 o adulto), en tu teléfono; el año en sí no se guarda ni se envía a ningún sitio.",
+    "Cualquiera puede jugar. Antes de iniciar sesión o ver un vídeo por primera vez, el juego pregunta tu año de nacimiento o, en la app de iPhone y iPad donde la ley lo exige, usa el rango de edad que comparte tu cuenta de Apple. Solo se guarda el grupo de edad (menos de 13, de 13 a 17 o adulto), en tu teléfono; el año en sí no se guarda ni se envía a ningún sitio.",
     "Los jugadores menores de 13 años no pueden iniciar sesión, así que no se guarda nada sobre ellos en línea. Si eligen ver un vídeo, se le indica a Google que es para un niño: es apto para niños, no se usa nada sobre el niño para elegirlo, y Google usa los datos del dispositivo solo para mostrarlo, contarlo y protegerlo del fraude.",
     "Si crees que un niño menor de 13 años ha iniciado sesión, escríbenos y eliminaremos la cuenta."
    ]

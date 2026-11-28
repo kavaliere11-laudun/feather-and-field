@@ -1,7 +1,7 @@
 {
  "title": "Privacy",
  "updated": "Ultimo aggiornamento: {date}",
- "intro": "Feather & Field è un rilassante gioco di fattoria creato da {owner}. Questa pagina spiega in modo semplice cosa conserva il gioco su di te, e perché. In breve: la tua fattoria vive sul tuo telefono, e niente che ti riguardi ne esce, a meno che tu non scelga di accedere, o di guardare un video per monete gratis nell’app per iPhone.",
+ "intro": "Feather & Field è un rilassante gioco di fattoria creato da {owner}. Questa pagina spiega in modo semplice cosa conserva il gioco su di te, e perché. In breve: la tua fattoria vive sul tuo telefono, e niente che ti riguardi ne esce, a meno che tu non scelga di accedere, o di guardare un video per monete gratis nell’app per iPhone e iPad.",
  "sections": [
   {
    "h": "Sul tuo telefono",
@@ -13,19 +13,19 @@
   {
    "h": "Se accedi (facoltativo)",
    "p": [
-    "Il mio account è facoltativo. Puoi accedere con Google o, nell’app per iPhone, anche con Apple. Il gioco usa poi il servizio Firebase di Google per:",
+    "Il mio account è facoltativo. Puoi accedere con Google o, nell’app per iPhone e iPad, anche con Apple. Il gioco usa poi il servizio Firebase di Google per:",
     "• farti accedere: Google o Apple fornisce al gioco l’ID del tuo account, il tuo nome e il tuo indirizzo email (con Apple puoi scegliere di nascondere la tua email: Apple fornisce allora un indirizzo di inoltro che arriva al tuo). Il gioco non vede mai la tua password;",
     "• conservare una copia della tua fattoria online, così non la perdi e puoi giocarci su un altro telefono o tablet. Si trova nel database Firebase di Google {where}, è collegata al tuo account e solo tu puoi aprirla.",
     "Perché: per darti ciò che hai chiesto, la tua fattoria al sicuro e su tutti i tuoi dispositivi (il servizio che hai scelto di usare).",
     "Per quanto tempo: finché non elimini il tuo account. Nelle Impostazioni, alla voce Il mio account, “Elimina account” elimina subito il tuo account e la tua fattoria online; la tua fattoria resta sul tuo telefono.",
     "Per preparare l’accesso con Google, il gioco si collega a Google solo quando apri le Impostazioni o tocchi “Accedi” nella schermata di benvenuto, quando il gioco ti suggerisce di accedere (una sola volta, qualche giorno dopo l’inizio di una fattoria) e, una volta effettuato l’accesso, ogni volta che il gioco si apre. I server di accesso di Google possono trovarsi fuori dal Regno Unito e dall’Europa; Google gestisce questi dati per nostro conto secondo i termini di Firebase, con le garanzie richieste dalla legge. Per saperne di più: <a href=\"https://firebase.google.com/support/privacy\">Privacy e sicurezza in Firebase</a>.",
-    "Nell’app per iPhone, l’accesso con Apple o con Google si apre solo quando tocchi il suo pulsante, e poi l’app si collega al servizio Firebase di Google come sopra. Per saperne di più su Apple: <a href=\"https://www.apple.com/legal/privacy/\">Informativa sulla privacy di Apple</a>."
+    "Nell’app per iPhone e iPad, l’accesso con Apple o con Google si apre solo quando tocchi il suo pulsante, e poi l’app si collega al servizio Firebase di Google come sopra. Per saperne di più su Apple: <a href=\"https://www.apple.com/legal/privacy/\">Informativa sulla privacy di Apple</a>."
    ]
   },
   {
-   "h": "Video per monete gratis (app per iPhone, facoltativo)",
+   "h": "Video per monete gratis (app per iPhone e iPad, facoltativo)",
    "p": [
-    "Nel negozio dell’app per iPhone puoi scegliere di guardare un breve video per monete gratis (cinque al giorno). I video arrivano da Google AdMob, il servizio pubblicitario di Google. Niente di Google viene avviato prima che tu tocchi “Guarda”.",
+    "Nel negozio dell’app per iPhone e iPad puoi scegliere di guardare un breve video per monete gratis (cinque al giorno). I video arrivano da Google AdMob, il servizio pubblicitario di Google. Niente di Google viene avviato prima che tu tocchi “Guarda”.",
     "I video sono contestuali: non vengono mai scelti in base a ciò che si sa di te, sono adatti a tutti e l’app non chiede mai di tracciarti. Per mostrare un video, contarlo e proteggerlo dalle frodi, Google riceve ciò che riceve qualsiasi servizio pubblicitario: l’indirizzo internet del tuo dispositivo, il tipo di dispositivo e le sue impostazioni, e come è stato guardato il video. Google usa questi dati secondo la propria informativa sulla privacy. Per saperne di più: <a href=\"https://policies.google.com/technologies/partner-sites\">Come Google utilizza le informazioni delle app che usano i suoi servizi</a>.",
     "Nel Regno Unito e in Europa, Google ti chiede il consenso la prima volta, e puoi cambiare le tue scelte nelle Impostazioni (“Le tue scelte sulla pubblicità”)."
    ]
@@ -40,14 +40,14 @@
   {
    "h": "Cosa il gioco non fa mai",
    "p": [
-    "Niente pubblicità imposta (solo i video che scegli di guardare per monete gratis, nell’app per iPhone), niente tracciamento, niente statistiche di utilizzo, e i tuoi dati non vengono mai venduti. Nessun cookie di tracciamento: sul tuo dispositivo resta solo ciò che serve al gioco per funzionare.",
-    "Nell’app per iPhone alcune cose si possono comprare con soldi veri. Il pagamento lo gestisce Apple: il gioco sa da Apple solo cosa hai comprato, per dartelo, e non vede mai la tua carta né i tuoi dati di pagamento. Sul sito non c’è niente da comprare."
+    "Niente pubblicità imposta (solo i video che scegli di guardare per monete gratis, nell’app per iPhone e iPad), niente tracciamento, niente statistiche di utilizzo, e i tuoi dati non vengono mai venduti. Nessun cookie di tracciamento: sul tuo dispositivo resta solo ciò che serve al gioco per funzionare.",
+    "Nell’app per iPhone e iPad alcune cose si possono comprare con soldi veri. Il pagamento lo gestisce Apple: il gioco sa da Apple solo cosa hai comprato, per dartelo, e non vede mai la tua carta né i tuoi dati di pagamento. Sul sito non c’è niente da comprare."
    ]
   },
   {
    "h": "Bambini",
    "p": [
-    "Tutti possono giocare. Prima del primo accesso o del primo video, il gioco chiede il tuo anno di nascita oppure, nell’app per iPhone dove la legge lo richiede, usa la fascia d’età condivisa dal tuo Apple Account. Viene conservata solo la fascia d’età (meno di 13 anni, da 13 a 17, o adulto), sul tuo telefono; l’anno in sé non viene conservato né inviato da nessuna parte.",
+    "Tutti possono giocare. Prima del primo accesso o del primo video, il gioco chiede il tuo anno di nascita oppure, nell’app per iPhone e iPad dove la legge lo richiede, usa la fascia d’età condivisa dal tuo Apple Account. Viene conservata solo la fascia d’età (meno di 13 anni, da 13 a 17, o adulto), sul tuo telefono; l’anno in sé non viene conservato né inviato da nessuna parte.",
     "I giocatori con meno di 13 anni non possono accedere, quindi online non viene conservato nulla su di loro. Se scelgono di guardare un video, Google viene informato che è per un bambino: è adatto ai bambini, nulla sul bambino viene usato per sceglierlo, e Google usa i dati del dispositivo solo per mostrarlo, contarlo e proteggerlo dalle frodi.",
     "Se pensi che un bambino con meno di 13 anni abbia effettuato l’accesso, scrivici e cancelleremo l’account."
    ]

@@ -1,7 +1,7 @@
 {
  "title": "Privacy",
  "updated": "Updated {date}",
- "intro": "Feather & Field is a cosy farm game made by {owner}. This page says simply what the game keeps about you, and why. In short: your farm lives on your phone, and nothing about you leaves it unless you choose to sign in, or to watch a video for free coins in the iPhone app.",
+ "intro": "Feather & Field is a cosy farm game made by {owner}. This page says simply what the game keeps about you, and why. In short: your farm lives on your phone, and nothing about you leaves it unless you choose to sign in, or to watch a video for free coins in the iPhone and iPad app.",
  "sections": [
   {
    "h": "On your phone",
@@ -13,19 +13,19 @@
   {
    "h": "If you sign in (optional)",
    "p": [
-    "My account is optional. You can sign in with Google, or, in the iPhone app, with Apple too. The game then uses Google’s Firebase service to:",
+    "My account is optional. You can sign in with Google, or, in the iPhone and iPad app, with Apple too. The game then uses Google’s Firebase service to:",
     "• sign you in: Google or Apple gives the game your account’s ID, your name and your email address (with Apple you can choose to hide your email: Apple then gives a stand-in address that forwards to yours). The game never sees your password;",
     "• keep a copy of your farm online, so you don’t lose it and can play it on another phone or tablet. It’s kept in Google’s Firebase database {where}, linked to your account, and only you can open it.",
     "Why: to give you what you asked for, your farm kept safe and on all your devices (the service you chose to use).",
     "How long: until you delete your account. In Settings, My account, “Delete my account” deletes your account and your farm online straight away; your farm stays on your phone.",
     "To get Google’s sign-in ready, the game connects to Google only when you open Settings or tap “Sign in” on the welcome screen, when the game suggests signing in (once, a few days into a farm), and, once you’re signed in, each time the game opens. Google’s sign-in servers may be outside the UK and Europe; Google looks after that data for us under its Firebase terms, with the safeguards the law asks for. More: <a href=\"https://firebase.google.com/support/privacy\">Privacy and security in Firebase</a>.",
-    "In the iPhone app, Apple’s or Google’s sign-in opens only when you tap its button, and the app then connects to Google’s Firebase service as above. More about Apple: <a href=\"https://www.apple.com/legal/privacy/\">Apple’s privacy policy</a>."
+    "In the iPhone and iPad app, Apple’s or Google’s sign-in opens only when you tap its button, and the app then connects to Google’s Firebase service as above. More about Apple: <a href=\"https://www.apple.com/legal/privacy/\">Apple’s privacy policy</a>."
    ]
   },
   {
-   "h": "Videos for free coins (iPhone app, optional)",
+   "h": "Videos for free coins (iPhone and iPad app, optional)",
    "p": [
-    "In the iPhone app’s shop you can choose to watch a short video for free coins (five a day). The videos come from Google AdMob, Google’s advertising service. Nothing of Google’s is started until you tap “Watch”.",
+    "In the iPhone and iPad app’s shop you can choose to watch a short video for free coins (five a day). The videos come from Google AdMob, Google’s advertising service. Nothing of Google’s is started until you tap “Watch”.",
     "The videos are contextual: they’re never chosen from what’s known about you, they’re suitable for everyone, and the app never asks to track you. To show a video, count it and keep it safe from fraud, Google receives what any advertising service does: your device’s internet address, the kind of device and its settings, and how the video was watched. Google uses that data under its own privacy policy. More: <a href=\"https://policies.google.com/technologies/partner-sites\">How Google uses information from apps that use its services</a>.",
     "In the UK and Europe, Google asks for your consent the first time, and you can change your choices in Settings (“Ad privacy choices”)."
    ]
@@ -40,14 +40,14 @@
   {
    "h": "What the game never does",
    "p": [
-    "No forced adverts (only the videos you choose to watch for free coins, in the iPhone app), no tracking, no analytics, and your data is never sold. No cookies for tracking: the only things kept on your device are those the game needs to work.",
-    "In the iPhone app, some things can be bought with real money. Apple takes the payment: the game only learns from Apple what you bought, to give it to you, and never sees your card or payment details. On the website, there’s nothing to buy."
+    "No forced adverts (only the videos you choose to watch for free coins, in the iPhone and iPad app), no tracking, no analytics, and your data is never sold. No cookies for tracking: the only things kept on your device are those the game needs to work.",
+    "In the iPhone and iPad app, some things can be bought with real money. Apple takes the payment: the game only learns from Apple what you bought, to give it to you, and never sees your card or payment details. On the website, there’s nothing to buy."
    ]
   },
   {
    "h": "Children",
    "p": [
-    "Anyone can play. Before a first sign-in or a first video, the game asks the year you were born, or, in the iPhone app where the law asks for it, uses the age range your Apple Account shares. Only the age group (under 13, 13 to 17, or adult) is kept, on your phone; the year itself isn’t kept or sent anywhere.",
+    "Anyone can play. Before a first sign-in or a first video, the game asks the year you were born, or, in the iPhone and iPad app where the law asks for it, uses the age range your Apple Account shares. Only the age group (under 13, 13 to 17, or adult) is kept, on your phone; the year itself isn’t kept or sent anywhere.",
     "Players under 13 can’t sign in, so nothing about them is kept online. If they choose to watch a video, Google is told it’s for a child: it’s suitable for children, nothing about the child is used to choose it, and Google uses the device’s data only to show it, count it and keep it safe from fraud.",
     "If you think a child under 13 has signed in, write to us and we’ll delete the account."
    ]

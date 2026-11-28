@@ -41,7 +41,7 @@ const STYLES = {
 .sign::before { left: 87px; } .sign::after { right: 87px; }
 .t { font: 600 ${s.size || 118}px/1.04 Fredoka, sans-serif; color: #fff6dd; letter-spacing: .5px;
   text-shadow: 0 3px 0 rgba(60,30,10,.55), 0 8px 18px rgba(40,20,5,.35); }
-.s { margin-top: 16px; font: 800 48px/1.2 Nunito, sans-serif; color: #f5d27a; text-shadow: 0 2px 0 rgba(60,30,10,.5); }
+.s { margin-top: 16px; font: 800 ${s.subSize || 48}px/1.2 Nunito, sans-serif; color: #f5d27a; text-shadow: 0 2px 0 rgba(60,30,10,.5); }
 .sign { text-align: center; }`,
   // a straw-cream panel in the top-left corner, its free corner rounded wide, a gold stitch inside its edge
   banner: s => `
@@ -67,7 +67,7 @@ for (const s of plan) {
   background: url(${img}) center / cover no-repeat; box-shadow: 0 0 0 14px #fff8e7, 0 0 0 17px rgba(110,80,40,.25), 0 40px 80px rgba(20,30,10,.45); }
 .hang { left: 0; right: 0; margin: 0 auto; max-width: 2300px; z-index: 2; }
 .sign { padding: 38px 90px 42px; }
-.t { font-size: ${s.size || 104}px; } .s { margin-top: 12px; font-size: 50px; }` : '';
+.t { font-size: ${s.size || 104}px; } .s { margin-top: 12px; font-size: ${s.subSize || 50}px; }` : '';
   await p.setContent(`<!doctype html><html><head><meta charset="utf-8"><style>${FACES}
 html, body { margin: 0; width: ${CW}px; height: ${CH}px; overflow: hidden; background: #3f7a2e; }
 .scene { position: absolute; inset: 0; background: url(${img}) ${s.pos || 'center'} / cover no-repeat; }

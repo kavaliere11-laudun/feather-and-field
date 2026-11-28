@@ -263,6 +263,7 @@ jobs:
       - name: Put the App Store page into App Store Connect
         env:
           SHOTS: ${{ contains(github.event.head_commit.message, '[no-shots]') && '0' || '1' }}      # ([no-shots]: the words only)
+          SETS: ${{ contains(github.event.head_commit.message, '[ipad-shots]') && 'ipad' || 'iphone' }}      # ([ipad-shots]: the iPad's pictures, the iPhone's left as they are)
         run: node app/tools/asc-listing.mjs
 
   # What App Store Connect says about the builds (processing, TestFlight state, tester groups): a push whose message has

@@ -1,7 +1,7 @@
 {
  "title": "Confidentialité",
  "updated": "Mise à jour le {date}",
- "intro": "Feather & Field est un jeu de ferme tout doux créé par {owner}. Cette page explique simplement ce que le jeu garde sur vous, et pourquoi. En bref : votre ferme vit sur votre téléphone, et rien ne vous concernant n’en sort, sauf si vous choisissez de vous connecter, ou de regarder une vidéo pour des pièces gratuites dans l’app iPhone.",
+ "intro": "Feather & Field est un jeu de ferme tout doux créé par {owner}. Cette page explique simplement ce que le jeu garde sur vous, et pourquoi. En bref : votre ferme vit sur votre téléphone, et rien ne vous concernant n’en sort, sauf si vous choisissez de vous connecter, ou de regarder une vidéo pour des pièces gratuites dans l’app iPhone et iPad.",
  "sections": [
   {
    "h": "Sur votre téléphone",
@@ -13,19 +13,19 @@
   {
    "h": "Si vous vous connectez (facultatif)",
    "p": [
-    "Mon compte est facultatif. Vous pouvez vous connecter avec Google, ou aussi avec Apple dans l’app iPhone. Le jeu utilise alors le service Firebase de Google pour :",
+    "Mon compte est facultatif. Vous pouvez vous connecter avec Google, ou aussi avec Apple dans l’app iPhone et iPad. Le jeu utilise alors le service Firebase de Google pour :",
     "• vous connecter : Google ou Apple transmet au jeu l’identifiant de votre compte, votre nom et votre adresse e-mail (avec Apple, vous pouvez choisir de masquer votre adresse : Apple donne alors une adresse relais qui renvoie vers la vôtre). Le jeu ne voit jamais votre mot de passe ;",
     "• garder une copie de votre ferme en ligne, pour que vous ne la perdiez pas et puissiez y jouer sur un autre téléphone ou une autre tablette. Elle est conservée dans la base de données Firebase de Google {where}, liée à votre compte, et elle n’est accessible qu’à vous.",
     "Pourquoi : pour vous rendre le service que vous avez demandé, votre ferme gardée en sécurité et sur tous vos appareils.",
     "Combien de temps : jusqu’à ce que vous supprimiez votre compte. Dans les Réglages, Mon compte, « Supprimer mon compte » supprime aussitôt votre compte et votre ferme en ligne ; votre ferme reste sur votre téléphone.",
     "Pour préparer la connexion Google, le jeu ne contacte Google que lorsque vous ouvrez les Réglages ou touchez « Connectez-vous » sur l’écran d’accueil, quand le jeu vous propose de vous connecter (une seule fois, quelques jours après le début d’une ferme), et, une fois la connexion faite, à chaque ouverture du jeu. Les serveurs de connexion de Google peuvent se trouver hors du Royaume-Uni et de l’Europe ; Google s’occupe de ces données pour nous selon les conditions de Firebase, avec les garanties prévues par la loi. En savoir plus : <a href=\"https://firebase.google.com/support/privacy\">Confidentialité et sécurité dans Firebase</a>.",
-    "Dans l’app iPhone, la connexion Apple ou Google ne s’ouvre que lorsque vous touchez son bouton, et l’app contacte ensuite le service Firebase de Google comme ci-dessus. En savoir plus sur Apple : <a href=\"https://www.apple.com/legal/privacy/\">Politique de confidentialité d’Apple</a>."
+    "Dans l’app iPhone et iPad, la connexion Apple ou Google ne s’ouvre que lorsque vous touchez son bouton, et l’app contacte ensuite le service Firebase de Google comme ci-dessus. En savoir plus sur Apple : <a href=\"https://www.apple.com/legal/privacy/\">Politique de confidentialité d’Apple</a>."
    ]
   },
   {
-   "h": "Vidéos pour des pièces gratuites (app iPhone, facultatif)",
+   "h": "Vidéos pour des pièces gratuites (app iPhone et iPad, facultatif)",
    "p": [
-    "Dans la boutique de l’app iPhone, vous pouvez choisir de regarder une courte vidéo pour des pièces gratuites (cinq par jour). Les vidéos viennent de Google AdMob, le service publicitaire de Google. Rien de Google n’est lancé avant que vous touchiez « Regarder ».",
+    "Dans la boutique de l’app iPhone et iPad, vous pouvez choisir de regarder une courte vidéo pour des pièces gratuites (cinq par jour). Les vidéos viennent de Google AdMob, le service publicitaire de Google. Rien de Google n’est lancé avant que vous touchiez « Regarder ».",
     "Les vidéos sont contextuelles : elles ne sont jamais choisies d’après ce que l’on sait de vous, elles conviennent à tous, et l’app ne vous demande jamais de vous suivre. Pour montrer une vidéo, la compter et la protéger de la fraude, Google reçoit ce que reçoit tout service publicitaire : l’adresse internet de votre appareil, le type d’appareil et ses réglages, et la façon dont la vidéo a été regardée. Google utilise ces données selon sa propre politique de confidentialité. En savoir plus : <a href=\"https://policies.google.com/technologies/partner-sites\">Comment Google utilise les informations des applications qui utilisent ses services</a>.",
     "Au Royaume-Uni et en Europe, Google vous demande votre consentement la première fois, et vous pouvez changer vos choix dans les Réglages (« Vos choix pour les publicités »)."
    ]
@@ -40,14 +40,14 @@
   {
    "h": "Ce que le jeu ne fait jamais",
    "p": [
-    "Pas de publicité imposée (seulement les vidéos que vous choisissez de regarder pour des pièces gratuites, dans l’app iPhone), pas de pistage, pas de statistiques, et vos données ne sont jamais vendues. Pas de cookies de pistage : seul ce dont le jeu a besoin pour fonctionner est gardé sur votre appareil.",
-    "Dans l’app iPhone, certaines choses peuvent s’acheter avec de l’argent réel. C’est Apple qui encaisse le paiement : le jeu apprend seulement d’Apple ce que vous avez acheté, pour vous le donner, et ne voit jamais votre carte ni vos informations de paiement. Sur le site, il n’y a rien à acheter."
+    "Pas de publicité imposée (seulement les vidéos que vous choisissez de regarder pour des pièces gratuites, dans l’app iPhone et iPad), pas de pistage, pas de statistiques, et vos données ne sont jamais vendues. Pas de cookies de pistage : seul ce dont le jeu a besoin pour fonctionner est gardé sur votre appareil.",
+    "Dans l’app iPhone et iPad, certaines choses peuvent s’acheter avec de l’argent réel. C’est Apple qui encaisse le paiement : le jeu apprend seulement d’Apple ce que vous avez acheté, pour vous le donner, et ne voit jamais votre carte ni vos informations de paiement. Sur le site, il n’y a rien à acheter."
    ]
   },
   {
    "h": "Les enfants",
    "p": [
-    "Tout le monde peut jouer. Avant une première connexion ou une première vidéo, le jeu demande votre année de naissance ou, dans l’app iPhone là où la loi le demande, utilise la tranche d’âge que partage votre compte Apple. Seule la tranche d’âge (moins de 13 ans, 13 à 17 ans ou adulte) est gardée, sur votre téléphone ; l’année elle-même n’est ni gardée ni envoyée.",
+    "Tout le monde peut jouer. Avant une première connexion ou une première vidéo, le jeu demande votre année de naissance ou, dans l’app iPhone et iPad là où la loi le demande, utilise la tranche d’âge que partage votre compte Apple. Seule la tranche d’âge (moins de 13 ans, 13 à 17 ans ou adulte) est gardée, sur votre téléphone ; l’année elle-même n’est ni gardée ni envoyée.",
     "Les joueurs de moins de 13 ans ne peuvent pas se connecter : rien les concernant n’est gardé en ligne. S’ils choisissent de regarder une vidéo, Google est prévenu qu’elle est destinée à un enfant : elle convient aux enfants, rien sur l’enfant ne sert à la choisir, et Google n’utilise les données de l’appareil que pour la montrer, la compter et la protéger de la fraude.",
     "Si vous pensez qu’un enfant de moins de 13 ans s’est connecté, écrivez-nous et nous supprimerons le compte."
    ]

@@ -1,7 +1,7 @@
 {
  "title": "Privacidade",
  "updated": "Última atualização: {date}",
- "intro": "Feather & Field é um jogo de fazenda aconchegante criado por {owner}. Esta página explica de um jeito simples o que o jogo guarda sobre você e por quê. Resumindo: sua fazenda vive no seu celular, e nada sobre você sai dele, a menos que você escolha fazer login ou assistir a um vídeo por moedas grátis no app para iPhone.",
+ "intro": "Feather & Field é um jogo de fazenda aconchegante criado por {owner}. Esta página explica de um jeito simples o que o jogo guarda sobre você e por quê. Resumindo: sua fazenda vive no seu celular, e nada sobre você sai dele, a menos que você escolha fazer login ou assistir a um vídeo por moedas grátis no app para iPhone e iPad.",
  "sections": [
   {
    "h": "No seu celular",
@@ -13,19 +13,19 @@
   {
    "h": "Se você fizer login (opcional)",
    "p": [
-    "Minha conta é opcional. Você pode fazer login com o Google ou, no app para iPhone, também com a Apple. O jogo então usa o serviço Firebase do Google para:",
+    "Minha conta é opcional. Você pode fazer login com o Google ou, no app para iPhone e iPad, também com a Apple. O jogo então usa o serviço Firebase do Google para:",
     "• fazer o seu login: o Google ou a Apple fornece ao jogo o ID da sua conta, seu nome e seu endereço de e-mail (com a Apple, você pode ocultar seu e-mail: a Apple fornece então um endereço de encaminhamento que chega ao seu). O jogo nunca vê sua senha;",
     "• guardar uma cópia da sua fazenda online, para você não perdê-la e poder continuar jogando em outro celular ou tablet. Ela fica armazenada no banco de dados Firebase do Google {where}, vinculada à sua conta, e só você pode abri-la.",
     "Por quê: para oferecer o que você pediu, sua fazenda em segurança e em todos os seus aparelhos (o serviço que você escolheu usar).",
     "Por quanto tempo: até você excluir sua conta. Nos Ajustes, em Minha conta, “Excluir conta” exclui imediatamente sua conta e sua fazenda online; sua fazenda continua no seu celular.",
     "Para deixar o login do Google pronto, o jogo só se conecta ao Google quando você abre os Ajustes ou toca em “Faça login” na tela de boas-vindas, quando o jogo sugere que você faça login (uma única vez, alguns dias depois de começar uma fazenda) e, depois que você faz login, sempre que o jogo é aberto. Os servidores de login do Google podem ficar fora do Reino Unido e da Europa; o Google cuida desses dados em nosso nome, de acordo com os termos do Firebase e com as garantias que a lei exige. Saiba mais: <a href=\"https://firebase.google.com/support/privacy\">Privacidade e segurança no Firebase</a>.",
-    "No app para iPhone, o login da Apple ou do Google só abre quando você toca no botão dele, e depois o app se conecta ao serviço Firebase do Google como explicado acima. Saiba mais sobre a Apple: <a href=\"https://www.apple.com/legal/privacy/\">Política de Privacidade da Apple</a>."
+    "No app para iPhone e iPad, o login da Apple ou do Google só abre quando você toca no botão dele, e depois o app se conecta ao serviço Firebase do Google como explicado acima. Saiba mais sobre a Apple: <a href=\"https://www.apple.com/legal/privacy/\">Política de Privacidade da Apple</a>."
    ]
   },
   {
-   "h": "Vídeos por moedas grátis (app para iPhone, opcional)",
+   "h": "Vídeos por moedas grátis (app para iPhone e iPad, opcional)",
    "p": [
-    "Na loja do app para iPhone, você pode escolher assistir a um vídeo curto por moedas grátis (cinco por dia). Os vídeos vêm do Google AdMob, o serviço de publicidade do Google. Nada do Google é iniciado antes de você tocar em “Assistir”.",
+    "Na loja do app para iPhone e iPad, você pode escolher assistir a um vídeo curto por moedas grátis (cinco por dia). Os vídeos vêm do Google AdMob, o serviço de publicidade do Google. Nada do Google é iniciado antes de você tocar em “Assistir”.",
     "Os vídeos são contextuais: nunca são escolhidos com base no que se sabe sobre você, são adequados para todos, e o app nunca pede para rastrear você. Para mostrar um vídeo, contá-lo e protegê-lo contra fraudes, o Google recebe o mesmo que qualquer serviço de publicidade: o endereço de internet do seu aparelho, o tipo de aparelho e suas configurações, e como o vídeo foi assistido. O Google usa esses dados de acordo com a própria política de privacidade. Saiba mais: <a href=\"https://policies.google.com/technologies/partner-sites\">Como o Google usa as informações de apps que usam os serviços dele</a>.",
     "No Reino Unido e na Europa, o Google pede seu consentimento na primeira vez, e você pode mudar suas escolhas em Ajustes (“Suas escolhas de anúncios”)."
    ]
@@ -40,14 +40,14 @@
   {
    "h": "O que o jogo nunca faz",
    "p": [
-    "Sem anúncios impostos (só os vídeos que você escolhe assistir por moedas grátis, no app para iPhone), sem rastreamento, sem estatísticas de uso, e seus dados nunca são vendidos. Nada de cookies de rastreamento: só fica guardado no seu aparelho aquilo de que o jogo precisa para funcionar.",
-    "No app para iPhone, algumas coisas podem ser compradas com dinheiro de verdade. Quem cuida do pagamento é a Apple: o jogo só fica sabendo pela Apple o que você comprou, para lhe entregar, e nunca vê seu cartão nem seus dados de pagamento. No site, não há nada para comprar."
+    "Sem anúncios impostos (só os vídeos que você escolhe assistir por moedas grátis, no app para iPhone e iPad), sem rastreamento, sem estatísticas de uso, e seus dados nunca são vendidos. Nada de cookies de rastreamento: só fica guardado no seu aparelho aquilo de que o jogo precisa para funcionar.",
+    "No app para iPhone e iPad, algumas coisas podem ser compradas com dinheiro de verdade. Quem cuida do pagamento é a Apple: o jogo só fica sabendo pela Apple o que você comprou, para lhe entregar, e nunca vê seu cartão nem seus dados de pagamento. No site, não há nada para comprar."
    ]
   },
   {
    "h": "Crianças",
    "p": [
-    "Qualquer pessoa pode jogar. Antes do primeiro login ou do primeiro vídeo, o jogo pergunta o ano em que você nasceu ou, no app para iPhone onde a lei exige, usa a faixa etária que sua Conta Apple compartilha. Só a faixa etária (menos de 13, de 13 a 17 ou adulto) fica guardada, no seu celular; o ano em si não é guardado nem enviado a lugar nenhum.",
+    "Qualquer pessoa pode jogar. Antes do primeiro login ou do primeiro vídeo, o jogo pergunta o ano em que você nasceu ou, no app para iPhone e iPad onde a lei exige, usa a faixa etária que sua Conta Apple compartilha. Só a faixa etária (menos de 13, de 13 a 17 ou adulto) fica guardada, no seu celular; o ano em si não é guardado nem enviado a lugar nenhum.",
     "Jogadores com menos de 13 anos não podem fazer login, então nada sobre eles fica guardado online. Se escolherem assistir a um vídeo, o Google é avisado de que é para uma criança: o vídeo é adequado para crianças, nada sobre a criança é usado para escolhê-lo, e o Google usa os dados do aparelho só para mostrá-lo, contá-lo e protegê-lo contra fraudes.",
     "Se você acha que uma criança com menos de 13 anos fez login, escreva para nós e vamos apagar a conta."
    ]

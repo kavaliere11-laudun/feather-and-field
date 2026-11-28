@@ -119,6 +119,7 @@ const SCENES = {
     ui: async p => { await p.evaluate(() => window.__farm.bookOpen('birds')); await p.waitForTimeout(1200); } },
   shop: { time: '10:30', hud: true, live: true, prep: (f) => { const g = f.game(); g.data.acctAsk = 1; g.data.coins = Math.max(g.data.coins, 48250); g.save(); }, setup: (f) => { f.lookAt(-24.5, -14.5, 2.4); return {}; }, secs: 1,
     ui: async p => {
+      if (process.env.LIGHT) await p.evaluate(v => { window.__dpr = v; }, +process.env.LIGHT);
       await p.evaluate(() => window.__farm.shopSheet('hens')); await p.waitForTimeout(1000);
       await p.evaluate(want => { const tiles = [...document.querySelectorAll('.gsheet:not([hidden]) .gviewable')]; const t = tiles.find(x => x.textContent.includes(want)) || tiles[0]; const pic = t && (t.querySelector('.gprev-open') || t); if (pic) pic.click(); }, process.env.WANT || 'Cochin');
       await p.waitForTimeout(6000);
@@ -126,12 +127,14 @@ const SCENES = {
       // swiping hand that says it can be turned has gone, and their faces come round)
       const r = await p.evaluate(() => { const c = document.querySelector('.gprev-stage canvas'); if (!c) return null; const b = c.getBoundingClientRect(); return [b.left + b.width / 2, b.top + b.height * 0.75]; });
       if (r) { const dx = +(process.env.PDRAG || 60); await p.mouse.move(r[0], r[1]); await p.mouse.down(); for (let k = 1; k <= 12; k++) { await p.mouse.move(r[0] + dx * k / 12, r[1], { steps: 2 }); await p.waitForTimeout(40); } await p.mouse.up(); }
-      await p.waitForTimeout(2500);
+      if (process.env.LIGHT) await p.evaluate(() => { window.__dpr = 0; });      // (the full sharpness again for the picture)
+      await p.waitForTimeout(process.env.LIGHT ? 6000 : 2500);
     } },
   groom: { time: '10:30', hud: true, live: true, prep: (f) => { const g = f.game(); g.data.acctAsk = 1; g.save(); }, setup: (f) => { window.__FF_GROOM_SECS = 3000; return {}; }, secs: 1,
     ui: async p => {
       // (Audrey: "the chicken has no eyes": a Silkie's dark face hides them, so a hen of another breed is groomed, her eyes
       // in sight; GBREED, the Buff Orpington by default: golden and fluffy)
+      if (process.env.LIGHT) await p.evaluate(v => { window.__dpr = v; }, +process.env.LIGHT);
       await p.evaluate(() => window.__farm.showsSheet()); await p.waitForTimeout(500);
       const who = await p.evaluate(want => { const g = window.__farm.game(), s = g.openShows(Date.now()).find(x => !x.locked); if (!s) return null; const L = g.showBirds(s); const x = L.find(q => g.baseOf(q.b.breed) === want && q.b.sex === 'h') || L[0]; return x && { name: x.b.name, first: L[0].b.name === x.b.name }; }, process.env.GBREED || 'orp');
       if (who && !who.first) { await p.evaluate(() => { const o = document.querySelector('.gsheet .gshow .glink'); if (o) o.click(); }); await p.waitForTimeout(500);
@@ -153,7 +156,8 @@ const SCENES = {
         for (let k = 0; S && S.step === 'shine' && k < stop; k++) { const sp = S.spots.filter(q => q[2] < 1)[0]; if (sp) await rub(sp); await p.waitForTimeout(250); S = await st(); }
         const sp = S && S.step === 'shine' && S.spots.find(q => q[2] < 1);
         if (sp) { const [x, y] = XY(sp); await p.mouse.move(x - 20, y); await p.mouse.down(); for (let k = 0; k < 5; k++) { await p.mouse.move(x + (k % 2 ? 18 : -18), y, { steps: 3 }); await p.waitForTimeout(30); } }
-        await p.waitForTimeout(1600);      // (her proud hop over)
+        if (process.env.LIGHT) await p.evaluate(() => { window.__dpr = 0; });      // (the full sharpness again for the picture)
+        await p.waitForTimeout(process.env.LIGHT ? 6000 : 1600);      // (her proud hop over)
         console.log('groom', JSON.stringify(await st()));
       }
       await p.waitForTimeout(600);
@@ -222,25 +226,28 @@ const SCENES = {
 for (const name of ONLY) {
   const S = SCENES[name];
   const ctx = await b.newContext({ viewport: { width: W, height: H }, deviceScaleFactor: DSF, hasTouch: true, isMobile: true, locale: process.env.LOC || 'en-GB', timezoneId: 'Europe/London' });
+  // (the iPad's game screens, 27 Nov 2026: while a live screen is played its drawing is kept light (LIGHT=0.5: that sharpness),
+  // the full sharpness back for the picture itself; the page reads window.__dpr when set)
+  if (process.env.LIGHT) await ctx.addInitScript(() => { const real = window.devicePixelRatio; Object.defineProperty(window, 'devicePixelRatio', { get: () => window.__dpr || real, configurable: true }); });
   await ctx.addInitScript(([save, T]) => { if (!sessionStorage.getItem('show')) { localStorage.setItem('ff3d.farm', save); localStorage.setItem('ff3d.age', '{"b":"adult","by":"asked"}'); sessionStorage.setItem('show', '1'); } window.__T = T; Date.now = () => window.__T; }, [farm.save, S.date ? new Date(S.date).getTime() : farm.T]);
   const p = await ctx.newPage(); p.on('pageerror', e => errs.push(name + ': ' + e.message));
   await p.goto(`http://localhost:${process.env.PORT || 8770}/play.html?q=0&time=${S.time || '10:30'}${process.env.LANG2 ? '&lang=' + process.env.LANG2 : ''}`, { waitUntil: 'domcontentloaded', timeout: 120000 });
   await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 300000 });
-  await p.evaluate(live => { const u = window.__farm.gameUI(); if (u.isOpen) u.close(); window.__farm.pause(!live); window.__farm.wind(3); }, !!S.live);
+  await p.evaluate(live => { const u = window.__farm.gameUI(); if (u.isOpen) u.close(); window.__farm.pause(!live); window.__farm.wind(3); }, !!S.live && !process.env.NOLIVE);
   if (process.env.LANG2) await p.evaluate(l => window.__farm.game().setLang(l), process.env.LANG2);      // (the farm's own language: its save keeps it)
   if (S.prep || process.env.LANG2) {
     if (S.prep) await p.evaluate(([fn, arg]) => new Function('f', 'arg', fn)(window.__farm, arg), [S.prep.toString().replace(/^[^{]*{/, '').replace(/}\s*$/, ''), S.arg || {}]);
     await p.evaluate(() => sessionStorage.setItem('show', '1'));
     await p.reload({ waitUntil: 'domcontentloaded' });
     await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 300000 });
-    await p.evaluate(live => { const u = window.__farm.gameUI(); if (u.isOpen) u.close(); window.__farm.pause(!live); window.__farm.wind(3); }, !!S.live);
+    await p.evaluate(live => { const u = window.__farm.gameUI(); if (u.isOpen) u.close(); window.__farm.pause(!live); window.__farm.wind(3); }, !!S.live && !process.env.NOLIVE);
   }
   if (S.prep2) {
     await p.evaluate(([fn, arg]) => new Function('f', 'arg', fn)(window.__farm, arg), [S.prep2.toString().replace(/^[^{]*{/, '').replace(/}\s*$/, ''), S.arg || {}]);
     await p.evaluate(() => sessionStorage.setItem('show', '1'));
     await p.reload({ waitUntil: 'domcontentloaded' });
     await p.waitForFunction(() => window.__farm && document.getElementById('loading') === null, null, { timeout: 300000 });
-    await p.evaluate(live => { const u = window.__farm.gameUI(); if (u.isOpen) u.close(); window.__farm.pause(!live); window.__farm.wind(3); }, !!S.live);
+    await p.evaluate(live => { const u = window.__farm.gameUI(); if (u.isOpen) u.close(); window.__farm.pause(!live); window.__farm.wind(3); }, !!S.live && !process.env.NOLIVE);
   }
   if (S.prep) console.log('staged', await p.evaluate(() => [sessionStorage.getItem('ff.layout'), sessionStorage.getItem('ff.decor')].filter(Boolean).join(' ')));
   if (!S.hud) await p.addStyleTag({ content: HIDE });

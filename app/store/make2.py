@@ -20,7 +20,7 @@ for L in LANGS:
     for i, (scene, (title, sub)) in enumerate(zip(C['scenes'], C[L])):
         own = os.path.join(SC, L, scene + '.png')
         q = {'img': own if os.path.exists(own) else os.path.join(SC, scene + '.png'), 'title': title, 'sub': sub, 'name': '%02d' % (i + 1), 'screen': scene in C['screens'], 'side': C.get('sides', {}).get(scene, 'left'), 'size': 100}
-        if IPAD: q.update({'ratio': 4 / 3, **C.get('ipad', {}).get(scene, {})})
+        if IPAD: q.update({'ratio': 4 / 3, 'size': 124, 'subSize': 58, 'w': 1560, **C.get('ipad', {}).get(scene, {})})      # (a taller picture: the sign a little bigger)
         plan.append(q)
     pf = os.path.join(d, 'plan.json'); json.dump(plan, open(pf, 'w', encoding='utf-8'), ensure_ascii=False)
     subprocess.run(['node', os.path.join(HERE, 'compose2.mjs'), pf, d, 'sign'], check=True, env={**os.environ, **({'CW': '2752', 'CH': '2064'} if IPAD else {})})

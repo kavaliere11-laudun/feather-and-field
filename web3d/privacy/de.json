@@ -1,7 +1,7 @@
 {
  "title": "Datenschutz",
  "updated": "Aktualisiert am {date}",
- "intro": "Feather & Field ist ein gemütliches Bauernhofspiel von {owner}. Diese Seite erklärt ganz einfach, was das Spiel über dich speichert und warum. Kurz gesagt: Dein Hof lebt auf deinem Handy, und nichts über dich verlässt es – außer du entscheidest dich für die Anmeldung oder schaust in der iPhone-App ein Video für Gratis-Münzen.",
+ "intro": "Feather & Field ist ein gemütliches Bauernhofspiel von {owner}. Diese Seite erklärt ganz einfach, was das Spiel über dich speichert und warum. Kurz gesagt: Dein Hof lebt auf deinem Handy, und nichts über dich verlässt es – außer du entscheidest dich für die Anmeldung oder schaust in der iPhone- und iPad-App ein Video für Gratis-Münzen.",
  "sections": [
   {
    "h": "Auf deinem Handy",
@@ -13,19 +13,19 @@
   {
    "h": "Wenn du dich anmeldest (freiwillig)",
    "p": [
-    "Mein Konto ist optional. Du kannst dich mit Google anmelden, in der iPhone-App auch mit Apple. Das Spiel nutzt dann den Firebase-Dienst von Google, um:",
+    "Mein Konto ist optional. Du kannst dich mit Google anmelden, in der iPhone- und iPad-App auch mit Apple. Das Spiel nutzt dann den Firebase-Dienst von Google, um:",
     "• dich anzumelden: Google oder Apple gibt dem Spiel deine Konto-ID, deinen Namen und deine E-Mail-Adresse (bei Apple kannst du deine E-Mail-Adresse verbergen: Apple gibt dann eine Ersatzadresse an, die an deine weiterleitet). Dein Passwort sieht das Spiel nie;",
     "• eine Kopie deines Hofs online aufzubewahren, damit er nicht verloren geht und du auf einem anderen Handy oder Tablet weiterspielen kannst. Sie liegt in der Firebase-Datenbank von Google {where}, ist mit deinem Konto verknüpft, und nur du kannst sie öffnen.",
     "Warum: Du hast darum gebeten, dass dein Hof sicher aufbewahrt wird und auf all deinen Geräten verfügbar ist – das ist der Dienst, den du selbst gewählt hast.",
     "Wie lange: bis du dein Konto löschst. In den Einstellungen unter Mein Konto löschst du mit „Konto löschen“ dein Konto und deinen Hof online sofort; auf deinem Handy bleibt dein Hof erhalten.",
     "Damit die Anmeldung über Google bereitsteht, verbindet sich das Spiel nur dann mit Google, wenn du die Einstellungen öffnest oder auf dem Willkommensbildschirm auf „Anmelden“ tippst, wenn das Spiel dir die Anmeldung vorschlägt (einmal, ein paar Tage nach dem Start deines Hofs) – und, sobald du angemeldet bist, bei jedem Start des Spiels. Die Anmeldeserver von Google können außerhalb des Vereinigten Königreichs und Europas liegen; Google kümmert sich in unserem Auftrag um diese Daten, nach den Bedingungen von Firebase und mit den Schutzmaßnahmen, die das Gesetz verlangt. Mehr dazu: <a href=\"https://firebase.google.com/support/privacy\">Datenschutz und Sicherheit in Firebase</a>.",
-    "In der iPhone-App öffnet sich die Anmeldung über Apple oder Google nur, wenn du auf die jeweilige Taste tippst; danach verbindet sich die App wie oben beschrieben mit dem Firebase-Dienst von Google. Mehr zu Apple: <a href=\"https://www.apple.com/legal/privacy/\">Datenschutzrichtlinie von Apple</a>."
+    "In der iPhone- und iPad-App öffnet sich die Anmeldung über Apple oder Google nur, wenn du auf die jeweilige Taste tippst; danach verbindet sich die App wie oben beschrieben mit dem Firebase-Dienst von Google. Mehr zu Apple: <a href=\"https://www.apple.com/legal/privacy/\">Datenschutzrichtlinie von Apple</a>."
    ]
   },
   {
-   "h": "Videos für Gratis-Münzen (iPhone-App, freiwillig)",
+   "h": "Videos für Gratis-Münzen (iPhone- und iPad-App, freiwillig)",
    "p": [
-    "Im Shop der iPhone-App kannst du dir ein kurzes Video für Gratis-Münzen ansehen (fünf am Tag). Die Videos kommen von Google AdMob, dem Werbedienst von Google. Von Google wird nichts gestartet, bevor du auf „Ansehen“ tippst.",
+    "Im Shop der iPhone- und iPad-App kannst du dir ein kurzes Video für Gratis-Münzen ansehen (fünf am Tag). Die Videos kommen von Google AdMob, dem Werbedienst von Google. Von Google wird nichts gestartet, bevor du auf „Ansehen“ tippst.",
     "Die Videos sind kontextbezogen: Sie werden nie nach dem ausgewählt, was über dich bekannt ist, sie sind für alle geeignet, und die App fragt nie, ob sie dich verfolgen darf. Um ein Video zu zeigen, zu zählen und vor Betrug zu schützen, erhält Google, was jeder Werbedienst erhält: die Internetadresse deines Geräts, die Art des Geräts und seine Einstellungen und wie das Video angesehen wurde. Google nutzt diese Daten nach seiner eigenen Datenschutzerklärung. Mehr dazu: <a href=\"https://policies.google.com/technologies/partner-sites\">Wie Google Informationen aus Apps nutzt, die seine Dienste verwenden</a>.",
     "Im Vereinigten Königreich und in Europa fragt Google beim ersten Mal nach deiner Einwilligung, und du kannst deine Wahl in den Einstellungen ändern („Deine Werbe-Einstellungen“)."
    ]
@@ -40,14 +40,14 @@
   {
    "h": "Was das Spiel nie tut",
    "p": [
-    "Keine aufgezwungene Werbung (nur die Videos, die du für Gratis-Münzen in der iPhone-App selbst ansehen willst), kein Tracking, keine Nutzungsanalyse, und deine Daten werden nie verkauft. Keine Cookies für Tracking: Auf deinem Gerät wird nur gespeichert, was das Spiel zum Funktionieren braucht.",
-    "In der iPhone-App kann man manche Dinge für echtes Geld kaufen. Die Zahlung wickelt Apple ab: Das Spiel erfährt von Apple nur, was du gekauft hast, damit du es bekommst, und sieht nie deine Karte oder deine Zahlungsdaten. Auf der Website gibt es nichts zu kaufen."
+    "Keine aufgezwungene Werbung (nur die Videos, die du für Gratis-Münzen in der iPhone- und iPad-App selbst ansehen willst), kein Tracking, keine Nutzungsanalyse, und deine Daten werden nie verkauft. Keine Cookies für Tracking: Auf deinem Gerät wird nur gespeichert, was das Spiel zum Funktionieren braucht.",
+    "In der iPhone- und iPad-App kann man manche Dinge für echtes Geld kaufen. Die Zahlung wickelt Apple ab: Das Spiel erfährt von Apple nur, was du gekauft hast, damit du es bekommst, und sieht nie deine Karte oder deine Zahlungsdaten. Auf der Website gibt es nichts zu kaufen."
    ]
   },
   {
    "h": "Kinder",
    "p": [
-    "Alle können spielen. Vor der ersten Anmeldung oder dem ersten Video fragt das Spiel nach deinem Geburtsjahr oder nutzt in der iPhone-App, wo das Gesetz es verlangt, die Altersgruppe, die dein Apple Account teilt. Nur die Altersgruppe (unter 13, 13 bis 17 oder erwachsen) wird gespeichert, auf deinem Handy; das Jahr selbst wird weder gespeichert noch irgendwohin gesendet.",
+    "Alle können spielen. Vor der ersten Anmeldung oder dem ersten Video fragt das Spiel nach deinem Geburtsjahr oder nutzt in der iPhone- und iPad-App, wo das Gesetz es verlangt, die Altersgruppe, die dein Apple Account teilt. Nur die Altersgruppe (unter 13, 13 bis 17 oder erwachsen) wird gespeichert, auf deinem Handy; das Jahr selbst wird weder gespeichert noch irgendwohin gesendet.",
     "Spieler unter 13 können sich nicht anmelden, daher wird online nichts über sie gespeichert. Wenn sie ein Video ansehen, erfährt Google, dass es für ein Kind ist: Es ist für Kinder geeignet, nichts über das Kind wird zur Auswahl genutzt, und Google nutzt die Gerätedaten nur, um es zu zeigen, zu zählen und vor Betrug zu schützen.",
     "Wenn du glaubst, dass sich ein Kind unter 13 angemeldet hat, schreib uns, und wir löschen das Konto."
    ]
